@@ -1,0 +1,61 @@
+# Local tool caches (sometimes created inside the project folder by mistake)
+.cache/
+.local/
+.ipython/
+.gitconfig
+.npm/
+node_modules/
+.my.cnf
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Flask
+instance/
+.webassets-cache
+
+# Runtime uploads and JSON backups (may contain customer/shop data; do not commit)
+app/static/uploads/
+app/static/backups/
+
+# Virtual Environment
+venv/
+ENV/
+posmaster-env/
+.env
+
+
+# IDE
+.idea/
+.vscode/
+
+# tests
+tests/
+
+# Database
+*.db
+*.sqlite
+
+# Logs
+logs/
+*.log

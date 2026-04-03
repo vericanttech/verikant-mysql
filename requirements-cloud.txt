@@ -1,0 +1,3 @@
+# Extra deps for Google Cloud Run / managed PostgreSQL (optional local install)
+-r requirements.txt
+psycopg2-binary>=2.9.9,<3

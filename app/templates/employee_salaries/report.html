@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-4 sm:space-y-0">
+        <h2 class="text-2xl font-bold text-gray-900">Rapport des Salaires</h2>
+        <a href="{{ url_for('employee_salaries.salary_list') }}" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            Retour aux Salaires
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-md mb-6">
+        <div class="p-6">
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Employé</label>
+                    <select name="employee_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">Tous les employés</option>
+                        {% for employee in employees %}
+                            <option value="{{ employee.id }}" {% if request.args.get('employee_id') == employee.id|string %}selected{% endif %}>
+                                {{ employee.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
+                    <input type="date" name="start_date" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" value="{{ request.args.get('start_date', '') }}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
+                    <input type="date" name="end_date" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" value="{{ request.args.get('end_date', '') }}">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Filtrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                    <i data-lucide="users" class="w-6 h-6 text-blue-600"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Paiements</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-green-100 rounded-lg">
+                    <i data-lucide="dollar-sign" class="w-6 h-6 text-green-600"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Salaires</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-purple-100 rounded-lg">
+                    <i data-lucide="trending-up" class="w-6 h-6 text-purple-600"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Moyenne</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        {% if total_count > 0 %}
+                            {{ (total_amount / total_count) | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}
+                        {% else %}
+                            0 {{ shop_profile.currency|default('FCFA') }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Statistics -->
+    <div class="bg-white rounded-lg shadow-md mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Statistiques par Employé</h3>
+        </div>
+        <div class="p-6">
+            <!-- Desktop Table -->
+            <div class="hidden sm:block overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employé</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre de Paiements</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Reçu</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Moyenne</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for employee_name, stats in employee_stats.items() %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ employee_name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ stats.count }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ stats.total | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {% if stats.count > 0 %}
+                                    {{ (stats.total / stats.count) | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}
+                                {% else %}
+                                    0 {{ shop_profile.currency|default('FCFA') }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Mobile Cards -->
+            <div class="block sm:hidden space-y-4">
+                {% for employee_name, stats in employee_stats.items() %}
+                <div class="bg-gray-50 rounded-lg shadow p-4">
+                    <div class="font-semibold text-gray-900 mb-2">{{ employee_name }}</div>
+                    <div class="flex justify-between text-sm mb-1"><span>Nombre de Paiements:</span><span>{{ stats.count }}</span></div>
+                    <div class="flex justify-between text-sm mb-1"><span>Total Reçu:</span><span>{{ stats.total | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span></div>
+                    <div class="flex justify-between text-sm"><span>Moyenne:</span><span>{% if stats.count > 0 %}{{ (stats.total / stats.count) | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}{% else %}0 {{ shop_profile.currency|default('FCFA') }}{% endif %}</span></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Salaries -->
+    <div class="bg-white rounded-lg shadow-md">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Détails des Salaires</h3>
+        </div>
+        <div class="p-6">
+            <!-- Desktop Table -->
+            <div class="hidden sm:block overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employé</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date de Paiement</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Méthode</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mois/Année</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for salary in salaries %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ salary.employee.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ salary.salary_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ salary.payment_date|format_date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {% if salary.payment_method == 'cash' %}Espèces
+                                {% elif salary.payment_method == 'bank' %}Banque
+                                {% elif salary.payment_method == 'check' %}Chèque
+                                {% else %}{{ salary.payment_method }}{% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ salary.month_year }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full
+                                    {% if salary.status == 'paid' %}bg-green-100 text-green-800
+                                    {% elif salary.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {% if salary.status == 'paid' %}Payé
+                                    {% elif salary.status == 'pending' %}En attente
+                                    {% else %}Annulé{% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Mobile Cards -->
+            <div class="block sm:hidden space-y-4">
+                {% for salary in salaries %}
+                <div class="bg-gray-50 rounded-lg shadow p-4">
+                    <div class="font-semibold text-gray-900 mb-2">{{ salary.employee.name }}</div>
+                    <div class="flex justify-between text-sm mb-1"><span>Montant:</span><span>{{ salary.salary_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span></div>
+                    <div class="flex justify-between text-sm mb-1"><span>Date de Paiement:</span><span>{{ salary.payment_date|format_date }}</span></div>
+                    <div class="flex justify-between text-sm mb-1"><span>Méthode:</span><span>{% if salary.payment_method == 'cash' %}Espèces{% elif salary.payment_method == 'bank' %}Banque{% elif salary.payment_method == 'check' %}Chèque{% else %}{{ salary.payment_method }}{% endif %}</span></div>
+                    <div class="flex justify-between text-sm mb-1"><span>Mois/Année:</span><span>{{ salary.month_year }}</span></div>
+                    <div class="flex justify-between text-sm"><span>Statut:</span><span><span class="px-2 py-1 text-xs font-medium rounded-full {% if salary.status == 'paid' %}bg-green-100 text-green-800{% elif salary.status == 'pending' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">{% if salary.status == 'paid' %}Payé{% elif salary.status == 'pending' %}En attente{% else %}Annulé{% endif %}</span></span></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

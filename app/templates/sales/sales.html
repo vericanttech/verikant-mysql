@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
+    <!-- Header and Controls Section -->
+    <div class="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:justify-between sm:items-center mb-6">
+        <h2 class="text-2xl font-semibold text-gray-800">Historique des Ventes</h2>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <div class="grid grid-cols-2 sm:flex gap-3">
+                <input type="date" id="start_date"
+                       class="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <input type="date" id="end_date"
+                       class="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <div class="grid grid-cols-2 sm:flex gap-3">
+                <button onclick="filterSales()"
+                        class="w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    Filtrer
+                </button>
+                <button onclick="exportToPDF()"
+                        class="w-full sm:w-auto px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                    Exporter PDF
+                </button>
+                <button onclick="generateAndShareSalesPDF()"
+                        class="w-full sm:w-auto px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="shadow rounded-lg overflow-hidden">
+        <!-- Mobile view -->
+        <div class="block md:hidden">
+        {% for sale in sales %}
+        <div class="bg-white border-b border-gray-200 p-4">
+            <div class="grid grid-cols-2 gap-2">
+                <div class="text-sm text-gray-500">Date</div>
+                <div class="text-sm">{{ sale.bill.date|format_date}}</div>
+                <div class="text-sm text-gray-500">Facture</div>
+                <div class="text-sm">{{ sale.bill.bill_number }}</div>
+                <div class="text-sm text-gray-500">Produit</div>
+                <div class="text-sm">{{ sale.product.name }}</div>
+                <div class="text-sm text-gray-500">Quantité</div>
+                <div class="text-sm">{{ sale.quantity }}</div>
+                <div class="text-sm text-gray-500">Prix/Unité</div>
+                <div class="text-sm">{{ sale.selling_price| fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</div>
+                <div class="text-sm text-gray-500">Total</div>
+                <div class="text-sm font-medium">{{ sale.total_amount | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</div>
+
+                {% if current_user.role == 'admin' %}
+                <div class="text-sm text-gray-500">Bénéfice</div>
+                <div class="text-sm text-green-600">{{ (sale.total_amount - (sale.buying_price * sale.quantity))| fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+            <!-- Mobile totals -->
+            <div class="bg-blue-50 p-4">
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="text-sm font-medium text-gray-500">Total des Ventes</div>
+                    <div class="text-sm font-medium">{{ total_sales | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</div>
+                    {% if current_user.role == 'admin' %}
+                    <div class="text-sm font-medium text-gray-500">Bénéfice Total</div>
+                    <div class="text-sm font-medium text-green-600">{{ total_profit | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Desktop view -->
+        <div class="hidden md:block">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Numéro de Facture</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix/Unité</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            {% if current_user.role == 'admin' %}
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bénéfice</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for sale in sales %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ sale.bill.date|format_date}}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ sale.bill.bill_number }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ sale.product.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ sale.quantity }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ sale.selling_price | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ sale.total_amount | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            {% if current_user.role == 'admin' %}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (sale.total_amount - (sale.buying_price * sale.quantity)) | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-blue-50">
+                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">Totaux</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{{ total_sales | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            {% if current_user.role == 'admin' %}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{{ total_profit | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            {% endif %}
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination Section -->
+        {% if pagination.pages > 1 %}
+        <div class="px-4 sm:px-6 py-3 bg-white border-t border-gray-200">
+            <nav class="flex items-center justify-center">
+                <ul class="flex flex-wrap gap-2 justify-center">
+                    {% for page_num in pagination.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+                        {% if page_num %}
+                            {% if page_num == pagination.page %}
+                            <li>
+                                <span class="flex items-center justify-center min-w-[40px] h-10 px-3 bg-blue-500 text-white rounded-lg font-semibold">
+                                    {{ page_num }}
+                                </span>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a href="{{ url_for('bills.sale_list', page=page_num, start=request.args.get('start'), end=request.args.get('end')) }}"
+                                   class="flex items-center justify-center min-w-[40px] h-10 px-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li>
+                                <span class="flex items-center justify-center min-w-[32px] h-10 text-gray-400 text-lg">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.querySelector('.fixed');
+    const contentWrapper = document.querySelector('.container');
+    const isMobile = () => window.innerWidth < 768;
+
+    // Handle content area clicks for mobile
+    if (contentWrapper && sidebar) {
+        contentWrapper.addEventListener('click', function(e) {
+            if (isMobile()) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (sidebar) {
+            if (!isMobile()) {
+                sidebar.classList.remove('-translate-x-full');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+            }
+        }
+    });
+
+    // Initialize mobile state
+    if (isMobile() && sidebar) {
+        sidebar.classList.add('-translate-x-full');
+    }
+
+    // Filter sales function
+    window.filterSales = function() {
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+        if (startDate && endDate) {
+            window.location.href = '{{ url_for("bills.sale_list") }}?start=' + startDate + '&end=' + endDate;
+        } else {
+            alert('Veuillez sélectionner les dates de début et de fin');
+        }
+    }
+
+    // Helper function to get current date parameters
+    function getCurrentDateParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const startDate = urlParams.get('start') || document.getElementById('start_date')?.value;
+        const endDate = urlParams.get('end') || document.getElementById('end_date')?.value;
+        return { startDate, endDate };
+    }
+
+    // Helper function to build PDF URL with parameters
+    function buildPDFUrl() {
+        const { startDate, endDate } = getCurrentDateParams();
+        const baseUrl = '{{ url_for("bills.export_sales_pdf") }}';
+        const params = new URLSearchParams();
+
+        if (startDate) params.append('start', startDate);
+        if (endDate) params.append('end', endDate);
+
+        return params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+    }
+
+    // Fetch PDF from backend as blob
+    async function fetchPDFBlob() {
+        try {
+            const pdfUrl = buildPDFUrl();
+            const response = await fetch(pdfUrl, {
+                method: 'GET',
+                credentials: 'same-origin', // Include cookies for authentication
+                headers: {
+                    'Accept': 'application/pdf'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.blob();
+        } catch (error) {
+            console.error('Error fetching PDF:', error);
+            throw new Error('Erreur lors de la récupération du PDF du serveur');
+        }
+    }
+
+    // Generate filename based on dates
+    function generateFilename() {
+        const { startDate, endDate } = getCurrentDateParams();
+
+        if (startDate && endDate) {
+            if (startDate === endDate) {
+                return `rapport_ventes_${startDate}.pdf`;
+            } else {
+                return `rapport_ventes_${startDate}_au_${endDate}.pdf`;
+            }
+        } else {
+            const today = new Date().toISOString().split('T')[0];
+            return `rapport_ventes_${today}.pdf`;
+        }
+    }
+
+    // Export PDF function (download directly)
+    window.exportToPDF = async function() {
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = 'Génération...';
+        button.disabled = true;
+
+        try {
+            const pdfBlob = await fetchPDFBlob();
+            const filename = generateFilename();
+
+            // Create download link
+            const url = window.URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+        } catch (error) {
+            console.error('Error in exportToPDF:', error);
+            alert(error.message || 'Erreur lors de la génération du PDF.');
+        } finally {
+            button.textContent = originalText;
+            button.disabled = false;
+        }
+    }
+
+    // Generate and share PDF for mobile/PWA
+    window.generateAndShareSalesPDF = async function() {
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = 'Génération...';
+        button.disabled = true;
+
+        try {
+            const pdfBlob = await fetchPDFBlob();
+            const filename = generateFilename();
+            const message = `Rapport de ventes - PDF en pièce jointe`;
+
+            // Check if Web Share API is available and supports file sharing
+            if (navigator.share && navigator.canShare) {
+                const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+
+                // Check if file sharing is supported
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: 'Rapport de ventes',
+                        text: message,
+                        files: [file]
+                    });
+                    return; // Success, exit early
+                }
+            }
+
+            // Fallback: Download PDF and open WhatsApp with message
+            const url = window.URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            // Open WhatsApp with message
+            const encodedMessage = encodeURIComponent(message);
+            setTimeout(() => {
+                window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+                alert('PDF téléchargé. Veuillez l\'attacher manuellement dans WhatsApp.');
+            }, 500); // Small delay to ensure download starts
+
+        } catch (error) {
+            console.error('Error in generateAndShareSalesPDF:', error);
+            alert(error.message || 'Erreur lors de la génération ou du partage du PDF.');
+        } finally {
+            button.textContent = originalText;
+            button.disabled = false;
+        }
+    }
+
+    // Alternative function to open PDF in new tab (for preview)
+    window.previewPDF = async function() {
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = 'Chargement...';
+        button.disabled = true;
+
+        try {
+            const pdfUrl = buildPDFUrl();
+            window.open(pdfUrl, '_blank');
+        } catch (error) {
+            console.error('Error in previewPDF:', error);
+            alert('Erreur lors de l\'ouverture du PDF.');
+        } finally {
+            button.textContent = originalText;
+            button.disabled = false;
+        }
+    }
+
+    // Set date values from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('start')) {
+        const startInput = document.getElementById('start_date');
+        if (startInput) startInput.value = urlParams.get('start');
+    }
+    if (urlParams.has('end')) {
+        const endInput = document.getElementById('end_date');
+        if (endInput) endInput.value = urlParams.get('end');
+    }
+
+    // Optional: Add keyboard shortcut for PDF export (Ctrl+P or Cmd+P)
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault(); // Prevent browser print dialog
+            if (typeof window.exportToPDF === 'function') {
+                // Create a fake event object for the function
+                const fakeEvent = { target: document.createElement('button') };
+                fakeEvent.target.textContent = 'Exporter PDF';
+                fakeEvent.target.disabled = false;
+                window.exportToPDF.call(null, fakeEvent);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

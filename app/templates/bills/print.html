@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facture #{{ bill.bill_number }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.4;
+            padding: 20px;
+        }
+
+        /* Side by side layout */
+        .bill-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            gap: 2mm;
+            flex-wrap: wrap;
+        }
+
+        .bill-half {
+            width: 49%;
+            padding: 10px;
+        }
+
+        /* Header styles */
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .company-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        /* Mobile-specific header styles */
+        .mobile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mobile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .mobile-company-name {
+            font-size: 24px;
+            font-weight: 900;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .mobile-company-tagline {
+            font-size: 12px;
+            opacity: 0.9;
+            font-style: italic;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .mobile-contact-info {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .mobile-contact-item {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .mobile-contact-item i {
+            margin-right: 5px;
+            color: #FFD700;
+        }
+
+        .mobile-bill-badge {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 15px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Bill info section */
+        .bill-info {
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 5px;
+        }
+
+        /* Mobile bill info styling */
+        .mobile-bill-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+        }
+
+        .mobile-info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .mobile-info-label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .mobile-info-value {
+            color: #212529;
+        }
+
+        /* Table styles */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .items-table th,
+        .items-table td {
+            border: 1px solid #000;
+            padding: 4px;
+            text-align: left;
+        }
+
+        .items-table th {
+            background-color: #f0f0f0;
+        }
+
+        /* Mobile table styling */
+        .mobile-items-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+        }
+
+        .mobile-items-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            padding: 12px 8px;
+            font-size: 11px;
+        }
+
+        .mobile-items-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 12px;
+        }
+
+        .mobile-items-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Totals section */
+        .total-section {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .total-section td {
+            border: 1px solid #000;
+            padding: 4px;
+            text-align: center;
+        }
+
+        /* Mobile totals styling */
+        .mobile-total-section {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
+        .mobile-total-section td {
+            padding: 12px 8px;
+            border: none;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .mobile-total-section tr:first-child td {
+            background: rgba(0,0,0,0.1);
+        }
+
+        /* Signature section */
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 10px;
+        }
+
+        .signature-box {
+            text-align: center;
+            flex: 1;
+        }
+
+        .signature-line {
+            border-bottom: 1px solid #000;
+            margin-top: 20px;
+            margin-bottom: 5px;
+        }
+
+        /* Total in letters */
+        .total-letters {
+            font-size: 11px;
+            font-weight: bold;
+            font-style: italic;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Mobile total letters styling */
+        .mobile-total-letters {
+            background: #fff3cd;
+            border: 2px dashed #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            color: #856404;
+            margin-top: 15px;
+        }
+
+        /* Action buttons */
+        .action-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .action-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: white;
+        }
+
+        .print-button {
+            background: #4CAF50;
+        }
+
+        .whatsapp-button {
+            background: #25D366;
+        }
+
+        /* Mobile action buttons */
+        .mobile-action-buttons {
+            position: fixed;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .mobile-action-button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .mobile-action-button:active {
+            transform: scale(0.95);
+        }
+
+        .mobile-print-button {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .mobile-whatsapp-button {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loading-spinner {
+            color: white;
+            font-size: 16px;
+            padding: 20px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                padding: 0;
+                font-size: 9pt;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .mobile-only {
+                display: none !important;
+            }
+            @page {
+                margin: 5mm;
+            }
+            .bill-half {
+                width: 49% !important;
+                display: block !important;
+            }
+        }
+
+        /* Mobile styles */
+        @media screen and (max-width: 767px) {
+            .bill-container {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .bill-half {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+
+            /* Hide second bill on mobile */
+            .bill-half:nth-child(2) {
+                display: none;
+            }
+
+            /* Hide desktop elements on mobile */
+            .desktop-only {
+                display: none !important;
+            }
+
+            /* Show mobile elements */
+            .mobile-only {
+                display: block !important;
+            }
+
+            .action-buttons {
+                display: none;
+            }
+
+            .mobile-action-buttons {
+                display: flex;
+            }
+
+            body {
+                padding: 10px;
+                background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                min-height: 100vh;
+            }
+
+            .bill-half {
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+                padding: 0;
+                overflow: hidden;
+            }
+
+            .header {
+                display: none;
+            }
+
+            .bill-info {
+                display: none;
+            }
+
+            .items-table {
+                display: none;
+            }
+
+            .total-section {
+                display: none;
+            }
+
+            .total-letters {
+                display: none;
+            }
+
+            .signature-section {
+                display: none;
+            }
+        }
+
+        /* Desktop styles */
+        @media screen and (min-width: 768px) {
+            .mobile-only {
+                display: none !important;
+            }
+            
+            .mobile-action-buttons {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="pdf-content" class="bill-container">
+        {% for i in range(2) %}
+        <div class="bill-half">
+            <!-- Desktop Header -->
+            <div class="header desktop-only">
+                <div class="company-name">{{ shop_profile.name }}</div>
+                <div>
+                    {% if shop_profile.phones %}
+                        Tel: {% for phone in shop_profile.phones %}
+                            {{ phone.phone }}{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                {% if shop_profile.address %}
+                <div>{{ shop_profile.address }}</div>
+                {% endif %}
+                {% if shop_profile.tax_id %}
+                <div>NINEA / NIF: {{ shop_profile.tax_id }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Mobile Header -->
+            <div class="mobile-header mobile-only">
+                <div class="mobile-company-name">{{ shop_profile.name }}</div>
+                <div class="mobile-company-tagline">Facture Professionnelle</div>
+                <div class="mobile-contact-info">
+                    {% if shop_profile.phones %}
+                        {% for phone in shop_profile.phones %}
+                        <div class="mobile-contact-item">
+                            <i class="fas fa-phone"></i> {{ phone.phone }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    {% if shop_profile.address %}
+                    <div class="mobile-contact-item">
+                        <i class="fas fa-map-marker-alt"></i> {{ shop_profile.address }}
+                    </div>
+                    {% endif %}
+                    {% if shop_profile.tax_id %}
+                    <div class="mobile-contact-item">
+                        <i class="fas fa-id-card"></i> NINEA/NIF: {{ shop_profile.tax_id }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="mobile-bill-badge">
+                    <i class="fas fa-file-invoice"></i> Facture #{{ bill.bill_number }}
+                </div>
+            </div>
+
+            <!-- Desktop Bill Information -->
+            <div class="bill-info desktop-only">
+                <div class="info-grid">
+                    <span>La Caissière:</span>
+                    <span>{{ bill.user.name }}</span>
+                    <span>No Facture:</span>
+                    <span>{{ bill.bill_number }}</span>
+                    <span>Date:</span>
+                    <span>{{ bill.date|format_date }}</span>
+                    {% if bill.client %}
+                    <span>Client:</span>
+                    <span>{{ bill.client.name }}</span>
+                    <span>Téléphone:</span>
+                    <span>{{ bill.client.phone }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Mobile Bill Information -->
+            <div class="mobile-bill-info mobile-only">
+                <div class="mobile-info-grid">
+                    <span class="mobile-info-label">👤 Caissière:</span>
+                    <span class="mobile-info-value">{{ bill.user.name }}</span>
+                    <span class="mobile-info-label">📅 Date:</span>
+                    <span class="mobile-info-value">{{ bill.date|format_date }}</span>
+                    {% if bill.client %}
+                    <span class="mobile-info-label">🏢 Client:</span>
+                    <span class="mobile-info-value">{{ bill.client.name }}</span>
+                    <span class="mobile-info-label">📞 Téléphone:</span>
+                    <span class="mobile-info-value">{{ bill.client.phone }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Desktop Items Table -->
+            <table class="items-table desktop-only">
+                <thead>
+                    <tr>
+                        <th>Qté</th>
+                        <th>Designation</th>
+                        <th>Prix unitaire</th>
+                        <th>Prix total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detail in details %}
+                    <tr>
+                        <td>{{ detail.quantity }}</td>
+                        <td>{{ detail.product.name }}</td>
+                        <td>{{ detail.selling_price | fr_thousands  }}</td>
+                        <td>{{ detail.total_amount | fr_thousands  }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Mobile Items Table -->
+            <table class="mobile-items-table mobile-only">
+                <thead>
+                    <tr>
+                        <th>Qté</th>
+                        <th>Designation</th>
+                        <th>Prix unitaire</th>
+                        <th>Prix total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detail in details %}
+                    <tr>
+                        <td>{{ detail.quantity }}</td>
+                        <td>{{ detail.product.name }}</td>
+                        <td>{{ detail.selling_price | fr_thousands  }}</td>
+                        <td>{{ detail.total_amount | fr_thousands  }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Desktop Totals Table -->
+            <table class="total-section desktop-only">
+                <tr>
+                    <td><strong>TOTAL</strong></td>
+                    <td><strong>AVANCE</strong></td>
+                    <td><strong>NET A PAYER</strong></td>
+                </tr>
+                <tr>
+                    <td>{{ bill.total_amount | fr_thousands  }}</td>
+                    <td>{{ bill.paid_amount | fr_thousands  }}</td>
+                    <td>{{ bill.remaining_amount | fr_thousands  }}</td>
+                </tr>
+            </table>
+
+            <!-- Mobile Totals Table -->
+            <table class="mobile-total-section mobile-only">
+                <tr>
+                    <td><strong>💰 TOTAL</strong></td>
+                    <td><strong>💳 AVANCE</strong></td>
+                    <td><strong>🧾 NET A PAYER</strong></td>
+                </tr>
+                <tr>
+                    <td>{{ bill.total_amount | fr_thousands  }}</td>
+                    <td>{{ bill.paid_amount | fr_thousands  }}</td>
+                    <td>{{ bill.remaining_amount | fr_thousands  }}</td>
+                </tr>
+            </table>
+
+            <!-- Desktop Signature Section -->
+            <div class="signature-section desktop-only">
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div>VISA RESPONSABLE DEPOT</div>
+                </div>
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div>VISA LIVREUR</div>
+                </div>
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div>VISA CAISSIER</div>
+                </div>
+            </div>
+
+            <!-- Desktop Total in Letters -->
+            <div class="total-letters desktop-only">
+                <strong>**Total en lettres :**</strong> {{ bill.total_amount|number_to_words(shop_profile.currency|default('FCFA'))|upper }}
+            </div>
+
+            <!-- Mobile Total in Letters -->
+            <div class="mobile-total-letters mobile-only">
+                <strong>✨ Total en lettres :</strong><br>
+                {{ bill.total_amount|number_to_words(shop_profile.currency|default('FCFA'))|upper }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Desktop Action Buttons -->
+    <div class="action-buttons no-print desktop-only">
+        <button onclick="window.print()" class="action-button print-button">
+            <i class="fas fa-print"></i> Imprimer
+        </button>
+        <button onclick="generateAndShare()" class="action-button whatsapp-button">
+            <i class="fab fa-whatsapp"></i> WhatsApp
+        </button>
+    </div>
+
+    <!-- Mobile Action Buttons -->
+    <div class="mobile-action-buttons no-print mobile-only">
+        <!--
+        <button onclick="window.print()" class="mobile-action-button mobile-print-button">
+            <i class="fas fa-print"></i> Imprimer
+        </button>
+        -->
+        <button onclick="generateAndShare()" class="mobile-action-button mobile-whatsapp-button">
+            <i class="fab fa-whatsapp"></i> Partager
+        </button>
+    </div>
+
+
+    <!-- Required scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+
+    <script>
+        // PDF generation options
+        const pdfOptions = {
+            margin: 10,
+            filename: 'facture_{{ bill.bill_number }}.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                letterRendering: true
+            },
+            jsPDF: {
+                unit: 'mm',
+                format: 'a4',
+                orientation: 'portrait'
+            }
+        };
+
+        // Function to show loading overlay
+        function showLoading() {
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.innerHTML = '<div class="loading-spinner">Génération du PDF...</div>';
+            document.body.appendChild(overlay);
+            return overlay;
+        }
+
+        // Function to generate PDF and share
+        async function generateAndShare() {
+            const loadingOverlay = showLoading();
+            try {
+                // Get the element to convert (just the first bill for mobile sharing)
+                const element = document.querySelector('.bill-half');
+
+                // Generate PDF
+                const pdfBlob = await html2pdf()
+                    .set(pdfOptions)
+                    .from(element)
+                    .output('blob');
+
+                // Create message for WhatsApp
+                const message = `Facture #{{ bill.bill_number }} - {{ shop_profile.name }}\n` +
+                              `Total: {{ bill.total_amount | fr_thousands  }}\n` +
+                              `Date: {{ bill.date|format_date }}`;
+
+                // Try to share using Web Share API first (mobile devices)
+                if (navigator.share && isMobile()) {
+                    try {
+                        const file = new File([pdfBlob], pdfOptions.filename, {
+                            type: 'application/pdf'
+                        });
+
+                        await navigator.share({
+                            title: 'Facture VERICANT',
+                            text: message,
+                            files: [file]
+                        });
+                    } catch (shareError) {
+                        console.log('Share API failed, falling back to WhatsApp URL');
+                        shareViaWhatsAppUrl(message);
+                    }
+                } else {
+                    // Fallback to WhatsApp URL sharing
+                    shareViaWhatsAppUrl(message);
+                }
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Une erreur est survenue lors de la génération du PDF.');
+            } finally {
+                // Remove loading overlay
+                loadingOverlay.remove();
+            }
+        }
+
+        // Function to check if device is mobile
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        // Function to share via WhatsApp URL
+        function shareViaWhatsAppUrl(message) {
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Circular black background -->
+  <circle cx="50" cy="50" r="50" fill="black" />
+
+  <!-- Icon version - just the V and curve -->
+  <g id="vericant-icon">
+    <path 
+      d="M30 20 L50 80 L70 20" 
+      fill="none" 
+      stroke="white" 
+      stroke-width="12" 
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path 
+      d="M65 20 Q80 20 80 35 L80 45" 
+      fill="none" 
+      stroke="#2A9D8F" 
+      stroke-width="12" 
+      stroke-linecap="round"
+    />
+  </g>
+</svg>

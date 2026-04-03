@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        <h2 class="text-2xl font-bold text-center sm:text-left">Gestion des Clients</h2>
+        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full sm:w-auto"
+                onclick="document.getElementById('addClientModal').classList.remove('hidden')">
+            Nouveau Client
+        </button>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="p-4 mb-4 rounded {% if category == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Search Bar -->
+    <div class="bg-white rounded-lg shadow mb-6 p-4">
+        <form class="flex flex-col sm:flex-row gap-4" method="GET">
+            <input type="text" class="w-full sm:flex-1 border rounded px-3 py-2" name="search"
+                   value="{{ request.args.get('search', '') }}"
+                   placeholder="Rechercher par nom, adresse, téléphone ou email">
+            <button type="submit" class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 w-full sm:w-auto">
+                Rechercher
+            </button>
+        </form>
+    </div>
+</div>
+
+
+<div class="bg-white rounded-lg shadow">
+    <div class="p-4">
+        <!-- Desktop Table View -->
+        <div class="hidden md:block overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Nom</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Adresse</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Téléphone</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Email</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for client in clients.items %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ client.name }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ client.address }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ client.phone }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ client.email }}</td>
+                        <!-- Inside the <td> with class="px-6 py-4 text-sm" that contains the action buttons -->
+                        <td class="px-6 py-4 text-sm">
+                            <div class="flex space-x-2">
+                                <a href="{{ url_for('clients.client_detail', client_id=client.id) }}"
+                                   class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
+                                    Détails
+                                </a>
+                                <button class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                                    onclick="editClient({{ client.id }}, '{{ client.name }}', '{{ client.address }}', '{{ client.phone }}', '{{ client.email }}')">
+                                    Modifier
+                                </button>
+                                <button class="bg-gray-400 text-white px-3 py-1 rounded text-sm cursor-not-allowed"
+                                    disabled>
+                                    Supprimer
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Card View -->
+        <div class="block md:hidden space-y-4">
+            {% for client in clients.items %}
+            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                <div class="space-y-2">
+                    <h3 class="text-lg font-semibold text-gray-800 truncate">{{ client.name }}</h3>
+                    
+                    {% if client.address %}
+                    <div class="flex items-start space-x-2">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0"></i>
+                        <p class="text-sm text-gray-600 flex-1">{{ client.address }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if client.phone %}
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="phone" class="w-4 h-4 text-gray-400 flex-shrink-0"></i>
+                        <a href="tel:{{ client.phone }}" class="text-sm text-blue-600 hover:text-blue-800">{{ client.phone }}</a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if client.email %}
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="mail" class="w-4 h-4 text-gray-400 flex-shrink-0"></i>
+                        <a href="mailto:{{ client.email }}" class="text-sm text-blue-600 hover:text-blue-800 truncate">{{ client.email }}</a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mt-4 flex flex-col space-y-2">
+                    <a href="{{ url_for('clients.client_detail', client_id=client.id) }}"
+                       class="w-full bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors text-center">
+                        Voir Détails
+                    </a>
+                    <button class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+                        onclick="editClient({{ client.id }}, '{{ client.name }}', '{{ client.address }}', '{{ client.phone }}', '{{ client.email }}')">
+                        Modifier
+                    </button>
+                    <button class="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
+                        onclick="deleteClient({{ client.id }}, '{{ client.name }}')">
+                        Supprimer
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+            <!-- Pagination -->
+            <nav class="flex justify-center mt-6">
+                <ul class="flex flex-wrap justify-center gap-2">
+                    {% for page_num in clients.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == clients.page %}
+                            <li>
+                                <span class="px-3 py-2 bg-blue-600 text-white border rounded-lg">{{ page_num }}</span>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a href="{{ url_for('clients.client_list', page=page_num, search=request.args.get('search', '')) }}"
+                                   class="px-3 py-2 bg-white border rounded-lg hover:bg-gray-50">{{ page_num }}</a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li>
+                                <span class="px-3 py-2 text-gray-400">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+
+<!-- Add Client Modal -->
+<div id="addClientModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-4 mx-auto p-4 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium">Nouveau Client</h3>
+            <button class="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+                    onclick="document.getElementById('addClientModal').classList.add('hidden')">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form method="POST" class="mt-4">
+            <input type="hidden" name="add_client" value="1">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Nom du Client</label>
+                    <input type="text" name="client_name" required
+                           class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Adresse</label>
+                    <input type="text" name="client_address"
+                           class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Téléphone</label>
+                    <input type="tel" name="client_phone"
+                           class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" name="client_email"
+                           class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                        onclick="closeAddClientModal()">Annuler</button>
+
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Ajouter</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<!-- Edit Client Modal -->
+<div id="editClientModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-4 mx-auto p-4 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium">Modifier le Client</h3>
+            <button class="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+                    onclick="document.getElementById('editClientModal').classList.add('hidden')">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form method="POST" class="mt-4">
+            <input type="hidden" name="edit_client" value="1">
+            <input type="hidden" name="client_id" id="edit_client_id">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Nom du Client <span class="text-red-500">*</span></label>
+                    <input type="text" name="name" id="edit_client_name" required
+                           class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Adresse</label>
+                    <input type="text" name="address" id="edit_client_address"
+                           class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Téléphone</label>
+                    <input type="tel" name="phone" id="edit_client_phone"
+                           class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" name="email" id="edit_client_email"
+                           class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                        onclick="document.getElementById('editClientModal').classList.add('hidden')">Annuler</button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Client Modal -->
+<div id="deleteClientModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-4 mx-auto p-4 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium">Supprimer le Client</h3>
+            <button class="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+                    onclick="document.getElementById('deleteClientModal').classList.add('hidden')">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form method="POST" class="mt-4">
+            <input type="hidden" name="delete_client" value="1">
+            <input type="hidden" name="client_id" id="delete_client_id">
+            <p class="text-gray-600">Êtes-vous sûr de vouloir supprimer <span id="delete_client_name" class="font-medium"></span>?</p>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                        onclick="document.getElementById('deleteClientModal').classList.add('hidden')">Annuler</button>
+                <button type="submit"
+                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Supprimer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editClient(id, name, address, phone, email) {
+    document.getElementById('edit_client_id').value = id;
+    document.getElementById('edit_client_name').value = name;
+    document.getElementById('edit_client_address').value = address;
+    document.getElementById('edit_client_phone').value = phone;
+    document.getElementById('edit_client_email').value = email;
+    document.getElementById('editClientModal').classList.remove('hidden');
+}
+function addClient() {
+    // Reset the form fields when opening the modal for adding a new client
+    document.querySelector('input[name="client_name"]').value = '';
+    document.querySelector('input[name="client_address"]').value = '';
+    document.querySelector('input[name="client_phone"]').value = '';
+    document.querySelector('input[name="client_email"]').value = '';
+
+    // Show the modal for adding a client
+    document.getElementById('addClientModal').classList.remove('hidden');
+}
+
+// Optionally, you can also add a close function for the modal:
+function closeAddClientModal() {
+    document.getElementById('addClientModal').classList.add('hidden');
+}
+
+function deleteClient(id, name) {
+    document.getElementById('delete_client_id').value = id;
+    document.getElementById('delete_client_name').textContent = name;
+    document.getElementById('deleteClientModal').classList.remove('hidden');
+}
+</script>
+{% endblock %}

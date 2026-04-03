@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-lg shadow p-6 mt-8">
+    <a href="{{ url_for('employee_salaries.salary_list') }}" class="text-blue-600 hover:underline mb-4 inline-block">&larr; Retour</a>
+    <h2 class="text-xl font-bold mb-6">Modifier Salaire</h2>
+    <form method="POST">
+        <input type="hidden" name="edit_salary" value="1">
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Employé</label>
+            <select name="employee_id" class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" required>
+                <option value="">Sélectionner un employé</option>
+                {% for employee in employees %}
+                    <option value="{{ employee.id }}" {% if salary.employee_id == employee.id %}selected{% endif %}>{{ employee.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Montant du salaire</label>
+            <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" name="salary_amount" id="salary_amount" value="{{ salary.salary_amount }}" required>
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Date de paiement</label>
+            <input type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" name="payment_date" value="{{ salary.payment_date|format_date }}" required>
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Méthode de paiement</label>
+            <select name="payment_method" class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" required>
+                <option value="cash" {% if salary.payment_method == 'cash' %}selected{% endif %}>Espèces</option>
+                <option value="bank" {% if salary.payment_method == 'bank' %}selected{% endif %}>Banque</option>
+                <option value="check" {% if salary.payment_method == 'check' %}selected{% endif %}>Chèque</option>
+            </select>
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Mois/Année (YYYY-MM)</label>
+            <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" name="month_year" value="{{ salary.month_year }}" required>
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Statut</label>
+            <select name="status" class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200">
+                <option value="paid" {% if salary.status == 'paid' %}selected{% endif %}>Payé</option>
+                <option value="pending" {% if salary.status == 'pending' %}selected{% endif %}>En attente</option>
+                <option value="cancelled" {% if salary.status == 'cancelled' %}selected{% endif %}>Annulé</option>
+            </select>
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+            <textarea name="notes" class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" rows="3">{{ salary.notes }}</textarea>
+        </div>
+        <div class="flex justify-end space-x-2">
+            <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Enregistrer</button>
+        </div>
+    </form>
+    <div class="h-32"></div>
+</div>
+{% endblock %} 

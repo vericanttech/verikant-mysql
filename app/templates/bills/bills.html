@@ -1,0 +1,495 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-2 sm:px-4">
+    <div class="flex justify-center mb-6 px-2 sm:px-4">
+        <h2 class="text-2xl font-semibold text-gray-800">Gestion des Factures</h2>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="mb-4 p-4 rounded {% if category == 'success' %}bg-green-100 text-green-700{% elif category == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6">
+        <!-- Filter Section -->
+        <div class="bg-white shadow-md rounded-lg p-4 mb-4">
+            <form id="filterForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end" method="GET">
+                <input type="hidden" name="page" value="1">
+                <!-- Date Range (grouped) -->
+                <div class="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0">
+                    <div class="flex-1">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Date de début</label>
+                        <input type="date" name="start_date" class="w-full max-w-xs px-2 py-1 border border-gray-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm" value="{{ request.args.get('start_date', '') }}">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Date de fin</label>
+                        <input type="date" name="end_date" class="w-full max-w-xs px-2 py-1 border border-gray-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm" value="{{ request.args.get('end_date', '') }}">
+                    </div>
+                </div>
+                <!-- Client Search -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Client</label>
+                    <input type="text" name="client_name" class="w-full max-w-xs px-2 py-1 border border-gray-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm" placeholder="Rechercher par nom..." value="{{ request.args.get('client_name', '') }}">
+                </div>
+                <!-- Status Filter -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Statut</label>
+                    <div class="flex items-center p-2 border border-gray-300 rounded bg-gray-50 max-w-xs">
+                        <input type="checkbox" id="show_unpaid" name="show_unpaid" value="true" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" {% if request.args.get('show_unpaid') == 'true' %}checked{% endif %}>
+                        <label for="show_unpaid" class="ml-2 text-xs text-gray-700">Factures impayées uniquement</label>
+                    </div>
+                </div>
+                <!-- Actions (spans both columns on mobile, right-aligned on desktop) -->
+                <div class="flex flex-col space-y-2 md:flex-row md:space-x-2 md:space-y-0 md:justify-end md:col-span-2">
+                    <button type="submit" class="w-full md:w-auto bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium flex items-center justify-center">
+                        <i data-lucide="search" class="w-4 h-4 inline mr-1"></i> Filtrer
+                    </button>
+                    <a href="{{ url_for('bills.bill_list') }}" class="w-full md:w-auto border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-1 rounded text-sm font-medium flex items-center justify-center">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 inline mr-1"></i> Réinitialiser
+                    </a>
+                    <button type="button" onclick="filterOverduePayments()" class="w-full md:w-auto bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium flex items-center justify-center">
+                        <i data-lucide='clock' class='w-4 h-4 inline mr-1'></i> Paiements en retard
+                    </button>
+                </div>
+            </form>
+        </div>
+<!-- Place the script after the filter section to avoid linter/template errors -->
+<script>
+function filterOverduePayments() {
+    const form = document.getElementById('filterForm');
+    // Add or update the overdue_payments input
+    let overdueInput = form.querySelector('input[name="overdue_payments"]');
+    if (!overdueInput) {
+        overdueInput = document.createElement('input');
+        overdueInput.type = 'hidden';
+        overdueInput.name = 'overdue_payments';
+        form.appendChild(overdueInput);
+    }
+    overdueInput.value = 'true';
+    form.submit();
+}
+</script>
+
+            <!-- Desktop Table View -->
+            <div class="hidden md:block overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Numéro de Facture</th>
+                            <th class="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom du Client</th>
+                            <th class="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant Payé</th>
+                            <th class="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant Restant</th>
+                            <th class="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Caissier</th>
+                            <th class="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for bill in bills %}
+                        <tr class="{{ 'bg-yellow-50' if bill.remaining_amount > 0 else '' }}">
+                            <td class="px-2 sm:px-6 py-4 whitespace-nowrap">{{ bill.bill_number }}</td>
+                            <td class="px-2 sm:px-6 py-4 whitespace-nowrap">{{ bill.client.name if bill.client else 'N/A' }}</td>
+                            <td class="px-2 sm:px-6 py-4 whitespace-nowrap">{{ bill.paid_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td class="px-2 sm:px-6 py-4 whitespace-nowrap">{{ bill.remaining_amount | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td class="px-2 sm:px-6 py-4 whitespace-nowrap">{{ bill.user.name if bill.user else 'N/A' }}</td>
+                            <td class="px-2 sm:px-6 py-4 whitespace-nowrap">{{ bill.date|format_date}}</td>
+                            <td class="px-2 sm:px-6 py-4 whitespace-nowrap space-x-2">
+                                <a href="{{ url_for('bills.bill_detail', bill_id=bill.id) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm">
+                                    Détails
+                                </a>
+                                {% if bill.remaining_amount > 0 %}
+                                <button class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-sm" onclick="makePayment({{ bill.id }}, '{{ bill.client.name if bill.client else 'N/A' }}', {{ bill.remaining_amount }})">
+                                    Paiement
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        {% if current_user.role == 'admin' %}
+                            <tr class="bg-blue-50">
+                                <td colspan="2" class="px-6 py-4 whitespace-nowrap font-bold">Totaux</td>
+                                <td class="px-6 py-4 whitespace-nowrap font-bold">{{ total_paid | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap font-bold">{{ total_remaining | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</td>
+                                <td colspan="3"></td>
+                            </tr>
+                        {% endif %}
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Mobile Card View -->
+            <div class="md:hidden space-y-4">
+                {% for bill in bills %}
+                <div class="bg-white rounded-lg shadow-md p-4 {{ 'bg-yellow-50' if bill.remaining_amount > 0 else '' }}">
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="font-semibold">Numéro:</span>
+                            <span>{{ bill.bill_number }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-semibold">Client:</span>
+                            <span>{{ bill.client.name if bill.client else 'N/A' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-semibold">Montant Payé:</span>
+                            <span>{{ bill.paid_amount | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-semibold">Montant Restant:</span>
+                            <span>{{ bill.remaining_amount | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-semibold">Caissier:</span>
+                            <span>{{ bill.user.name if bill.user else 'N/A' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-semibold">Date:</span>
+                            <span>{{ bill.date|format_date}}</span>
+                        </div>
+                        <div class="flex justify-end space-x-2 mt-4">
+                            <a href="{{ url_for('bills.bill_detail', bill_id=bill.id) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm">
+                                Détails
+                            </a>
+                            {% if bill.remaining_amount > 0 %}
+                            <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm" onclick="makePayment({{ bill.id }}, '{{ bill.client.name if bill.client else 'N/A' }}', {{ bill.remaining_amount }})">
+                                Paiement
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Mobile Totals -->
+                {% if current_user.role == 'admin' %}
+                <div class="bg-blue-50 rounded-lg p-4 mt-4">
+                    <div class="space-y-2">
+                        <div class="flex justify-between font-bold">
+                            <span>Total Payé:</span>
+                            <span>{{ total_paid | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                        <div class="flex justify-between font-bold">
+                            <span>Total Restant:</span>
+                            <span>{{ total_remaining | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+
+        {% if pagination.pages > 1 %}
+        <div class="py-4 px-2 sm:px-6">
+            <nav class="flex justify-center" aria-label="Page navigation">
+                <ul class="flex flex-wrap justify-center gap-2">
+                    {% for page_num in pagination.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+                        {% if page_num %}
+                            {% if page_num == pagination.page %}
+                            <li>
+                                <span class="px-3 py-2 bg-blue-500 text-white rounded-md text-sm">{{ page_num }}</span>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a class="px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
+                                   href="{{ url_for('bills.bill_list',
+                                       page=page_num,
+                                       start_date=request.args.get('start_date'),
+                                       end_date=request.args.get('end_date'),
+                                       client_name=request.args.get('client_name'),
+                                       client_id=request.args.get('client_id'),
+                                       show_unpaid=request.args.get('show_unpaid')
+                                   ) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li>
+                                <span class="px-2 py-2 text-gray-500">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+        </div>
+    </div>
+
+
+
+<!-- Modal d'Ajout de Facture -->
+<div class="modal hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" id="addBillModal" tabindex="-1">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h5 class="text-lg font-semibold">Ajouter une Nouvelle Facture</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="p-4">
+                    <input type="hidden" name="add_bill" value="1">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Numéro de Facture</label>
+                        <input type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="bill_number" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom du Client</label>
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="client_name" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant Total</label>
+                        <input type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="total_amount" step="0.01" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Paiement Initial</label>
+                        <input type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="montant_payer" step="0.01" required>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t gap-2">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">Ajouter la Facture</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Modification de Facture -->
+<div class="modal hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" id="editBillModal" tabindex="-1">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h5 class="text-lg font-semibold">Modifier la Facture</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="p-4">
+                    <input type="hidden" name="edit_bill" value="1">
+                    <input type="hidden" name="bill_number" id="edit_bill_number">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom du Client</label>
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="client_name" id="edit_client_name" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant Payé</label>
+                        <input type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="montant_payer" id="edit_montant_payer" step="0.01" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant Restant</label>
+                        <input type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="montant_restant" id="edit_montant_restant" step="0.01" required>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t gap-2">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">Enregistrer les Modifications</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Paiement -->
+<div class="modal hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" id="paymentModal" tabindex="-1">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h5 class="text-lg font-semibold">Effectuer un Paiement</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form action="{{ url_for('bills.bill_list') }}" method="POST">
+                <div class="p-4">
+                    <input type="hidden" name="make_payment" value="1">
+                    <input type="hidden" name="bill_id" id="payment_bill_id">
+                    <p class="mb-2">Paiement pour le client : <span id="payment_client_name" class="font-medium"></span></p>
+                    <p class="mb-4">Montant restant : <span id="payment_remaining" class="font-medium"></span> {{ shop_profile.currency|default('FCFA') }}</p>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant du Paiement</label>
+                        <input type="number"
+                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                               name="payment_amount"
+                               step="0.01"
+                               required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Mode de Paiement</label>
+                        <select name="payment_method"
+                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="cash">Espèces</option>
+                            <option value="card">Carte</option>
+                            <option value="transfer">Virement</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea name="notes"
+                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                  rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t gap-2">
+                    <button type="button"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                            data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md">
+                            Effectuer le Paiement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Suppression de Facture -->
+<div class="modal hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" id="deleteBillModal" tabindex="-1">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h5 class="text-lg font-semibold">Supprimer la Facture</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="p-4">
+                    <input type="hidden" name="delete_bill" value="1">
+                    <input type="hidden" name="bill_number" id="delete_bill_number">
+                    <p class="text-gray-700">Êtes-vous sûr de vouloir supprimer cette facture ?</p>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t gap-2">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+function formatNumberFR(value) {
+    return new Intl.NumberFormat('fr-FR', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+    }).format(value);
+}
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal handling functions
+    window.openModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+
+        // Reset form if present
+        const form = modal.querySelector('form');
+        if (form) form.reset();
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Close modal handlers
+        const handleClose = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        // Handle close button clicks
+        const closeButtons = modal.querySelectorAll('[data-bs-dismiss="modal"]');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', handleClose, { once: true });
+        });
+
+        // Handle outside clicks
+        const handleOutsideClick = (e) => {
+            if (e.target === modal) {
+                handleClose();
+            }
+        };
+        modal.addEventListener('click', handleOutsideClick);
+
+        // Handle escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                handleClose();
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+
+        // Clean up event listeners when modal is hidden
+        const cleanup = () => {
+            modal.removeEventListener('click', handleOutsideClick);
+            document.removeEventListener('keydown', handleEscape);
+            modal.removeEventListener('hidden.cleanup', cleanup);
+        };
+        modal.addEventListener('hidden.cleanup', cleanup);
+    };
+
+    // Bill specific functions
+    window.editBill = function(billNumber, clientName, montantPayer, montantRestant) {
+        document.getElementById('edit_bill_number').value = billNumber;
+        document.getElementById('edit_client_name').value = clientName;
+        document.getElementById('edit_montant_payer').value = montantPayer;
+        document.getElementById('edit_montant_restant').value = montantRestant;
+        window.openModal('editBillModal');
+    };
+
+    window.deleteBill = function(billNumber) {
+        document.getElementById('delete_bill_number').value = billNumber;
+        window.openModal('deleteBillModal'); // Fixed: changed from editBillModal to deleteBillModal
+    };
+
+window.makePayment = function(billId, clientName, remaining) {
+    document.getElementById('payment_bill_id').value = billId;  // Changed from payment_bill_number
+    document.getElementById('payment_client_name').textContent = clientName;
+    document.getElementById('payment_remaining').textContent = formatNumberFR(remaining.toFixed(2));
+    window.openModal('paymentModal');
+};
+
+    // Initialize all modals on page load
+    const initializeModals = () => {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (!modal.classList.contains('hidden')) {
+                modal.classList.add('hidden');
+            }
+            modal.classList.remove('flex');
+            modal.setAttribute('aria-hidden', 'true');
+        });
+    };
+
+    // Run initialization
+    initializeModals();
+});
+</script>
+{% endblock %}
+{% endblock %}

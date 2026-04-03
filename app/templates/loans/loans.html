@@ -1,0 +1,565 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <!-- Modified header section for better mobile alignment -->
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-4 sm:space-y-0">
+        <h2 class="text-2xl font-bold text-gray-900">Gestion des Prêts</h2>
+        <button class="w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" onclick="showModal('addLoanModal')">
+            Nouveau Prêt
+        </button>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="p-4 mb-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-700{% elif category == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Date Filter -->
+    <div class="bg-white rounded-lg shadow-md mb-4">
+        <div class="p-6">
+            <div class="max-w-3xl mx-auto">
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input type="date" id="start_date" class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" value="{{ request.args.get('start', '') }}" placeholder="Date de début">
+                    <input type="date" id="end_date" class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" value="{{ request.args.get('end', '') }}" placeholder="Date de fin">
+                    <button class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" onclick="filterLoans()">Filtrer</button>
+                    {% if request.args.get('start') %}
+                    <button class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2" onclick="clearFilters()">Effacer</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md">
+        <div class="p-6">
+            <!-- Desktop view (hidden on mobile) -->
+            <div class="hidden md:block overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <!-- Original table header and content -->
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date du Prêt</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant Payé</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Restant</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Caissier</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for loan in loans.items %}
+                        <tr class="even:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.borrower_name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.loan_date|format_date }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.paid_amount| fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (loan.amount - loan.paid_amount) | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.cashier_name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                <button onclick='deleteLoan("{{ loan.id }}", "{{ loan.name }}")' class="px-2 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                    Supprimer
+                                </button>
+                                <button
+                                    onclick='makePayment("{{ loan.id }}", "{{ loan.name }}", {{ loan.amount - loan.paid_amount }})'
+                                    class="px-2 py-1 text-sm text-white rounded focus:outline-none focus:ring-2 focus:ring-offset-2
+                                           {% if loan.amount - loan.paid_amount == 0 %}
+                                               bg-gray-400 cursor-not-allowed
+                                           {% else %}
+                                               bg-green-500 hover:bg-green-600 focus:ring-green-500
+                                           {% endif %}"
+                                    {% if loan.amount - loan.paid_amount == 0 %} disabled {% endif %}
+                                >
+                                    Paiement
+                                </button>
+
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-blue-50">
+                            <td colspan="2" class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">Total</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{{ total_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{{ total_paid | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{{ total_remaining | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Mobile view (shown only on mobile) -->
+            <div class="md:hidden space-y-4">
+                {% for loan in loans.items %}
+                <div class="bg-white rounded-lg shadow p-4 border border-gray-200">
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Nom:</span>
+                            <span>{{ loan.borrower_name }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Date:</span>
+                            <span>{{ loan.loan_date|format_date }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Montant:</span>
+                            <span>{{ loan.amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Payé:</span>
+                            <span>{{ loan.paid_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Restant:</span>
+                            <span>{{ (loan.amount - loan.paid_amount) | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Caissier:</span>
+                            <span>{{ loan.cashier_name }}</span>
+                        </div>
+                        <div class="flex justify-end space-x-2 pt-2">
+                            <button onclick='deleteLoan("{{ loan.id }}", "{{ loan.name }}")' class="px-3 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                Supprimer
+                            </button>
+                            <button
+                                onclick='makePayment("{{ loan.id }}", "{{ loan.name }}", {{ loan.amount - loan.paid_amount }})'
+                                class="px-2 py-1 text-sm text-white rounded focus:outline-none focus:ring-2 focus:ring-offset-2
+                                       {% if loan.amount - loan.paid_amount == 0 %}
+                                           bg-gray-400 cursor-not-allowed
+                                       {% else %}
+                                           bg-green-500 hover:bg-green-600 focus:ring-green-500
+                                       {% endif %}"
+                                {% if loan.amount - loan.paid_amount == 0 %} disabled {% endif %}
+                            >
+                                Paiement
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Mobile Totals -->
+                <div class="bg-blue-50 rounded-lg p-4 mt-4">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold">Total Montant:</span>
+                            <span>{{ total_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold">Total Payé:</span>
+                            <span>{{ total_paid | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold">Total Restant:</span>
+                            <span>{{ total_remaining | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-6">
+                <nav class="flex items-center justify-center" aria-label="Navigation des pages">
+                    <ul class="flex flex-wrap gap-2">
+                        {% if loans.has_prev %}
+                        <li>
+                            <a href="{{ url_for('loans.loan_list', page=loans.prev_num, start=request.args.get('start'), end=request.args.get('end')) }}"
+                               class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                Précédent
+                            </a>
+                        </li>
+                        {% else %}
+                        <li>
+                            <span class="px-3 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed">
+                                Précédent
+                            </span>
+                        </li>
+                        {% endif %}
+
+                        {% for page_num in loans.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+                            {% if page_num %}
+                                {% if page_num == loans.page %}
+                                <li>
+                                    <span class="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md">
+                                        {{ page_num }}
+                                    </span>
+                                </li>
+                                {% else %}
+                                <li>
+                                    <a href="{{ url_for('loans.loan_list', page=page_num, start=request.args.get('start'), end=request.args.get('end')) }}"
+                                       class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                                <li>
+                                    <span class="px-3 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-300 rounded-md">
+                                        ...
+                                    </span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if loans.has_next %}
+                        <li>
+                            <a href="{{ url_for('loans.loan_list', page=loans.next_num, start=request.args.get('start'), end=request.args.get('end')) }}"
+                               class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                Suivant
+                            </a>
+                        </li>
+                        {% else %}
+                        <li>
+                            <span class="px-3 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed">
+                                Suivant
+                            </span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Add Loan Modal -->
+<div id="addLoanModal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="flex min-h-screen items-center justify-center p-4">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h5 class="text-lg font-medium text-gray-900">Nouveau Prêt</h5>
+                <button type="button" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700" data-modal-close>
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="px-6 py-4">
+                    <input type="hidden" name="add_loan" value="1">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                        <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="borrower_name" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant</label>
+                        <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="amount" id="amount" step="0.01" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Paiement Initial</label>
+                        <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="paid_amount" id="paid_amount" step="0.01" value="0">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date du Prêt</label>
+                        <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="loan_date" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date d'Échéance</label>
+                        <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="due_date">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                        <select name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="active">Actif</option>
+                            <option value="paid">Payé</option>
+                            <option value="defaulted">En Défaut</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t bg-gray-50 flex justify-end space-x-2">
+                    <button type="button" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2" data-modal-close>Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Make Payment Modal -->
+<div id="paymentModal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="flex min-h-screen items-center justify-center p-4">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h5 class="text-lg font-medium text-gray-900">Effectuer un Paiement</h5>
+                <button type="button" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700" id="closeModalButton">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST" id="paymentForm">
+                <div class="px-6 py-4">
+                    <input type="hidden" name="make_payment" value="1">
+                    <input type="hidden" name="loan_id" id="payment_loan_id">
+                    <p class="mb-2 text-sm text-gray-600">Paiement pour le prêt de : <span id="payment_loan_name" class="font-medium text-gray-900"></span></p>
+                    <p class="mb-4 text-sm text-gray-600">Montant restant : <span id="payment_remaining" class="font-medium text-gray-900"></span> {{ shop_profile.currency|default('FCFA') }}</p>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant du Paiement</label>
+                        <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="payment_amount" id="payment_amount" step="0.01" required>
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t bg-gray-50 flex justify-end space-x-2">
+                    <button type="button" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2" data-modal-close>Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">Effectuer le Paiement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Delete Loan Modal -->
+<div id="deleteLoanModal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="flex min-h-screen items-center justify-center p-4">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h5 class="text-lg font-medium text-gray-900">Supprimer le Prêt</h5>
+                <button type="button" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700" data-modal-close>
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="px-6 py-4">
+                    <input type="hidden" name="delete_loan" value="1">
+                    <input type="hidden" name="loan_id" id="delete_loan_id">
+                    <p class="text-sm text-gray-600">Êtes-vous sûr de vouloir supprimer le prêt de <span id="delete_loan_name" class="font-medium"></span>?</p>
+                </div>
+                <div class="px-6 py-4 border-t bg-gray-50 flex justify-end space-x-2">
+                    <button type="button" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2" data-modal-close>Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+// Utility function to format numbers in French format
+function formatNumberFR(value) {
+    return new Intl.NumberFormat('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value);
+}
+
+// Function to apply Cleave formatting to an input element
+function applyCleaveToInput(input) {
+    if (input) {
+        return new Cleave(input, {
+            numeral: true,
+            numeralThousandsGroupStyle: 'thousand',
+            numeralDecimalScale: 2,
+            numeralDecimalMark: '.',
+            delimiter: ' '
+        });
+    }
+    return null;
+}
+
+// Function to clean formatted values in a form before submission
+function cleanFormattedValues(form) {
+    const targetInputNames = ['amount', 'paid_amount', 'payment_amount'];
+
+    targetInputNames.forEach(name => {
+        const field = form.querySelector(`[name="${name}"]`);
+        if (field) {
+            field.value = field.value.replace(/\s/g, '');
+        }
+    });
+}
+
+// Modal handling functions
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// Delete loan function
+function deleteLoan(id, name) {
+    try {
+        document.getElementById('delete_loan_id').value = id;
+        document.getElementById('delete_loan_name').textContent = name;
+        showModal('deleteLoanModal');
+    } catch (error) {
+        console.error('Error in deleteLoan:', error);
+        alert('Erreur lors de la suppression.');
+    }
+}
+
+// Make payment function
+function makePayment(id, name, remaining) {
+    try {
+        // Set the modal fields with data
+        document.getElementById('payment_loan_id').value = id;
+        document.getElementById('payment_loan_name').textContent = name;
+        document.getElementById('payment_remaining').textContent = formatNumberFR(remaining.toFixed(2));
+
+        // Show the modal
+        showModal('paymentModal');
+
+        // Get payment amount input and apply Cleave formatting
+        const paymentAmountInput = document.getElementById('payment_amount');
+        if (paymentAmountInput) {
+            // Destroy any existing Cleave instance
+            if (paymentAmountInput.cleave) {
+                paymentAmountInput.cleave.destroy();
+            }
+            // Apply new Cleave instance
+            paymentAmountInput.cleave = applyCleaveToInput(paymentAmountInput);
+        }
+
+        // Get the payment form
+        const paymentForm = document.getElementById('paymentForm');
+
+        // Remove any existing event listeners
+        const newPaymentForm = paymentForm.cloneNode(true);
+        paymentForm.parentNode.replaceChild(newPaymentForm, paymentForm);
+
+        // Apply Cleave to the new form's payment amount input
+        const newPaymentAmountInput = newPaymentForm.querySelector('[name="payment_amount"]');
+        if (newPaymentAmountInput) {
+            newPaymentAmountInput.cleave = applyCleaveToInput(newPaymentAmountInput);
+        }
+
+        // Add the submit handler
+        newPaymentForm.addEventListener('submit', function(event) {
+            const paymentAmount = parseFloat(this.querySelector('[name="payment_amount"]').value.replace(/\s/g, ''));
+            if (isNaN(paymentAmount) || paymentAmount <= 0 || paymentAmount > remaining) {
+                event.preventDefault();
+                alert('Veuillez entrer un montant de paiement valide');
+                return;
+            }
+            // Clean values before submission
+            cleanFormattedValues(this);
+        });
+
+    } catch (error) {
+        console.error('Error in makePayment:', error);
+        alert('Erreur lors du paiement.');
+    }
+}
+
+// Filter loans function
+function filterLoans() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+
+    if (!startDate || !endDate) {
+        alert('Veuillez sélectionner les dates de début et de fin');
+        return;
+    }
+
+    if (startDate > endDate) {
+        alert('La date de début ne peut pas être postérieure à la date de fin');
+        return;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = urlParams.get('page') || 1;
+    window.location.href = `${window.location.pathname}?page=${currentPage}&start=${startDate}&end=${endDate}`;
+}
+
+// Clear filters function
+function clearFilters() {
+    window.location.href = window.location.pathname;
+}
+
+// Initialize everything when the DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Apply Cleave.js to all numeric inputs initially
+    const numericInputs = [
+        document.getElementById('amount'),
+        document.getElementById('paid_amount'),
+        document.getElementById('payment_amount')
+    ];
+
+    // Apply Cleave to each valid input
+    numericInputs.forEach(input => {
+        if (input) {
+            input.cleave = applyCleaveToInput(input);
+        }
+    });
+
+    // Add event listeners to all forms
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            cleanFormattedValues(this);
+        });
+    });
+
+    // Initialize modal close handlers
+    document.getElementById('closeModalButton')?.addEventListener('click', function() {
+        hideModal('paymentModal');
+    });
+
+    document.querySelectorAll('[data-modal-close]').forEach(button => {
+        button.addEventListener('click', () => {
+            const modal = button.closest('[role="dialog"]');
+            hideModal(modal.id);
+        });
+    });
+
+    // Handle clicks outside modal content
+    document.querySelectorAll('[role="dialog"]').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                hideModal(modal.id);
+            }
+        });
+    });
+
+    // Handle escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const visibleModal = document.querySelector('[role="dialog"]:not(.hidden)');
+            if (visibleModal) {
+                hideModal(visibleModal.id);
+            }
+        }
+    });
+
+    // Set initial date values
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('start')) {
+        document.getElementById('start_date').value = urlParams.get('start');
+    }
+    if (urlParams.has('end')) {
+        document.getElementById('end_date').value = urlParams.get('end');
+    }
+});
+
+</script>
+{% endblock %}

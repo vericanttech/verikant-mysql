@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- User List Section -->
+    <div class="mb-8 bg-white shadow-sm rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Utilisateurs Existants</h2>
+
+        <!-- Table View for Desktop -->
+        <div class="hidden md:block overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rôle</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date de création</th>
+                        <th class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for user in users %}
+                    <tr data-user-id="{{ user.id }}">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 user-name">{{ user.name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 user-role">{{ user.role }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if user.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ 'Actif' if user.is_active else 'Inactif' }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.created_at }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="toggleUserStatus('{{ user.id }}', {{ user.is_active|tojson }})" class="{% if user.is_active %}text-red-600 hover:text-red-900{% else %}text-green-600 hover:text-green-900{% endif %} mr-3">
+                                {{ 'Désactiver' if user.is_active else 'Activer' }}
+                            </button>
+                            <button onclick="openResetPassword('{{ user.id }}')" class="text-blue-600 hover:text-blue-900 mr-3">
+                                Réinitialiser MDP
+                            </button>
+                            <button onclick="openEditUser('{{ user.id }}')" class="text-green-600 hover:text-green-900">
+                                Modifier
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Card View for Mobile -->
+        <div class="md:hidden">
+            {% for user in users %}
+            <div class="bg-white shadow-md rounded-lg p-4 mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">{{ user.name }}</h3>
+                <p class="text-sm text-gray-600">Rôle: <span class="text-gray-900">{{ user.role }}</span></p>
+                <p class="text-sm text-gray-600">Statut:
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if user.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                        {{ 'Actif' if user.is_active else 'Inactif' }}
+                    </span>
+                </p>
+                <p class="text-sm text-gray-600">Date de création: <span class="text-gray-900">{{ user.created_at }}</span></p>
+                <div class="mt-3 flex space-x-2">
+                    <button onclick="toggleUserStatus('{{ user.id }}', {{ user.is_active|tojson }})" class="{% if user.is_active %}text-red-600 hover:text-red-900{% else %}text-green-600 hover:text-green-900{% endif %}">
+                        {{ 'Désactiver' if user.is_active else 'Activer' }}
+                    </button>
+                    <button onclick="openResetPassword('{{ user.id }}')" class="text-blue-600 hover:text-blue-900">
+                        Réinitialiser MDP
+                    </button>
+                    <button onclick="openEditUser('{{ user.id }}')" class="text-green-600 hover:text-green-900">
+                        Modifier
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+    <!-- New User Form Section -->
+    <div class="bg-white shadow-sm rounded-lg p-6">
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold text-gray-800">Créer un Nouvel Utilisateur</h2>
+            <p class="text-gray-600 mt-2">Remplissez le formulaire ci-dessous pour créer un nouvel utilisateur</p>
+        </div>
+
+        <form method="POST" class="space-y-6">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur</label>
+                <input type="text" name="username" id="username" required autocomplete="off"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+                <input type="password" name="password" id="password" required autocomplete="new-password"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div>
+                <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Rôle</label>
+                <select name="role" id="role" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <option value="" disabled selected>Sélectionnez un rôle</option>
+                    <option value="user">Utilisateur</option>
+                    <option value="admin">Administrateur</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <a href="{{ url_for('dashboard.index') }}"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Annuler
+                </a>
+                <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Créer l'utilisateur
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Password Reset Modal -->
+    <div id="resetPasswordModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <form id="resetPasswordForm" method="POST" action="{{ url_for('auth.reset_password') }}" class="space-y-4">
+                <input type="hidden" id="resetUserId" name="user_id">
+                <h3 class="text-lg font-medium text-gray-900">Réinitialiser le mot de passe</h3>
+                <div>
+                    <label for="newPassword" class="block text-sm font-medium text-gray-700">Nouveau mot de passe</label>
+                    <input type="password" id="newPassword" name="new_password" required
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+                </div>
+                <div class="flex justify-end space-x-3 mt-4">
+                    <button type="button" onclick="closeResetPassword()"
+                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Annuler
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Confirmer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="editUserModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <form id="editUserForm" method="POST" action="{{ url_for('auth.edit_user') }}" class="space-y-4">
+            <input type="hidden" id="editUserId" name="user_id">
+            <h3 class="text-lg font-medium text-gray-900">Modifier l'utilisateur</h3>
+            <div>
+                <label for="editUsername" class="block text-sm font-medium text-gray-700">Nom d'utilisateur</label>
+                <input type="text" id="editUsername" name="username" required
+                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+            </div>
+            <div>
+                <label for="editRole" class="block text-sm font-medium text-gray-700">Rôle</label>
+                <select id="editRole" name="role" required
+                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+                    <option value="user">Utilisateur</option>
+                    <option value="admin">Administrateur</option>
+                </select>
+            </div>
+            <div class="flex justify-end space-x-3 mt-4">
+                <button type="button" onclick="closeEditUser()"
+                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Annuler
+                </button>
+                <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    Sauvegarder
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openResetPassword(userId) {
+        document.getElementById('resetUserId').value = userId;
+        document.getElementById('resetPasswordModal').classList.remove('hidden');
+    }
+
+    function closeResetPassword() {
+        document.getElementById('resetPasswordModal').classList.add('hidden');
+    }
+
+        function openEditUser(userId) {
+        const user = document.querySelector(`tr[data-user-id="${userId}"]`);
+        const username = user.querySelector('.user-name').textContent;
+        const role = user.querySelector('.user-role').textContent;
+
+        document.getElementById('editUserId').value = userId;
+        document.getElementById('editUsername').value = username;
+        document.getElementById('editRole').value = role.toLowerCase();
+        document.getElementById('editUserModal').classList.remove('hidden');
+    }
+
+    function closeEditUser() {
+        document.getElementById('editUserModal').classList.add('hidden');
+    }
+
+        document.getElementById('editUserModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeEditUser();
+        }
+    });
+
+        function toggleUserStatus(userId, currentStatus) {
+        if (confirm('Êtes-vous sûr de vouloir ' + (currentStatus ? 'désactiver' : 'activer') + ' cet utilisateur ?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ url_for('auth.toggle_user_status') }}";
+
+            const userIdInput = document.createElement('input');
+            userIdInput.type = 'hidden';
+            userIdInput.name = 'user_id';
+            userIdInput.value = userId;
+
+            const statusInput = document.createElement('input');
+            statusInput.type = 'hidden';
+            statusInput.name = 'current_status';
+            statusInput.value = currentStatus;
+
+            form.appendChild(userIdInput);
+            form.appendChild(statusInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('resetPasswordModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeResetPassword();
+        }
+    });
+</script>
+{% endblock %}

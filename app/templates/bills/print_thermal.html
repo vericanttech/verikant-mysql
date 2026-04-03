@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <title>Facture #{{ bill.bill_number }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            width: 100%;
+            max-width: 302px;
+            margin: 0 auto;
+            padding: 8px;
+            background: white;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom: 2px solid #000;
+        }
+
+        .barcode-section {
+            text-align: center;
+            margin: 16px 0;
+        }
+
+        #barcode {
+            max-width: 100%;
+            height: 40px;
+        }
+
+        .company-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .contact-info {
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .bill-details {
+            margin: 12px 0;
+            font-size: 13px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 8px;
+        }
+
+        .bill-details div {
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .bill-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .items-table {
+            width: 100%;
+            margin: 12px 0;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .items-table th {
+            text-align: left;
+            padding: 4px 2px;
+            border-bottom: 1px solid #000;
+            font-weight: bold;
+        }
+
+        .items-table td {
+            padding: 4px 2px;
+            border-bottom: 1px dotted #ccc;
+        }
+
+        .number-cell {
+            text-align: right;
+        }
+
+        .total-section {
+            margin: 12px 0;
+            font-size: 13px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 4px 0;
+            padding: 2px 0;
+        }
+
+        .grand-total {
+            font-weight: bold;
+            font-size: 15px;
+            border-top: 2px solid #000;
+            margin-top: 8px;
+            padding-top: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 16px;
+            padding-top: 8px;
+            border-top: 1px solid #000;
+            font-size: 12px;
+        }
+
+        .footer p {
+            margin: 3px 0;
+        }
+
+        .action-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: white;
+        }
+
+        .print-button {
+            background: #4CAF50;
+        }
+
+        .whatsapp-button {
+            background: #25D366;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                margin: 0;
+                padding: 4px;
+            }
+            .action-buttons {
+                display: none;
+            }
+        }
+
+        @media screen and (max-width: 400px) {
+            body {
+                padding: 4px;
+            }
+
+            .items-table {
+                font-size: 12px;
+            }
+
+            .action-buttons {
+                bottom: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">{{ shop_profile.name }}</div>
+        <div class="contact-info">
+            {% if shop_profile.phones %}
+                Tel: {% for phone in shop_profile.phones %}
+                    {{ phone.phone }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+        {% if shop_profile.address %}
+        <div class="contact-info">{{ shop_profile.address }}</div>
+        {% endif %}
+        {% if shop_profile.tax_id %}
+        <div class="contact-info">NINEA / NIF: {{ shop_profile.tax_id }}</div>
+        {% endif %}
+    </div>
+
+    <div class="bill-details">
+        <div class="bill-title">Facture #{{ bill.bill_number }}</div>
+        <div>
+            <span>Date:</span>
+            <span>{{ bill.date|format_date }}</span>
+        </div>
+        {% if bill.client %}
+        <div>
+            <span>Client:</span>
+            <span>{{ bill.client.name }}</span>
+        </div>
+        {% if bill.client.phone %}
+        <div>
+            <span>Tel:</span>
+            <span>{{ bill.client.phone }}</span>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 40%">Article</th>
+                <th style="width: 15%">Qté</th>
+                <th style="width: 20%" class="number-cell">Prix</th>
+                <th style="width: 25%" class="number-cell">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detail in details %}
+            <tr>
+                <td>{{ detail.product.name }}</td>
+                <td>{{ detail.quantity }}</td>
+                <td class="number-cell">{{ "{:,.0f}".format(detail.selling_price) }}</td>
+                <td class="number-cell">{{ "{:,.0f}".format(detail.total_amount) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <div class="total-row">
+            <span>Sous-total:</span>
+            <span>{{ "{:,.0f}".format(bill.total_amount) }}</span>
+        </div>
+        {% if bill.paid_amount < bill.total_amount %}
+        <div class="total-row">
+            <span>Payé:</span>
+            <span>{{ "{:,.0f}".format(bill.paid_amount) }}</span>
+        </div>
+        <div class="total-row">
+            <span>Reste:</span>
+            <span>{{ "{:,.0f}".format(bill.remaining_amount) }}</span>
+        </div>
+        {% endif %}
+        <div class="total-row grand-total">
+            <span>TOTAL:</span>
+            <span>{{ "{:,.0f}".format(bill.total_amount) }}</span>
+        </div>
+    </div>
+
+    <div class="barcode-section">
+        <svg id="barcode"></svg>
+    </div>
+
+    <div class="footer">
+        <p>Merci de votre confiance!</p>
+        <p>Pour toute réclamation, veuillez présenter cette facture</p>
+    </div>
+
+    <div class="action-buttons no-print">
+        <button onclick="window.print()" class="action-button print-button">
+            <i class="fas fa-print"></i> Imprimer
+        </button>
+        <button onclick="shareViaWhatsApp()" class="action-button whatsapp-button">
+            <i class="fab fa-whatsapp"></i> WhatsApp
+        </button>
+    </div>
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+<script>
+    // Generate barcode
+    JsBarcode("#barcode", "{{ bill.bill_number }}", {
+        format: "CODE39",
+        width: 1.5,
+        height: 40,
+        displayValue: true,
+        fontSize: 12,
+        margin: 10
+    });
+
+    // Function to share via WhatsApp
+    function shareViaWhatsApp() {
+        // Create the message to share
+        const message = `Facture #{{ bill.bill_number }} - {{ shop_profile.name }}\n` +
+                       `Total: {{ "{:,.0f}".format(bill.total_amount) }}\n` +
+                       `Date: {{ bill.date|format_date }}`;
+
+        // Encode the message for URL
+        const encodedMessage = encodeURIComponent(message);
+
+        // Create WhatsApp URL
+        const whatsappURL = `https://wa.me/?text=${encodedMessage}`;
+
+        // Open WhatsApp in a new window
+        window.open(whatsappURL, '_blank');
+    }
+</script>
+</html>

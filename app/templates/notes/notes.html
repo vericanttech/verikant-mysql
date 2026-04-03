@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h2 class="text-2xl font-semibold text-gray-800">Gestion des Notes</h2>
+        <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+            <!-- Show All Toggle Button -->
+            <a href="{{ url_for('notes.note_list', show_all='1' if not show_all else None) }}"
+               class="flex items-center gap-2 px-4 py-2 rounded-lg {% if show_all %}bg-gray-600 hover:bg-gray-700{% else %}bg-gray-500 hover:bg-gray-600{% endif %} text-white transition-colors text-center justify-center">
+                <i data-lucide="{% if show_all %}eye-off{% else %}eye{% endif %}" class="w-4 h-4"></i>
+                {% if show_all %}
+                    Voir Mes Notes
+                {% else %}
+                    Voir Toutes
+                {% endif %}
+            </a>
+
+            <!-- Add Note Button -->
+            <button onclick="openModal('addNoteModal')"
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-center justify-center">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Nouvelle Note
+            </button>
+        </div>
+    </div>
+
+    <!-- Date Filter Section -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="max-w-3xl mx-auto">
+            <div class="flex flex-col sm:flex-row gap-4">
+                <input type="date" id="start_date"
+                       class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                       value="{{ request.args.get('start', '') }}"
+                       placeholder="Date de début">
+                <input type="date" id="end_date"
+                       class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                       value="{{ request.args.get('end', '') }}"
+                       placeholder="Date de fin">
+                <button onclick="filterNotes()"
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    Filtrer
+                </button>
+                {% if request.args.get('start') %}
+                <button onclick="clearFilters()"
+                        class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    Effacer
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for note in notes.items %}
+        <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4 text-sm text-gray-500">
+                    <span>{{ note.created_at }}</span>
+                    <span>Par: {{ note.user.name if note.user else 'Unknown' }}</span>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">{{ note.title }}</h3>
+                <p class="text-gray-700 whitespace-pre-line mb-4">{{ note.content }}</p>
+                <div class="flex gap-2">
+                    <button onclick="openEditModal('{{ note.id }}', '{{ note.content|replace("'", "\\'")|safe }}')"
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-sm transition-colors">
+                        Modifier
+                    </button>
+                    <button onclick="openDeleteModal('{{ note.id }}')"
+                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-sm transition-colors">
+                        Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if notes.items %}
+    <div class="mt-8">
+        <nav class="flex justify-center">
+            <ul class="flex gap-2">
+                <!-- Update the page number links -->
+                {% for page_num in notes.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                    {% if page_num %}
+                        {% if page_num == notes.page %}
+                        <li>
+                            <span class="px-4 py-2 bg-blue-500 text-white rounded-lg">
+                                {{ page_num }}
+                            </span>
+                        </li>
+                        {% else %}
+                        <li>
+                            <a href="{{ url_for('notes.note_list', page=page_num, start=request.args.get('start'), end=request.args.get('end'), show_all=show_all) }}"
+                               class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </nav>
+    </div>
+    {% else %}
+    <div class="text-center mt-8 text-gray-500">
+        <p>Aucune note trouvée.</p>
+    </div>
+    {% endif %}
+
+    <!-- Add Note Modal -->
+    <div id="addNoteModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="min-h-screen px-4 text-center">
+            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form method="POST">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Nouvelle Note</h3>
+                        </div>
+                        <input type="hidden" name="add_note" value="1">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Contenu de la Note</label>
+                            <textarea name="note" rows="5" required
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-500 text-base font-medium text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Ajouter
+                        </button>
+                        <button type="button" onclick="closeModal('addNoteModal')" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Note Modal -->
+    <div id="editNoteModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="min-h-screen px-4 text-center">
+            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form method="POST">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Modifier la Note</h3>
+                        </div>
+                        <input type="hidden" name="edit_note" value="1">
+                        <input type="hidden" name="note_id" id="edit_note_id">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Contenu de la Note</label>
+                            <textarea name="note" id="edit_note_content" rows="5" required
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-500 text-base font-medium text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Enregistrer
+                        </button>
+                        <button type="button" onclick="closeModal('editNoteModal')" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Note Modal -->
+    <div id="deleteNoteModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="min-h-screen px-4 text-center">
+            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form method="POST">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Supprimer la Note</h3>
+                        </div>
+                        <input type="hidden" name="delete_note" value="1">
+                        <input type="hidden" name="note_id" id="delete_note_id">
+                        <p class="text-gray-700">Êtes-vous sûr de vouloir supprimer cette note?</p>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-red-500 text-base font-medium text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Supprimer
+                        </button>
+                        <button type="button" onclick="closeModal('deleteNoteModal')" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set initial date values from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('start')) {
+        document.getElementById('start_date').value = urlParams.get('start');
+    }
+    if (urlParams.has('end')) {
+        document.getElementById('end_date').value = urlParams.get('end');
+    }
+
+    // Close modal when clicking outside
+    document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal(modal.id);
+            }
+        });
+    });
+
+    // Handle escape key to close modals
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+                if (!modal.classList.contains('hidden')) {
+                    closeModal(modal.id);
+                }
+            });
+        }
+    });
+});
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function openEditModal(id, content) {
+    console.log('Opening edit modal with id:', id, 'and content:', content);
+    try {
+        const noteIdInput = document.getElementById('edit_note_id');
+        const noteContentInput = document.getElementById('edit_note_content');
+
+        if (noteIdInput && noteContentInput) {
+            noteIdInput.value = id;
+            noteContentInput.value = content;
+            openModal('editNoteModal');
+            console.log('Modal inputs set successfully');
+        } else {
+            console.error('Modal inputs not found:', {
+                noteIdInput: !!noteIdInput,
+                noteContentInput: !!noteContentInput
+            });
+        }
+    } catch (error) {
+        console.error('Error in openEditModal:', error);
+    }
+}
+
+function openDeleteModal(id) {
+    document.getElementById('delete_note_id').value = id;
+    openModal('deleteNoteModal');
+}
+
+function filterNotes() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+
+    if (!startDate || !endDate) {
+        alert('Veuillez sélectionner les dates de début et de fin');
+        return;
+    }
+
+    if (startDate > endDate) {
+        alert('La date de début ne peut pas être postérieure à la date de fin');
+        return;
+    }
+
+    // Preserve the current page and show_all parameter if they exist in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = urlParams.get('page') || 1;
+    const showAll = urlParams.get('show_all');
+
+    const params = new URLSearchParams({
+        page: currentPage,
+        start: startDate,
+        end: endDate
+    });
+
+    if (showAll) {
+        params.append('show_all', showAll);
+    }
+
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
+}
+function clearFilters() {
+    // Preserve only the show_all parameter when clearing filters
+    const urlParams = new URLSearchParams(window.location.search);
+    const showAll = urlParams.get('show_all');
+
+    if (showAll) {
+        window.location.href = `${window.location.pathname}?show_all=${showAll}`;
+    } else {
+        window.location.href = window.location.pathname;
+    }
+}
+</script>
+{% endblock %}

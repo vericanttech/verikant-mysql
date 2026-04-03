@@ -1,0 +1,47 @@
+# PythonAnywhere / dev cruft (can be huge)
+.local/
+.npm/
+.cache/
+.ipython/
+.gitconfig
+.my.cnf
+
+# Git / env
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Tests / tooling not needed at runtime
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local DB (use Cloud SQL / managed DB in prod; mount or seed separately if needed)
+*.db
+*.sqlite
+instance/
+
+# Node (Tailwind build not required for running Flask in container unless you add a build stage)
+node_modules/
+
+# Docs / misc
+*.md
+!README.md

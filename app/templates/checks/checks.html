@@ -1,0 +1,472 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <h2 class="text-2xl font-bold text-center sm:text-left">Gestion des Chèques</h2>
+        <button class="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                onclick="document.getElementById('addCheckModal').classList.remove('hidden')">
+            Nouveau Chèque
+        </button>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="p-4 mb-4 rounded {% if category == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+        <!-- Filter section modified for mobile -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-4">
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <input type="date" id="start_date"
+                           class="w-full sm:flex-1 border rounded px-3 py-2"
+                           value="{{ request.args.get('start', '') }}">
+                    <input type="date" id="end_date"
+                           class="w-full sm:flex-1 border rounded px-3 py-2"
+                           value="{{ request.args.get('end', '') }}">
+                    <div class="flex gap-2">
+                        <button class="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                onclick="filterChecks()">Filtrer</button>
+                        {% if request.args.get('start') %}
+                        <button class="flex-1 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                                onclick="clearFilters()">Effacer</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Main Table Card -->
+    <div class="hidden md:block">
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-4">
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Date</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Nom</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Montant du Retrait</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Caissier</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for check in checks.items %}
+                        <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ check.date|format_date  }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ check.payee_name }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ check.withdrawal_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ check.user.name }}</td>
+                            <td class="px-6 py-4 text-sm space-x-2">
+                            <button class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                                    onclick="editCheck({{ check.id }}, '{{ check.payee_name }}', {{ check.withdrawal_amount }}, '{{ check.date }}')">
+                                Modifier
+                            </button>
+
+                                <button class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                                        onclick="deleteCheck({{ check.id }}, '{{ check.name }}')">
+                                    Supprimer
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-blue-50">
+                            <td colspan="2" class="px-6 py-4 text-sm font-bold">Total</td>
+                            <td colspan="3" class="px-6 py-4 text-sm font-bold">{{ total_amount | fr_thousands}} {{ shop_profile.currency|default('FCFA') }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            </div>
+
+        <!-- Mobile Card View -->
+        <div class="md:hidden">
+            <div class="space-y-4">
+                {% for check in checks.items %}
+                <div class="bg-white rounded-lg shadow p-4">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="text-sm text-gray-500">Date</div>
+                        <div class="text-sm font-medium">{{ check.date|format_date }}</div>
+
+                        <div class="text-sm text-gray-500">Nom</div>
+                        <div class="text-sm font-medium">{{ check.payee_name }}</div>
+
+                        <div class="text-sm text-gray-500">Montant du Retrait</div>
+                        <div class="text-sm font-medium">{{ check.withdrawal_amount | fr_thousands}} {{ shop_profile.currency|default('FCFA') }}</div>
+
+                        <div class="text-sm text-gray-500">Caissier</div>
+                        <div class="text-sm font-medium">{{ check.user.name }}</div>
+                    </div>
+
+                    <div class="mt-4 flex gap-2">
+                        <button class="flex-1 bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600"
+                                onclick="editCheck({{ check.id }}, '{{ check.payee_name }}', {{ check.withdrawal_amount }}, '{{ check.date }}')">
+                            Modifier
+                        </button>
+                        <button class="flex-1 bg-red-500 text-white px-3 py-2 rounded text-sm hover:bg-red-600"
+                                onclick="deleteCheck({{ check.id }}, '{{ check.name }}')">
+                            Supprimer
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Mobile Total Card -->
+                <div class="bg-blue-50 rounded-lg shadow p-4">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="text-sm font-bold">Total</div>
+                        <div class="text-sm font-bold">{{ total_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            <!-- Pagination -->
+            <nav class="flex justify-center mt-4" aria-label="Navigation des pages">
+                <ul class="flex space-x-2">
+                    {% if checks.has_prev %}
+                    <li>
+                        <a href="{{ url_for('expenses.check_list', page=checks.prev_num, start=request.args.get('start'), end=request.args.get('end')) }}"
+                           class="px-3 py-2 bg-white border rounded hover:bg-gray-50">Précédent</a>
+                    </li>
+                    {% else %}
+                    <li>
+                        <span class="px-3 py-2 bg-gray-100 border rounded text-gray-400">Précédent</span>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in checks.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == checks.page %}
+                            <li>
+                                <span class="px-3 py-2 bg-blue-600 text-white border rounded">{{ page_num }}</span>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a href="{{ url_for('expenses.check_list', page=page_num, start=request.args.get('start'), end=request.args.get('end')) }}"
+                                   class="px-3 py-2 bg-white border rounded hover:bg-gray-50">{{ page_num }}</a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li>
+                                <span class="px-3 py-2 text-gray-400">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if checks.has_next %}
+                    <li>
+                        <a href="{{ url_for('expenses.check_list', page=checks.next_num, start=request.args.get('start'), end=request.args.get('end')) }}"
+                           class="px-3 py-2 bg-white border rounded hover:bg-gray-50">Suivant</a>
+                    </li>
+                    {% else %}
+                    <li>
+                        <span class="px-3 py-2 bg-gray-100 border rounded text-gray-400">Suivant</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+<!-- Add Check Modal -->
+<div id="addCheckModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium">Nouveau Chèque</h3>
+            <button class="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+                    onclick="document.getElementById('addCheckModal').classList.add('hidden')">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form method="POST" class="mt-4">
+            <input type="hidden" name="add_check" value="1">
+            <div class="mt-2">
+                <label class="block text-sm font-medium text-gray-700">Nom</label>
+                <input type="text" name="payee_name" required
+                       class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            </div>
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700">Montant du Retrait</label>
+                <input type="text" name="withdrawal_amount" step="0.01" required
+                       class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                        onclick="document.getElementById('addCheckModal').classList.add('hidden')">Annuler</button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Ajouter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Check Modal -->
+<div id="editCheckModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium">Modifier le Chèque</h3>
+            <button class="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+                    onclick="document.getElementById('editCheckModal').classList.add('hidden')">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form method="POST" class="mt-4">
+            <input type="hidden" name="edit_check" value="1">
+            <input type="hidden" name="check_id" id="edit_check_id">
+            <input type="hidden" name="check_date" id="edit_check_date"> <!-- Added hidden field for date -->
+            <div class="mt-2">
+                <label class="block text-sm font-medium text-gray-700">Nom</label>
+                <input type="text" name="payee_name" id="edit_name" required
+                       class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            </div>
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700">Montant du Retrait</label>
+                <input type="text" name="withdrawal_amount" id="edit_withdrawal_amount" step="0.01" required
+                       class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                        onclick="document.getElementById('editCheckModal').classList.add('hidden')">Annuler</button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- Delete Check Modal -->
+<div id="deleteCheckModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium">Supprimer le Chèque</h3>
+            <button class="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+                    onclick="document.getElementById('deleteCheckModal').classList.add('hidden')">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form method="POST" class="mt-4">
+            <input type="hidden" name="delete_check" value="1">
+            <input type="hidden" name="check_id" id="delete_check_id">
+            <p class="text-gray-600">Êtes-vous sûr de vouloir supprimer le chèque de <span id="delete_check_name" class="font-medium"></span>?</p>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                        onclick="document.getElementById('deleteCheckModal').classList.add('hidden')">Annuler</button>
+                <button type="submit"
+                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Supprimer</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+    // Utility function to format numbers in French format
+function formatNumberFR(value) {
+    return new Intl.NumberFormat('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value);
+}
+
+// Function to apply Cleave formatting to an input element
+function applyCleaveToInput(input) {
+    if (input) {
+        // First destroy any existing Cleave instance to avoid memory leaks
+        if (input.cleave) {
+            input.cleave.destroy();
+        }
+        // Apply new Cleave instance
+        return new Cleave(input, {
+            numeral: true,
+            numeralThousandsGroupStyle: 'thousand',
+            numeralDecimalScale: 2,
+            numeralDecimalMark: '.',
+            delimiter: ' '
+        });
+    }
+    return null;
+}
+
+// Function to clean formatted values in a form before submission
+function cleanFormattedValues(form) {
+    const targetInputNames = ['withdrawal_amount', 'edit_withdrawal_amount'];
+
+    targetInputNames.forEach(name => {
+        const field = form.querySelector(`[name="${name}"]`);
+        if (field) {
+            field.value = field.value.replace(/\s/g, '');
+        }
+    });
+}
+
+// Modal handling functions
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// Filter and clear functions
+function filterChecks() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+
+    if (!startDate || !endDate) {
+        alert('Veuillez sélectionner les dates de début et de fin');
+        return;
+    }
+
+    if (startDate > endDate) {
+        alert('La date de début ne peut pas être postérieure à la date de fin');
+        return;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = urlParams.get('page') || 1;
+    window.location.href = `${window.location.pathname}?page=${currentPage}&start=${startDate}&end=${endDate}`;
+}
+
+function clearFilters() {
+    window.location.href = window.location.pathname;
+}
+
+// Check edit function
+function editCheck(id, name, withdrawalAmount, date) {
+    document.getElementById('edit_check_id').value = id;
+    document.getElementById('edit_name').value = name;
+
+    // Format and set withdrawal amount
+    const editWithdrawalInput = document.getElementById('edit_withdrawal_amount');
+    editWithdrawalInput.value = withdrawalAmount;
+
+    // Reapply Cleave to ensure formatting works properly
+    applyCleaveToInput(editWithdrawalInput);
+
+    // Set date if provided
+    if (date) {
+        document.getElementById('edit_check_date').value = date;
+    }
+
+    // Show modal
+    showModal('editCheckModal');
+}
+
+// Check delete function
+function deleteCheck(id, name) {
+    document.getElementById('delete_check_id').value = id;
+    document.getElementById('delete_check_name').textContent = name;
+    showModal('deleteCheckModal');
+}
+
+// Initialize everything when the DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Apply Cleave.js to all numeric inputs initially
+    const numericInputs = [
+        document.querySelector('input[name="withdrawal_amount"]'),
+        document.getElementById('edit_withdrawal_amount')
+    ];
+
+    // Apply Cleave to each valid input
+    numericInputs.forEach(input => {
+        if (input) {
+            input.cleave = applyCleaveToInput(input);
+        }
+    });
+
+    // Set up form submission handlers to clean formatted values
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            cleanFormattedValues(this);
+        });
+    });
+
+    // Set up modal close buttons
+    document.querySelectorAll('[data-modal-close], .modal-close').forEach(button => {
+        button.addEventListener('click', () => {
+            const modalId = button.closest('[role="dialog"]').id ||
+                            button.getAttribute('data-modal-target') ||
+                            (button.closest('.fixed') ? button.closest('.fixed').id : null);
+
+            if (modalId) hideModal(modalId);
+        });
+    });
+
+    // Close modals when clicking outside
+    document.querySelectorAll('#addCheckModal, #editCheckModal, #deleteCheckModal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                hideModal(modal.id);
+            }
+        });
+    });
+
+    // Close modals with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const visibleModal = document.querySelector('#addCheckModal:not(.hidden), #editCheckModal:not(.hidden), #deleteCheckModal:not(.hidden)');
+            if (visibleModal) {
+                hideModal(visibleModal.id);
+            }
+        }
+    });
+
+    // Initialize date filters from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('start')) {
+        document.getElementById('start_date').value = urlParams.get('start');
+    }
+    if (urlParams.has('end')) {
+        document.getElementById('end_date').value = urlParams.get('end');
+    }
+
+    // Set up modal open buttons
+    const addCheckButton = document.querySelector('button[onclick*="addCheckModal"]');
+    if (addCheckButton) {
+        addCheckButton.onclick = function() {
+            showModal('addCheckModal');
+            // Reapply Cleave to the withdrawal amount input in the add form
+            const addWithdrawalInput = document.querySelector('input[name="withdrawal_amount"]');
+            if (addWithdrawalInput) {
+                applyCleaveToInput(addWithdrawalInput);
+            }
+        };
+    }
+
+    // Set up close buttons for each modal
+    document.querySelectorAll('[onclick*="classList.add(\'hidden\')"]').forEach(button => {
+        const modalId = button.getAttribute('onclick').match(/document\.getElementById\('([^']+)'\)/)[1];
+        button.onclick = function() {
+            hideModal(modalId);
+        };
+    });
+});
+</script>
+{% endblock %}

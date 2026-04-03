@@ -1,0 +1,531 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 sm:px-8">
+    <!-- Header -->
+    <!-- Replace the header section in your HTML (around line 4-10) with this: -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 px-4 sm:px-8 space-y-4 md:space-y-0">
+        <h2 class="text-2xl font-bold">Gestion des Stocks</h2>
+        <div class="flex flex-col sm:flex-row gap-2">
+            <!-- PDF Export Button -->
+            <a href="#" onclick="exportAndSharePDF(event)"
+               class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Exporter PDF
+            </a>
+            <!-- Existing New Product Button -->
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onclick="openModal('addProductModal')">
+                Nouveau Produit
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Search and Filter Section -->
+    <div class="mb-6 px-4 sm:px-8">
+        <form method="GET" class="grid gap-4 sm:flex sm:flex-wrap sm:items-end">
+            <div class="w-full sm:w-2/3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Rechercher un produit</label>
+                <input type="text" name="search" value="{{ request.args.get('search', '') }}"
+                       class="w-full px-4 py-2 text-gray-700 bg-white border rounded-lg focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"
+                       placeholder="Nom du produit...">
+            </div>
+            <div class="w-full sm:w-auto">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Stock bas</label>
+                <select name="stock_filter" class="w-full sm:w-auto rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">Tous les produits</option>
+                    <option value="low" {% if request.args.get('stock_filter') == 'low' %}selected{% endif %}>Stock bas (&lt;10)</option>
+                </select>
+            </div>
+            <div class="w-full sm:w-auto flex gap-2">
+                <button type="submit" class="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    Filtrer
+                </button>
+                {% if request.args.get('search') or request.args.get('stock_filter') %}
+                <a href="{{ url_for('inventory.product_list') }}" class="w-full sm:w-auto text-blue-500 hover:text-blue-600 text-center">
+                    Réinitialiser
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="mb-4 p-4 rounded {% if category == 'success' %}bg-green-100 text-green-700{% elif category == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Products Section -->
+    <div class="bg-white rounded-lg shadow p-4">
+        <!-- Desktop Table View -->
+        <div class="hidden sm:block overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom du Produit</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prix de Vente</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prix d'Achat</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for product in products.items %}
+                    <tr class="hover:bg-gray-50 {% if product.stock < 10 %}bg-red-50{% endif %}">
+                        <td class="px-6 py-4 whitespace-nowrap">{{ product.name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ product.selling_price | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ product.buying_price | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap {% if product.stock < 10 %}text-red-600 font-medium{% endif %}">{{ product.stock }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap space-x-2">
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }})'>Modifier</button>
+
+                            <button class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm" onclick='deleteProduct({{ product.id }}, {{ product.name|tojson }})'>Supprimer</button>
+
+
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+
+        <!-- Mobile View: Card Layout -->
+        <div class="block sm:hidden">
+            {% for product in products.items %}
+            <div class="border p-4 rounded-lg shadow mb-4 {% if product.stock < 10 %}bg-red-50{% endif %}">
+                <h3 class="text-lg font-bold">{{ product.name }}</h3>
+                <p class="text-gray-700">Prix de Vente: <span class="font-medium">{{ product.selling_price | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</span></p>
+                <p class="text-gray-700">Prix d'Achat: <span class="font-medium">{{ product.buying_price | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</span></p>
+                <p class="text-gray-700 {% if product.stock < 10 %}text-red-600 font-medium{% endif %}">Stock: {{ product.stock }}</p>
+                <div class="flex gap-2 mt-2">
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }})'>Modifier</button>
+
+                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm" onclick='deleteProduct({{ product.id }}, {{ product.name|tojson }})'>Supprimer</button>
+
+
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Page navigation" class="mt-6">
+                <ul class="flex justify-center space-x-2">
+                    {% for page_num in products.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == products.page %}
+                            <li>
+                                <span class="px-3 py-2 bg-blue-500 text-white rounded-md">{{ page_num }}</span>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a class="px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                                   href="{{ url_for('inventory.product_list', page=page_num, search=request.args.get('search', ''), stock_filter=request.args.get('stock_filter', '')) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li>
+                                <span class="px-3 py-2 text-gray-500">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Shop Totals Section (Admin Only) -->
+{% if shop_totals %}
+<div class="mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow p-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10" />
+        </svg>
+        Résumé de la Boutique
+    </h3>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Total Products -->
+        <div class="bg-white rounded-lg p-4 shadow-sm">
+            <div class="text-sm text-gray-600">Total Produits</div>
+            <div class="text-2xl font-bold text-gray-800">{{ shop_totals.total_products_count }}</div>
+        </div>
+
+        <!-- Low Stock Alert -->
+        <div class="bg-white rounded-lg p-4 shadow-sm">
+            <div class="text-sm text-gray-600">Stock Bas</div>
+            <div class="text-2xl font-bold {% if shop_totals.low_stock_count > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                {{ shop_totals.low_stock_count }}
+            </div>
+        </div>
+
+        <!-- Total Buying Value -->
+        <div class="bg-white rounded-lg p-4 shadow-sm">
+            <div class="text-sm text-gray-600">Valeur d'Achat</div>
+            <div class="text-lg font-bold text-blue-600">
+                {{ shop_totals.total_buying_value | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}
+            </div>
+        </div>
+
+        <!-- Total Selling Value -->
+        <div class="bg-white rounded-lg p-4 shadow-sm">
+            <div class="text-sm text-gray-600">Valeur de Vente</div>
+            <div class="text-lg font-bold text-green-600">
+                {{ shop_totals.total_selling_value | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Profit Section -->
+    <div class="mt-4 bg-white rounded-lg p-4 shadow-sm">
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Marge Bénéficiaire Potentielle:</span>
+            <span class="text-xl font-bold {% if shop_totals.total_profit >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {{ shop_totals.total_profit | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}
+            </span>
+        </div>
+    </div>
+</div>
+{% endif %}
+</div>
+
+
+
+<!-- Add Product Modal -->
+<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="addProductModal" tabindex="-1">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h5 class="text-lg font-semibold">Ajouter un Nouveau Produit</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="p-4">
+                    <input type="hidden" name="add_product" value="1">
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Produit</label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
+                               name="name" 
+                               placeholder="Ex: Riz, Sucre, Huile..."
+                               required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Prix de Vente</label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
+                               name="selling_price" 
+                               id="add_product_selling"
+                               placeholder="Ex: 5000"
+                               required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Prix d'Achat</label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
+                               name="buying_price" 
+                               id="add_product_buying"
+                               placeholder="Ex: 4000"
+                               required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Stock Initial</label>
+                        <input type="number" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
+                               name="stock" 
+                               placeholder="Ex: 100"
+                               required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Stock Minimum</label>
+                        <input type="number" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
+                               name="min_stock" 
+                               placeholder="Ex: 10"
+                               value="0">
+                    </div>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t gap-2">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="editProductModal" tabindex="-1">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h5 class="text-lg font-semibold">Modifier le Produit</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="p-4">
+                    <input type="hidden" name="edit_product" value="1">
+                    <input type="hidden" name="product_id" id="edit_product_id">
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Produit</label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
+                               name="name" 
+                               id="edit_product_name"
+                               placeholder="Ex: Riz, Sucre, Huile..."
+                               required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Prix de Vente</label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
+                               name="selling_price" 
+                               id="edit_selling_price"
+                               placeholder="Ex: 5000"
+                               required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Prix d'Achat</label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
+                               name="buying_price" 
+                               id="edit_buying_price"
+                               placeholder="Ex: 4000"
+                               required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Stock</label>
+                        <input type="number" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
+                               name="stock" 
+                               id="edit_stock"
+                               placeholder="Ex: 100"
+                               required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Stock Minimum</label>
+                        <input type="number" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
+                               name="min_stock" 
+                               id="edit_min_stock"
+                               placeholder="Ex: 10">
+                    </div>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t gap-2">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Product Modal -->
+<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="deleteProductModal" tabindex="-1">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h5 class="text-lg font-semibold">Supprimer le Produit</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="p-4">
+                    <input type="hidden" name="delete_product" value="1">
+                    <input type="hidden" name="product_id" id="delete_product_id">
+                    <p class="text-gray-700">Êtes-vous sûr de vouloir supprimer <span id="delete_product_name" class="font-medium"></span> ?</p>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t gap-2">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
+<script>
+
+// Numbers formatting variables
+
+const cleaveSelling = new Cleave('#edit_selling_price', {
+    numeral: true,
+    numeralDecimalMark: ',',
+    delimiter: ' ',
+    numeralThousandsGroupStyle: 'thousand'
+});
+
+const cleaveBuying = new Cleave('#edit_buying_price', {
+    numeral: true,
+    numeralDecimalMark: ',',
+    delimiter: ' ',
+    numeralThousandsGroupStyle: 'thousand'
+});
+
+
+const addProductSelling = new Cleave('#add_product_selling', {
+    numeral: true,
+    numeralDecimalMark: ',',
+    delimiter: ' ',
+    numeralThousandsGroupStyle: 'thousand'
+});
+
+const addProductBuying = new Cleave('#add_product_buying', {
+    numeral: true,
+    numeralDecimalMark: ',',
+    delimiter: ' ',
+    numeralThousandsGroupStyle: 'thousand'
+});
+
+// Modal handling functions
+
+const openModal = (modalId) => {
+    const modal = document.getElementById(modalId);
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    // Add event listeners for closing
+    const closeButtons = modal.querySelectorAll('[data-bs-dismiss="modal"]');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', () => closeModal(modalId));
+    });
+
+    // Close on outside click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal(modalId);
+        }
+    });
+
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeModal(modalId);
+        }
+    });
+};
+
+const closeModal = (modalId) => {
+    const modal = document.getElementById(modalId);
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+};
+
+// Initialize all modals
+document.addEventListener('DOMContentLoaded', () => {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    });
+
+    // Handle Add Product form submission
+    const addProductForm = document.querySelector('#addProductModal form');
+    if (addProductForm) {
+        addProductForm.addEventListener('submit', function(e) {
+            // Get raw numeric values before submission
+            const sellingPrice = addProductSelling.getRawValue();
+            const buyingPrice = addProductBuying.getRawValue();
+
+            // Replace formatted values with raw values
+            document.getElementById('add_product_selling').value = sellingPrice;
+            document.getElementById('add_product_buying').value = buyingPrice;
+        });
+    }
+
+    // Handle Edit Product form submission
+    const editProductForm = document.querySelector('#editProductModal form');
+    if (editProductForm) {
+        editProductForm.addEventListener('submit', function(e) {
+            // Get raw numeric values before submission
+            const sellingPrice = cleaveSelling.getRawValue();
+            const buyingPrice = cleaveBuying.getRawValue();
+
+            // Replace formatted values with raw values
+            document.getElementById('edit_selling_price').value = sellingPrice;
+            document.getElementById('edit_buying_price').value = buyingPrice;
+        });
+    }
+});
+
+
+
+// Add this function to your existing script section
+function exportAndSharePDF(event) {
+    event.preventDefault();
+
+    // Get current search parameters
+    const searchParam = new URLSearchParams(window.location.search).get('search') || '';
+    const stockFilterParam = new URLSearchParams(window.location.search).get('stock_filter') || '';
+
+    // Create the PDF export URL
+    const pdfUrl = new URL('{{ url_for("inventory.export_products_pdf") }}', window.location.origin);
+    if (searchParam) pdfUrl.searchParams.set('search', searchParam);
+    if (stockFilterParam) pdfUrl.searchParams.set('stock_filter', stockFilterParam);
+
+    // Download the PDF first
+    const downloadLink = document.createElement('a');
+    downloadLink.href = pdfUrl.toString();
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+
+    // Wait a moment then open WhatsApp
+    setTimeout(() => {
+        const message = `📋 Liste des Produits - Gestion des Stocks\n\nVeuillez télécharger le PDF depuis ce lien:\n${pdfUrl.toString()}\n\n📅 Généré le: ${new Date().toLocaleDateString('fr-FR')}`;
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    }, 1000);
+}
+
+// Product specific functions
+function editProduct(id, name, selling_price, buying_price, stock, min_stock) {
+    document.getElementById('edit_product_id').value = id;
+    document.getElementById('edit_product_name').value = name;
+
+    // Set raw values (Cleave will auto-format them if already initialized)
+    cleaveSelling.setRawValue(selling_price);
+    cleaveBuying.setRawValue(buying_price);
+
+    document.getElementById('edit_stock').value = stock;
+    document.getElementById('edit_min_stock').value = min_stock || 0;
+
+    openModal('editProductModal');
+}
+
+function deleteProduct(id, name) {
+    document.getElementById('delete_product_id').value = id;
+    document.getElementById('delete_product_name').textContent = name;
+    openModal('deleteProductModal');
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        <h2 class="text-2xl font-bold text-center sm:text-left">Détails du Client</h2>
+        <a href="{{ url_for('clients.client_list') }}" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 w-full sm:w-auto">
+            Retour à la liste
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="p-4 mb-4 rounded {% if category == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Client Information Card -->
+    <div class="bg-white rounded-lg shadow mb-6">
+        <div class="p-6">
+            <h3 class="text-xl font-semibold mb-4">Informations du Client</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-600">Nom:</p>
+                    <p class="font-medium">{{ client.name }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-600">Adresse:</p>
+                    <p class="font-medium">{{ client.address }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-600">Téléphone:</p>
+                    <p class="font-medium">{{ client.phone }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-600">Email:</p>
+                    <p class="font-medium">{{ client.email }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Statistics -->
+    <div class="bg-white rounded-lg shadow mb-6">
+        <div class="p-6">
+            <h3 class="text-xl font-semibold mb-4">Statistiques</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <p class="text-gray-600">Total des Achats</p>
+                    <p class="text-2xl font-bold text-blue-700">{{ stats.total_purchases|default(0, true)|round(2) }}{{ current_shop.currency|default('FCFA') }}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-gray-600">Total Payé</p>
+                    <p class="text-2xl font-bold text-green-700">{{ stats.total_paid|default(0, true)|round(2) }} {{ current_shop.currency|default('FCFA') }}</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <p class="text-gray-600">Nombre de Factures</p>
+                    <p class="text-2xl font-bold text-purple-700">{{ stats.total_bills|default(0) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Bills Table -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6">
+            <h3 class="text-xl font-semibold mb-4">Historique des Factures</h3>
+
+            {% if bills.items %}
+                <!-- Desktop Table View -->
+                <div class="hidden md:block overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Numéro</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Date</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Montant Total</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Montant Payé</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for bill in bills.items %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ bill.bill_number }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">
+                                    {% if bill.date is string %}
+                                        {{ bill.date }}
+                                    {% else %}
+                                        {{ bill.date.strftime('%d-%m-%Y') }}
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ bill.total_amount|round(2) }} {{ current_shop.currency|default('FCFA') }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ bill.paid_amount|round(2) }} {{ current_shop.currency|default('FCFA') }}</td>
+                                <td class="px-4 py-3 text-sm">
+                                    {% if bill.status == 'paid' %}
+                                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Payée</span>
+                                    {% else %}
+                                        <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">Non Payée</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Card View -->
+                <div class="block md:hidden space-y-4">
+                    {% for bill in bills.items %}
+                    <div class="border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="font-semibold">{{ bill.bill_number }}</p>
+                            <p class="text-sm text-gray-600">
+                                {% if bill.date is string %}
+                                    {{ bill.date }}
+                                {% else %}
+                                    {{ bill.date.strftime('%d-%m-%Y') }}
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <p class="text-sm text-gray-600">Total: <span class="font-medium">{{ bill.total_amount|round(2) }} {{ current_shop.currency|default('FCFA') }} </span></p>
+                            <p class="text-sm text-gray-600">Payé: <span class="font-medium">{{ bill.paid_amount|round(2) }} {{ current_shop.currency|default('FCFA') }} </span></p>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            {% if bill.status == 'paid' %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Payée</span>
+                            {% else %}
+                                <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">Non Payée</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                <nav class="flex justify-center mt-4">
+                    <ul class="flex space-x-2">
+                        {% if bills.has_prev %}
+                        <li>
+                            <a href="{{ url_for('clients.client_detail', client_id=client.id, page=bills.prev_num) }}"
+                               class="px-3 py-2 bg-white border rounded hover:bg-gray-50">Précédent</a>
+                        </li>
+                        {% else %}
+                        <li>
+                            <span class="px-3 py-2 bg-gray-100 border rounded text-gray-400">Précédent</span>
+                        </li>
+                        {% endif %}
+
+                        {% for page_num in bills.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                            {% if page_num %}
+                                {% if page_num == bills.page %}
+                                <li>
+                                    <span class="px-3 py-2 bg-blue-600 text-white border rounded">{{ page_num }}</span>
+                                </li>
+                                {% else %}
+                                <li>
+                                    <a href="{{ url_for('clients.client_detail', client_id=client.id, page=page_num) }}"
+                                       class="px-3 py-2 bg-white border rounded hover:bg-gray-50">{{ page_num }}</a>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                                <li>
+                                    <span class="px-3 py-2 text-gray-400">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if bills.has_next %}
+                        <li>
+                            <a href="{{ url_for('clients.client_detail', client_id=client.id, page=bills.next_num) }}"
+                               class="px-3 py-2 bg-white border rounded hover:bg-gray-50">Suivant</a>
+                        </li>
+                        {% else %}
+                        <li>
+                            <span class="px-3 py-2 bg-gray-100 border rounded text-gray-400">Suivant</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% else %}
+                <div class="text-center py-8">
+                    <p class="text-gray-500">Aucune facture trouvée pour ce client.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

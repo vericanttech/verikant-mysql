@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="bg-white shadow-sm rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6">Gérer les Magasins</h2>
+
+        <!-- Shops Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for shop in shops %}
+            <div class="bg-white border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                <div class="p-5">
+                    <!-- Shop Logo -->
+                    <div class="w-16 h-16 mb-4 mx-auto rounded-full overflow-hidden bg-blue-50 flex items-center justify-center">
+                        {% if shop.logo_path %}
+                            <img src="{{ url_for('static', filename=shop.logo_path) }}"
+                                 alt="{{ shop.name }}"
+                                 class="w-full h-full object-cover">
+                        {% else %}
+                            <i data-lucide="store" class="w-8 h-8 text-blue-500"></i>
+                        {% endif %}
+                    </div>
+
+                    <!-- Shop Info -->
+                    <h3 class="text-lg font-semibold text-center text-gray-900 mb-2">{{ shop.name }}</h3>
+                    <p class="text-sm text-gray-600 text-center mb-4">
+                        {{ shop.business_type or 'Type non défini' }}
+                    </p>
+
+                    <!-- Shop Details -->
+                    <div class="space-y-2 text-sm text-gray-600 mb-4">
+                        <p><i data-lucide="map-pin" class="w-4 h-4 inline mr-2"></i>{{ shop.address or 'Adresse non définie' }}</p>
+                        <p><i data-lucide="mail" class="w-4 h-4 inline mr-2"></i>{{ shop.email or 'Email non défini' }}</p>
+                        {% if shop.phones %}
+                            <p><i data-lucide="phone" class="w-4 h-4 inline mr-2"></i>{{ shop.phones[0].phone }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex justify-center">
+                        {% if shop.id == current_user.current_shop_id %}
+                            <span class="px-4 py-2 bg-green-100 text-green-800 rounded-lg">
+                                Magasin Actuel
+                            </span>
+                        {% else %}
+                            <a href="{{ url_for('auth.select_shop', shop_id=shop.id) }}"
+                               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                Sélectionner
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script >
+    localStorage.removeItem('pos_cart');
+</script>
+{% endblock %}

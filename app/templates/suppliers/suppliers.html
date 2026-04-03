@@ -1,0 +1,443 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <div class="mb-6 px-8 sm:px-16">
+        <h2 class="text-2xl font-bold mb-4 md:mb-0">Gestion des Fournisseurs</h2>
+        <div class="md:flex md:space-x-2">  <div class="mb-2 md:mb-0"> <button class="w-full md:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onclick="openModal('addSupplierModal')">
+                    Nouveau Fournisseur
+                </button>
+            </div>
+            <div class="mb-2 md:mb-0">
+                <button class="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded" onclick="openModal('addBillModal')">
+                    Nouvelle Facture
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="mb-4 p-4 rounded {% if category == 'success' %}bg-green-100 text-green-700{% elif category == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6">
+            <div class="overflow-x-auto hidden md:block">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom du Fournisseur</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Numéro de Facture</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant Payé</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reste</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for bill in suppliers.items %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">{{ bill.supplier.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ bill.bill_number }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ bill.amount | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ bill.paid_amount | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ (bill.amount - bill.paid_amount) | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ bill.date|format_date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap space-x-2">
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm"
+                                    onclick="editBill({{ bill.id }}, '{{ bill.supplier.name }}', '{{ bill.bill_number }}', {{ bill.amount }}, {{ bill.paid_amount }})">
+                                Modifier
+                            </button>
+                            <button
+                                class="text-white px-2 py-1 rounded text-sm
+                                       {% if bill.amount - bill.paid_amount == 0 %}
+                                           bg-gray-400 cursor-not-allowed
+                                       {% else %}
+                                           bg-green-500 hover:bg-green-600
+                                       {% endif %}"
+                                onclick="makePayment({{ bill.id }}, '{{ bill.supplier.name }}', {{ bill.amount - bill.paid_amount }})"
+                                {% if bill.amount - bill.paid_amount == 0 %} disabled {% endif %}
+                            >
+                                Paiement
+                            </button>
+
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="md:hidden space-y-4">
+                {% for bill in suppliers.items %}
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <p><strong>Fournisseur:</strong> {{ bill.supplier.name }}</p>
+                    <p><strong>Facture:</strong> {{ bill.bill_number }}</p>
+                    <p><strong>Montant:</strong> {{ bill.amount | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</p>
+                    <p><strong>Montant Payé:</strong> {{ bill.paid_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</p>
+                    <p><strong>Reste:</strong> {{ (bill.amount - bill.paid_amount) | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</p>
+                    <p><strong>Date:</strong> {{ bill.date|format_date }}</p>
+                    <div class="mt-2 space-y-2">  <button class="w-full bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm mb-2" onclick="editBill({{ bill.id }}, '{{ bill.supplier.name }}', '{{ bill.bill_number }}', {{ bill.amount }}, {{ bill.paid_amount }})">Modifier</button>
+                    <button
+                        class="text-white px-2 py-1 rounded text-sm
+                               {% if bill.amount - bill.paid_amount == 0 %}
+                                   bg-gray-400 cursor-not-allowed
+                               {% else %}
+                                   bg-green-500 hover:bg-green-600
+                               {% endif %}"
+                        onclick="makePayment({{ bill.id }}, '{{ bill.supplier.name }}', {{ bill.amount - bill.paid_amount }})"
+                        {% if bill.amount - bill.paid_amount == 0 %} disabled {% endif %}
+                    >
+                        Paiement
+                    </button>
+
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+            <!-- Pagination -->
+            <div class="flex justify-center items-center mt-6">
+                <p class="text-sm text-blue-600">
+                    Page {{ suppliers.page }} sur {{ suppliers.pages }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bill Modal -->
+<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="addBillModal" tabindex="-1">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h5 class="text-lg font-semibold">Ajouter une Nouvelle Facture</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-500" onclick="closeModal('addBillModal')">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="p-4">
+                    <input type="hidden" name="add_bill" value="1">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fournisseur</label>
+                        <select name="supplier_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                            {% for supplier in all_suppliers %}
+                            <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Numéro de Facture</label>
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="bill_number" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant</label>
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="amount" step="0.01" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Paiement Initial</label>
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="paid_amount" step="0.01" value="0">
+                    </div>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t gap-2">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" onclick="closeModal('addBillModal')">Annuler</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Supplier Modal -->
+<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="addSupplierModal" tabindex="-1">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h5 class="text-lg font-semibold">Ajouter un Nouveau Fournisseur</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="p-4">
+                    <input type="hidden" name="add_supplier" value="1">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom du Fournisseur</label>
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="supplier_name" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Numéro de Facture</label>
+                        <input type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="bill_number" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant</label>
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="amount" step="0.01" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Paiement Initial</label>
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="paid_amount" step="0.01" value="0">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Informations Supplémentaires</label>
+                        <textarea class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="supplier_data" rows="3" placeholder="Entrez des informations supplémentaires"></textarea>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t gap-2">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Supplier Modal -->
+<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="editBillModal" tabindex="-1">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h5 class="text-lg font-semibold">Modifier le Fournisseur</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="p-4">
+                <input type="hidden" name="edit_bill" value="1"> <!-- Change to edit_bill -->
+                <input type="hidden" name="bill_id" id="edit_bill_id"> <!-- Change field name -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom du Fournisseur</label>
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="supplier_name" id="edit_supplier_name" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Numéro de Facture</label>
+                        <input type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="bill_number" id="edit_bill_number" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant</label>
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="amount" id="edit_amount" step="0.01" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant Payé</label>
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="paid_amount" id="edit_paid_amount" step="0.01" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Informations Supplémentaires</label>
+                        <textarea class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="supplier_data" id="edit_supplier_data" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t gap-2">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Make Payment Modal -->
+<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="paymentModal" tabindex="-1">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h5 class="text-lg font-semibold">Effectuer un Paiement</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="p-4">
+                <input type="hidden" name="make_payment" value="1">
+                <input type="hidden" name="bill_id" id="payment_bill_id"> <!-- Change field name -->
+                    <p class="mb-2 text-gray-700">Paiement au fournisseur: <span id="payment_supplier_name" class="font-medium"></span></p>
+                    <p class="mb-4 text-gray-700">Montant restant: <span id="payment_remaining" class="font-medium"></span> {{ shop_profile.currency|default('FCFA') }}</p>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant du Paiement</label>
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" name="payment_amount" step="0.01" required>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t gap-2">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md">Effectuer le Paiement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Supplier Modal -->
+<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="deleteSupplierModal" tabindex="-1">
+    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h5 class="text-lg font-semibold">Supprimer le Fournisseur</h5>
+                <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST">
+                <div class="p-4">
+                    <input type="hidden" name="delete_supplier" value="1">
+                    <input type="hidden" name="supplier_id" id="delete_supplier_id">
+                    <p class="text-gray-700">Êtes-vous sûr de vouloir supprimer le fournisseur <span id="delete_supplier_name" class="font-medium"></span> ?</p>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t gap-2">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
+<script>
+function formatNumberFR(value) {
+    return new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+    }).format(value);
+}
+
+// Modal handling functions
+window.openModal = (modalId) => {
+    const modal = document.getElementById(modalId);
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    // Add event listeners for closing
+    const closeButtons = modal.querySelectorAll('[data-bs-dismiss="modal"]');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', () => closeModal(modalId));
+    });
+
+    // Close on outside click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal(modalId);
+        }
+    });
+
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeModal(modalId);
+        }
+    });
+};
+
+window.closeModal = (modalId) => {
+    const modal = document.getElementById(modalId);
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+};
+
+// Initialize all modals
+document.addEventListener('DOMContentLoaded', () => {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    });
+});
+
+// edit supplier function
+// edit supplier function
+window.editBill = function(billId, supplierName, billNumber, amount, paidAmount) {
+    document.getElementById('edit_bill_id').value = billId;
+    document.getElementById('edit_supplier_name').value = supplierName;
+    document.getElementById('edit_bill_number').value = billNumber;
+
+    // Format numbers for display
+    const amountInput = document.getElementById('edit_amount');
+    const paidAmountInput = document.getElementById('edit_paid_amount');
+
+    // Set values then trigger input event to format with Cleave.js
+    amountInput.value = amount;
+    paidAmountInput.value = paidAmount;
+
+    // Trigger input event to format with Cleave.js
+    amountInput.dispatchEvent(new Event('input', { bubbles: true }));
+    paidAmountInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+    openModal('editBillModal');
+};
+
+
+
+function deleteSupplier(id, name) {
+    document.getElementById('delete_supplier_id').value = id;
+    document.getElementById('delete_supplier_name').textContent = name;
+    openModal('deleteSupplierModal');
+}
+
+function makePayment(billId, supplierName, remaining) {
+    document.getElementById('payment_bill_id').value = billId;
+    document.getElementById('payment_supplier_name').textContent = supplierName;
+    document.getElementById('payment_remaining').textContent = formatNumberFR(remaining);
+
+    // Initialize payment amount with remaining balance
+    const paymentInput = document.querySelector('input[name="payment_amount"]');
+    paymentInput.value = remaining;
+
+    // Trigger input event to format with Cleave.js
+    paymentInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+    openModal('paymentModal');
+}
+
+    document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Cleave.js on all amount inputs
+    const amountInputs = document.querySelectorAll('input[name="amount"], input[name="paid_amount"], input[name="payment_amount"]');
+
+    amountInputs.forEach(function(input) {
+        new Cleave(input, {
+            numeral: true,
+            numeralThousandsGroupStyle: 'thousand',
+            numeralDecimalMark: ',',
+            delimiter: ' '
+        });
+    });
+
+    // Handle form submissions to clean the data
+    const forms = document.querySelectorAll('form');
+    forms.forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            const numericInputs = form.querySelectorAll('input[name="amount"], input[name="paid_amount"], input[name="payment_amount"]');
+            numericInputs.forEach(function(input) {
+                // Remove formatting and convert to server-friendly format
+                input.value = input.value.replace(/\s/g, '').replace(',', '.');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}
