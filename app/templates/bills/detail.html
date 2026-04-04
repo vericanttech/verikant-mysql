@@ -129,7 +129,8 @@
                             </span>
                         </div>
                         <div class="border-t border-gray-200 my-2 pt-2"></div>
-                        {% if bill.vat_amount and bill.vat_amount > 0 %}
+                        {% set show_vat = (bill.vat_amount is not none and bill.vat_amount > 0) or (bill.vat_rate is not none and bill.vat_rate > 0) %}
+                        {% if show_vat %}
                         <div class="flex justify-between items-center">
                             <span class="text-gray-700 font-medium">Total HT:</span>
                             <span class="text-gray-800">{{ bill.amount_ht | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
@@ -140,7 +141,7 @@
                         </div>
                         {% endif %}
                         <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-medium">{% if bill.vat_amount and bill.vat_amount > 0 %}Total TTC{% else %}Montant Total{% endif %}:</span>
+                            <span class="text-gray-700 font-medium">{% if show_vat %}Total TTC{% else %}Montant Total{% endif %}:</span>
                             <span class="text-gray-800 font-semibold">{{ bill.total_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
                         </div>
                         <div class="flex justify-between items-center">

@@ -241,7 +241,8 @@
     </table>
 
     <div class="total-section">
-        {% if bill.vat_amount and bill.vat_amount > 0 %}
+        {% set show_vat = (bill.vat_amount is not none and bill.vat_amount > 0) or (bill.vat_rate is not none and bill.vat_rate > 0) %}
+        {% if show_vat %}
         <div class="total-row">
             <span>Total HT:</span>
             <span>{{ "{:,.0f}".format(bill.amount_ht) }}</span>
@@ -267,7 +268,7 @@
         </div>
         {% endif %}
         <div class="total-row grand-total">
-            <span>{% if bill.vat_amount and bill.vat_amount > 0 %}Total TTC{% else %}TOTAL{% endif %}:</span>
+            <span>{% if show_vat %}Total TTC{% else %}TOTAL{% endif %}:</span>
             <span>{{ "{:,.0f}".format(bill.total_amount) }}</span>
         </div>
     </div>

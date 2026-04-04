@@ -379,6 +379,26 @@
             background: rgba(0, 0, 0, 0.8);
         }
 
+        /* TVA block (no Tailwind — print view does not load Tailwind) */
+        .vat-summary {
+            width: 100%;
+            max-width: 22rem;
+            margin: 0.75rem 0 0.75rem auto;
+            font-size: 0.875rem;
+        }
+        .vat-summary-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0.35rem 0;
+        }
+        .vat-summary-line.vat-summary-total {
+            border-bottom: none;
+            font-weight: 600;
+            padding-top: 0.5rem;
+        }
+
         /* Print styles */
         @media print {
             body {
@@ -388,8 +408,12 @@
             .no-print {
                 display: none !important;
             }
+            /* Screen layout uses desktop/mobile; when printing, show desktop layout */
             .mobile-only {
                 display: none !important;
+            }
+            .desktop-only {
+                display: block !important;
             }
             @page {
                 margin: 5mm;
@@ -397,6 +421,10 @@
             .bill-half {
                 width: 49% !important;
                 display: block !important;
+            }
+            .vat-summary {
+                display: block !important;
+                max-width: 100%;
             }
         }
 
@@ -614,18 +642,19 @@
                 </tbody>
             </table>
 
-            {% if bill.vat_amount and bill.vat_amount > 0 %}
-            <div class="desktop-only mb-3 text-sm" style="max-width: 320px; margin-left: auto;">
-                <div class="flex justify-between border-b py-1"><span>Total HT</span><span>{{ bill.amount_ht | fr_thousands }}</span></div>
-                <div class="flex justify-between border-b py-1"><span>TVA{% if bill.vat_rate %} ({{ (bill.vat_rate * 100)|round(2) }}%){% endif %}</span><span>{{ bill.vat_amount | fr_thousands }}</span></div>
-                <div class="flex justify-between py-1 font-semibold"><span>Total TTC</span><span>{{ bill.total_amount | fr_thousands }}</span></div>
+            {% set show_vat = (bill.vat_amount is not none and bill.vat_amount > 0) or (bill.vat_rate is not none and bill.vat_rate > 0) %}
+            {% if show_vat %}
+            <div class="vat-summary">
+                <div class="vat-summary-line"><span>Total HT</span><span>{{ bill.amount_ht | fr_thousands }}</span></div>
+                <div class="vat-summary-line"><span>TVA{% if bill.vat_rate %} ({{ (bill.vat_rate * 100)|round(2) }}%){% endif %}</span><span>{{ bill.vat_amount | fr_thousands }}</span></div>
+                <div class="vat-summary-line vat-summary-total"><span>Total TTC</span><span>{{ bill.total_amount | fr_thousands }}</span></div>
             </div>
             {% endif %}
 
             <!-- Desktop Totals Table -->
             <table class="total-section desktop-only">
                 <tr>
-                    <td><strong>{% if bill.vat_amount and bill.vat_amount > 0 %}TOTAL TTC{% else %}TOTAL{% endif %}</strong></td>
+                    <td><strong>{% if show_vat %}TOTAL TTC{% else %}TOTAL{% endif %}</strong></td>
                     <td><strong>AVANCE</strong></td>
                     <td><strong>NET A PAYER</strong></td>
                 </tr>
@@ -636,18 +665,10 @@
                 </tr>
             </table>
 
-            {% if bill.vat_amount and bill.vat_amount > 0 %}
-            <div class="mobile-only mb-3 text-sm px-2">
-                <div class="flex justify-between border-b py-1"><span>Total HT</span><span>{{ bill.amount_ht | fr_thousands }}</span></div>
-                <div class="flex justify-between border-b py-1"><span>TVA{% if bill.vat_rate %} ({{ (bill.vat_rate * 100)|round(2) }}%){% endif %}</span><span>{{ bill.vat_amount | fr_thousands }}</span></div>
-                <div class="flex justify-between py-1 font-semibold"><span>Total TTC</span><span>{{ bill.total_amount | fr_thousands }}</span></div>
-            </div>
-            {% endif %}
-
             <!-- Mobile Totals Table -->
             <table class="mobile-total-section mobile-only">
                 <tr>
-                    <td><strong>💰 {% if bill.vat_amount and bill.vat_amount > 0 %}TOTAL TTC{% else %}TOTAL{% endif %}</strong></td>
+                    <td><strong>💰 {% if show_vat %}TOTAL TTC{% else %}TOTAL{% endif %}</strong></td>
                     <td><strong>💳 AVANCE</strong></td>
                     <td><strong>🧾 NET A PAYER</strong></td>
                 </tr>
