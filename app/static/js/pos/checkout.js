@@ -1,15 +1,62 @@
 // Checkout and payment functionality
+function getCartSubtotalHt() {
+    if (!window.cart || !window.cart.length) return 0;
+    return window.cart.reduce((s, item) => s + item.price * item.quantity, 0);
+}
+
+function updateCheckoutTotals() {
+    const receiptDataElement = document.getElementById('receipt-data');
+    if (!receiptDataElement) return;
+    const currency = receiptDataElement.dataset.shopCurrency;
+    const subHt = getCartSubtotalHt();
+    const applyEl = document.getElementById('vat-apply');
+    const rateEl = document.getElementById('vat-rate-percent');
+    const apply = applyEl && applyEl.checked;
+    let ratePct = 18;
+    if (rateEl && rateEl.value !== '') {
+        ratePct = parseFloat(String(rateEl.value).replace(',', '.')) || 0;
+    }
+    const rate = ratePct / 100;
+    let vatAmt = 0;
+    let ttc = subHt;
+    if (apply && ratePct > 0) {
+        vatAmt = Math.round(subHt * rate * 100) / 100;
+        ttc = subHt + vatAmt;
+    }
+    const subEl = document.getElementById('checkout-subtotal-ht');
+    const vatDisplay = document.getElementById('checkout-vat-amount');
+    const modalTotal = document.getElementById('modal-total');
+    if (subEl) subEl.textContent = `${formatNumberFR(subHt.toFixed(2))} ${currency}`;
+    if (vatDisplay) vatDisplay.textContent = `${formatNumberFR(vatAmt.toFixed(2))} ${currency}`;
+    if (modalTotal) modalTotal.value = `${formatNumberFR(ttc.toFixed(2))} ${currency}`;
+    window.__checkoutTtc = ttc;
+    window.__checkoutApplyVat = !!(apply && ratePct > 0);
+    window.__checkoutVatRatePercent = apply ? ratePct : 0;
+}
+window.updateCheckoutTotals = updateCheckoutTotals;
+
+function getCheckoutTotalTtc() {
+    if (typeof window.__checkoutTtc === 'number' && !isNaN(window.__checkoutTtc)) {
+        return window.__checkoutTtc;
+    }
+    const cartTotal = document.getElementById('cart-total');
+    if (!cartTotal) return 0;
+    const rawTotal = cartTotal.textContent
+        .replace(/[^\d,]/g, '')
+        .replace(/\s/g, '')
+        .replace(',', '.');
+    return parseFloat(rawTotal) || 0;
+}
+
 function initCheckoutEventListeners() {
+    const vatApply = document.getElementById('vat-apply');
+    const vatRate = document.getElementById('vat-rate-percent');
+    if (vatApply) vatApply.addEventListener('change', updateCheckoutTotals);
+    if (vatRate) vatRate.addEventListener('input', updateCheckoutTotals);
+
     // Calculate change
     document.getElementById('cash-received').addEventListener('input', function () {
-        // Step 1: Parse total - extract the raw value from the display
-        const cartTotal = document.getElementById('cart-total');
-        const rawTotal = cartTotal.textContent
-            .replace(/[^\d,]/g, '')       // Remove currency and non-numeric characters
-            .replace(/\s/g, '')           // Remove spaces
-            .replace(',', '.');           // Replace comma with dot for JS parsing
-
-        const total = parseFloat(rawTotal);
+        const total = getCheckoutTotalTtc();
 
         // Step 2: Get raw value from Cleave instance instead of parsing the formatted input
         const received = parseFloat(window.cashReceived.getRawValue()) || 0;
@@ -46,18 +93,15 @@ function initCheckoutEventListeners() {
 
             // Improved parsing of the total amount
             const cartTotal = document.getElementById('cart-total');
-            const totalRaw = cartTotal.textContent
-                .replace(/[^\d,]/g, '')  // Remove currency and non-numeric characters
-                .replace(/\s/g, '')      // Remove spaces
-                .replace(',', '.');      // Replace comma with dot for JS parsing
-            const total = parseFloat(totalRaw);
-
             const customerId = document.getElementById('selected-customer-id').value;
 
             if (isNaN(cashReceivedAmount) || cashReceivedAmount < 0) {
                 showNotification('Veuillez entrer un montant valide', 'error');
                 return;
             }
+
+            const applyVat = !!window.__checkoutApplyVat;
+            const vatRatePct = window.__checkoutVatRatePercent;
 
             const response = await fetch('/api/process_sale', {
                 method: 'POST',
@@ -74,7 +118,9 @@ function initCheckoutEventListeners() {
                     bill_number: billNumber,
                     client_id: customerId || null,
                     initial_payment: cashReceivedAmount,
-                    payment_method: 'cash'
+                    payment_method: 'cash',
+                    apply_vat: applyVat,
+                    vat_rate: applyVat ? vatRatePct : null
                 })
             });
 
@@ -262,7 +308,16 @@ function formatReceiptData(data) {
     // Format currency correctly
     const currencyText = ` ${shopCurrency}`;
 
-    // Format TOTAL
+    const vatAmt = data.vat_amount != null ? Number(data.vat_amount) : 0;
+    if (vatAmt > 0 && data.amount_ht != null) {
+        cmds += `Total HT:${" ".repeat(Math.max(0, lineWidth - 9 - formatNumber(data.amount_ht).length - currencyText.length))}${formatNumber(data.amount_ht)}${currencyText}\n`;
+        const vr = data.vat_rate != null ? Number(data.vat_rate) : 0;
+        const ratePctDisplay = vr > 0 && vr <= 1 ? (vr * 100).toFixed(2).replace(/\.?0+$/, '') : (vr > 0 ? String(vr) : '');
+        cmds += `TVA${ratePctDisplay ? ' (' + ratePctDisplay + '%)' : ''}:${" ".repeat(Math.max(0, lineWidth - 6 - formatNumber(vatAmt).length - currencyText.length))}${formatNumber(vatAmt)}${currencyText}\n`;
+        cmds += '-'.repeat(45) + '\n';
+    }
+
+    // Format TOTAL (TTC)
     const totalValue = formatNumber(data.total_amount);
     const totalLabel = "TOTAL:";
     const totalPadding = lineWidth - totalLabel.length - totalValue.length - currencyText.length;

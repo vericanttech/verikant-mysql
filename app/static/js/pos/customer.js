@@ -111,6 +111,9 @@ async function createCustomer(customerData) {
             selectCustomer(newCustomer);
             closeModal('newCustomerModal');
             openModal('checkoutModal');
+            if (typeof window.updateCheckoutTotals === 'function') {
+                window.updateCheckoutTotals();
+            }
             showNotification('Client créé avec succès', 'success');
             return newCustomer;
         } else {
@@ -121,6 +124,13 @@ async function createCustomer(customerData) {
         showNotification('Erreur lors de la création du client', 'error');
         return null;
     }
+}
+
+/**
+ * Initialize customer-related event listeners (alias for main.js)
+ */
+function initCustomerEventListeners() {
+    initCustomerEvents();
 }
 
 /**
@@ -146,14 +156,6 @@ function initCustomerEvents() {
         await createCustomer(customerData);
     });
 }
-
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize customer events if elements exist
-    if (customerSearch && document.getElementById('new-customer-btn')) {
-        initCustomerEvents();
-    }
-});
 
 // Export functions for use in other modules
 window.customerUtils = {

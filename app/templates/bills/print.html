@@ -614,10 +614,18 @@
                 </tbody>
             </table>
 
+            {% if bill.vat_amount and bill.vat_amount > 0 %}
+            <div class="desktop-only mb-3 text-sm" style="max-width: 320px; margin-left: auto;">
+                <div class="flex justify-between border-b py-1"><span>Total HT</span><span>{{ bill.amount_ht | fr_thousands }}</span></div>
+                <div class="flex justify-between border-b py-1"><span>TVA{% if bill.vat_rate %} ({{ (bill.vat_rate * 100)|round(2) }}%){% endif %}</span><span>{{ bill.vat_amount | fr_thousands }}</span></div>
+                <div class="flex justify-between py-1 font-semibold"><span>Total TTC</span><span>{{ bill.total_amount | fr_thousands }}</span></div>
+            </div>
+            {% endif %}
+
             <!-- Desktop Totals Table -->
             <table class="total-section desktop-only">
                 <tr>
-                    <td><strong>TOTAL</strong></td>
+                    <td><strong>{% if bill.vat_amount and bill.vat_amount > 0 %}TOTAL TTC{% else %}TOTAL{% endif %}</strong></td>
                     <td><strong>AVANCE</strong></td>
                     <td><strong>NET A PAYER</strong></td>
                 </tr>
@@ -628,10 +636,18 @@
                 </tr>
             </table>
 
+            {% if bill.vat_amount and bill.vat_amount > 0 %}
+            <div class="mobile-only mb-3 text-sm px-2">
+                <div class="flex justify-between border-b py-1"><span>Total HT</span><span>{{ bill.amount_ht | fr_thousands }}</span></div>
+                <div class="flex justify-between border-b py-1"><span>TVA{% if bill.vat_rate %} ({{ (bill.vat_rate * 100)|round(2) }}%){% endif %}</span><span>{{ bill.vat_amount | fr_thousands }}</span></div>
+                <div class="flex justify-between py-1 font-semibold"><span>Total TTC</span><span>{{ bill.total_amount | fr_thousands }}</span></div>
+            </div>
+            {% endif %}
+
             <!-- Mobile Totals Table -->
             <table class="mobile-total-section mobile-only">
                 <tr>
-                    <td><strong>💰 TOTAL</strong></td>
+                    <td><strong>💰 {% if bill.vat_amount and bill.vat_amount > 0 %}TOTAL TTC{% else %}TOTAL{% endif %}</strong></td>
                     <td><strong>💳 AVANCE</strong></td>
                     <td><strong>🧾 NET A PAYER</strong></td>
                 </tr>

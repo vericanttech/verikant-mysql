@@ -93,6 +93,11 @@ function updateCartDisplay() {
 
     // Save cart to localStorage
     localStorage.setItem('pos_cart', JSON.stringify(window.cart));
+
+    const checkoutModal = document.getElementById('checkoutModal');
+    if (checkoutModal && !checkoutModal.classList.contains('hidden') && typeof window.updateCheckoutTotals === 'function') {
+        window.updateCheckoutTotals();
+    }
 }
 
 function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
@@ -209,9 +214,11 @@ function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
 
     // Checkout process
     checkoutBtn.addEventListener('click', function() {
-        document.getElementById('modal-total').value = cartTotal.textContent;
         document.getElementById('cash-received').value = '';
         document.getElementById('change-amount').value = '';
         window.openModal('checkoutModal');
+        if (typeof window.updateCheckoutTotals === 'function') {
+            window.updateCheckoutTotals();
+        }
     });
 }

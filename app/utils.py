@@ -60,3 +60,26 @@ def number_to_words(number, currency='FCFA'):
     except Exception as e:
         print(f"Error converting number to words: {e}")
         return str(number)
+
+
+def recalculate_sales_bill_totals(bill):
+    """
+    Set amount_ht from line items, vat_amount from vat_rate, total_amount (TTC),
+    remaining_amount and status. Expects bill.id and line details to be consistent.
+    """
+    from app.models import SalesDetail
+
+    details = SalesDetail.query.filter_by(bill_id=bill.id).all()
+    amount_ht = sum(float(d.total_amount) for d in details)
+    bill.amount_ht = amount_ht
+    if bill.vat_rate is not None and float(bill.vat_rate) > 0:
+        bill.vat_amount = round(amount_ht * float(bill.vat_rate), 2)
+    else:
+        bill.vat_amount = 0
+    bill.total_amount = bill.amount_ht + bill.vat_amount
+    paid = float(bill.paid_amount or 0)
+    bill.remaining_amount = max(0, float(bill.total_amount) - paid)
+    if bill.remaining_amount == 0:
+        bill.status = 'paid'
+    else:
+        bill.status = 'partially_paid'

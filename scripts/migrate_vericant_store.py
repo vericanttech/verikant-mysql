@@ -68,12 +68,16 @@ def main():
         for row in src_cur.fetchall():
             client_id = client_map.get(row['client_name'])
             user_id = get_user_id_by_name(dest_session, row['cashier_name'])
+            ta = row['montant_payer'] + row['montant_restant']
             bill = SalesBill(
                 shop_id=SHOP_ID,
                 bill_number=row['bill_number'],
                 client_id=client_id,
                 user_id=user_id,
-                total_amount=(row['montant_payer'] + row['montant_restant']),
+                amount_ht=ta,
+                vat_rate=None,
+                vat_amount=0,
+                total_amount=ta,
                 paid_amount=row['montant_payer'],
                 remaining_amount=row['montant_restant'],
                 date=row['date'],

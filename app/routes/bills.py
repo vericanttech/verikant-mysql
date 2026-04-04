@@ -24,6 +24,24 @@ from datetime import date
 bills = Blueprint('bills', __name__)
 
 
+def _parse_vat_from_request(data):
+    """Return vat_rate (0–1) or None from POS JSON. Prices are HT."""
+    apply_vat = data.get('apply_vat') in (True, 'true', '1', 1)
+    raw = data.get('vat_rate')
+    if not apply_vat or raw is None or raw == '':
+        return None
+    try:
+        r = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if r <= 0:
+        return None
+    if r > 1.0:
+        r = r / 100.0
+    if r > 1.0:
+        r = 1.0
+    return r
+
 
 def get_shop_filtered_query(model, additional_filters=None):
     """Helper function to filter queries by shop_id"""
@@ -123,6 +141,9 @@ def print_bill(bill_id, print_format='standard'):
                     'price': detail.selling_price,
                     'total': detail.total_amount
                 } for detail in bill.sales_details],
+                'amount_ht': bill.amount_ht,
+                'vat_rate': bill.vat_rate,
+                'vat_amount': bill.vat_amount,
                 'total_amount': bill.total_amount,
                 'paid_amount': bill.paid_amount,
                 'remaining_amount': bill.remaining_amount
@@ -236,7 +257,13 @@ def process_sale():
         return jsonify({'error': 'No items in sale'}), 400
 
     try:
-        total_amount = sum(item['total'] for item in items)
+        amount_ht = sum(float(item['total']) for item in items)
+        vat_rate = _parse_vat_from_request(data)
+        if vat_rate is not None:
+            vat_amount = round(amount_ht * vat_rate, 2)
+        else:
+            vat_amount = 0.0
+        total_amount = amount_ht + vat_amount
 
         # Calculate remaining amount, ensuring it's never negative
         remaining_amount = max(0, total_amount - initial_payment)
@@ -251,6 +278,9 @@ def process_sale():
             shop_id=shop_id,
             bill_number=int(data.get('bill_number')),
             client_id=client_id,
+            amount_ht=amount_ht,
+            vat_rate=vat_rate,
+            vat_amount=vat_amount,
             total_amount=total_amount,
             paid_amount=actual_paid_amount,
             remaining_amount=remaining_amount,
@@ -336,6 +366,9 @@ def bill_list():
                 shop_id=current_user.current_shop_id,
                 bill_number=int(request.form.get('bill_number')),
                 client_id=client.id if client else None,
+                amount_ht=total_amount,
+                vat_rate=None,
+                vat_amount=0,
                 total_amount=total_amount,
                 paid_amount=initial_payment,
                 remaining_amount=total_amount - initial_payment,

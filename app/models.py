@@ -156,6 +156,10 @@ class SalesBill(ShopModel, TimestampMixin):
     client_id = db.Column(db.Integer, db.ForeignKey('clients.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     total_amount = db.Column(db.REAL, nullable=False)
+    # HT = sum of line totals (hors TVA). TTC = amount_ht + vat_amount.
+    amount_ht = db.Column(db.REAL, nullable=False)
+    vat_rate = db.Column(db.REAL, nullable=True)
+    vat_amount = db.Column(db.REAL, nullable=False, server_default='0')
     paid_amount = db.Column(db.REAL, nullable=False, server_default='0')
     remaining_amount = db.Column(db.REAL, nullable=False, server_default='0')
     date = db.Column(db.String(32), nullable=False)

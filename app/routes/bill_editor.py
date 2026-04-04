@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import SalesBill, SalesDetail, Client, Product
 from functools import wraps
-from app.utils import admin_required
+from app.utils import admin_required, recalculate_sales_bill_totals
 
 bill_editor = Blueprint('bill_editor', __name__)
 
@@ -37,15 +37,10 @@ def add_product_to_bill():
     existing_detail = SalesDetail.query.filter_by(bill_id=bill.id, product_id=product_id).first()
     if existing_detail:
         # Update existing item
-        old_total = existing_detail.total_amount
         existing_detail.quantity += quantity
         if price != existing_detail.selling_price:
             existing_detail.selling_price = price
         existing_detail.total_amount = existing_detail.quantity * existing_detail.selling_price
-        # Update bill totals
-        difference = existing_detail.total_amount - old_total
-        bill.total_amount += difference
-        bill.remaining_amount += difference
     else:
         # Add new item
         product = Product.query.get(product_id)
@@ -57,9 +52,8 @@ def add_product_to_bill():
             buying_price=product.buying_price,
             total_amount=quantity * price
         )
-        bill.total_amount += detail.total_amount
-        bill.remaining_amount += detail.total_amount
         db.session.add(detail)
+    recalculate_sales_bill_totals(bill)
     db.session.commit()
     flash("Article ajouté ou mis à jour", "success")
     return redirect(url_for('bills.bill_detail', bill_id=bill.id))
@@ -70,9 +64,9 @@ def add_product_to_bill():
 def delete_product_from_bill():
     detail = SalesDetail.query.get(request.form['detail_id'])
     bill = SalesBill.query.get(detail.bill_id)
-    bill.total_amount -= detail.total_amount
-    bill.remaining_amount -= detail.total_amount
     db.session.delete(detail)
+    db.session.flush()
+    recalculate_sales_bill_totals(bill)
     db.session.commit()
     return redirect(url_for('bills.bill_detail', bill_id=bill.id))
 
@@ -81,12 +75,10 @@ def delete_product_from_bill():
 @admin_required
 def update_product_price():
     detail = SalesDetail.query.get(request.form['detail_id'])
-    old_total = detail.total_amount
     new_price = float(request.form['new_price'])
     detail.selling_price = new_price
     detail.total_amount = detail.quantity * new_price
     bill = SalesBill.query.get(detail.bill_id)
-    bill.total_amount += detail.total_amount - old_total
-    bill.remaining_amount += detail.total_amount - old_total
+    recalculate_sales_bill_totals(bill)
     db.session.commit()
     return redirect(url_for('bills.bill_detail', bill_id=bill.id))

@@ -129,8 +129,18 @@
                             </span>
                         </div>
                         <div class="border-t border-gray-200 my-2 pt-2"></div>
+                        {% if bill.vat_amount and bill.vat_amount > 0 %}
                         <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-medium">Montant Total:</span>
+                            <span class="text-gray-700 font-medium">Total HT:</span>
+                            <span class="text-gray-800">{{ bill.amount_ht | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700 font-medium">TVA{% if bill.vat_rate %} ({{ (bill.vat_rate * 100)|round(2) }}%){% endif %}:</span>
+                            <span class="text-gray-800">{{ bill.vat_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700 font-medium">{% if bill.vat_amount and bill.vat_amount > 0 %}Total TTC{% else %}Montant Total{% endif %}:</span>
                             <span class="text-gray-800 font-semibold">{{ bill.total_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
                         </div>
                         <div class="flex justify-between items-center">
