@@ -20,7 +20,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# Root-level Python/build lib only (bare "lib/" ignored app/static/js/lib for Lucide)
+/lib/
 lib64/
 parts/
 sdist/

@@ -31,6 +31,8 @@ A comprehensive Point of Sale and Business Management System built with Flask.
    pip install -r requirements.txt
    ```
 
+   **Optional (Node, for Tailwind / refreshing Lucide):** `npm install` copies `lucide.min.js` from the `lucide` package into `app/static/js/lib/` (also run `npm run copy-lucide` after upgrading `lucide` in `package.json`). The built file is committed so the app works without Node on the server.
+
 4. Configure the database (optional):
 
    - **Default:** SQLite under `instance/shop.db` if you do not set a URI.

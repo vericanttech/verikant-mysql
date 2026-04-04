@@ -8,7 +8,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tailwindcss -i ./app/static/css/tailwind-input.css -o ./app/static/css/style.css --watch"
+    "build": "tailwindcss -i ./app/static/css/tailwind-input.css -o ./app/static/css/style.css --watch",
+    "copy-lucide": "node -e \"require('fs').mkdirSync('app/static/js/lib',{recursive:true}); require('fs').copyFileSync('node_modules/lucide/dist/umd/lucide.min.js','app/static/js/lib/lucide.min.js'); console.log('Copied lucide.min.js');\"",
+    "postinstall": "node -e \"try { require('fs').mkdirSync('app/static/js/lib',{recursive:true}); require('fs').copyFileSync('node_modules/lucide/dist/umd/lucide.min.js','app/static/js/lib/lucide.min.js'); } catch (e) { if (e.code !== 'ENOENT') throw e; }\""
   },
   "repository": {
     "type": "git",
