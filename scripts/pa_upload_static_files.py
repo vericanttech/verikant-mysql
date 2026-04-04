@@ -5,17 +5,20 @@ Docs: https://help.pythonanywhere.com/pages/API/
 Requires:
   pip install requests
 
-Authentication (never commit these):
-  set PA_API_TOKEN=your_token_from_Account_API_token_tab
-  set PA_DEPLOY_USERNAME=vericant
+Loads project root ``.env`` (same as the Flask app). Set:
 
-Example (from project root, after copying uploads back locally):
-  python scripts/pa_upload_static_files.py --source app/static/uploads
+  PA_API_TOKEN          — Account → API token (never commit)
+  PA_DEPLOY_USERNAME    — e.g. vericant
+  PA_API_HOST           — optional, default www.pythonanywhere.com
+  PA_UPLOAD_REMOTE_PREFIX — optional, remote absolute path prefix
+  PA_UPLOAD_SOURCE      — optional, local folder (relative to project root)
+  PA_UPLOAD_DELAY       — optional, seconds between requests (default 1.6)
 
-Rate limit: ~40 requests/minute — this script pauses between uploads.
+Example:
+  python scripts/pa_upload_static_files.py
+  python scripts/pa_upload_static_files.py --source app/static/uploads --dry-run
 
-Remote path prefix (default matches your PA app):
-  /home/vericant/verikant-mysql/app/static/uploads
+Rate limit: ~40 requests/minute — pauses between uploads.
 """
 from __future__ import annotations
 
@@ -24,6 +27,8 @@ import os
 import sys
 import time
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 try:
     import requests
@@ -34,6 +39,14 @@ except ImportError:
 _root = Path(__file__).resolve().parent.parent
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
+
+
+def _default_upload_source() -> Path:
+    raw = os.environ.get("PA_UPLOAD_SOURCE", "").strip()
+    if raw:
+        p = Path(raw)
+        return p if p.is_absolute() else (_root / p)
+    return _root / "app" / "static" / "uploads"
 
 
 def _build_url(host: str, username: str, remote_file_path: str) -> str:
@@ -64,38 +77,52 @@ def upload_one(
 
 
 def main() -> int:
+    load_dotenv(_root / ".env")
+
+    default_remote = os.environ.get(
+        "PA_UPLOAD_REMOTE_PREFIX",
+        "/home/vericant/verikant-mysql/app/static/uploads",
+    ).strip()
+    default_host = os.environ.get("PA_API_HOST", "www.pythonanywhere.com").strip()
+    default_user = os.environ.get("PA_DEPLOY_USERNAME", "").strip()
+    default_token = os.environ.get("PA_API_TOKEN", "").strip()
+    try:
+        default_delay = float(os.environ.get("PA_UPLOAD_DELAY", "1.6"))
+    except ValueError:
+        default_delay = 1.6
+
     p = argparse.ArgumentParser(description="Upload folder to PythonAnywhere via Files API.")
     p.add_argument(
         "--source",
         type=Path,
-        default=_root / "app" / "static" / "uploads",
-        help="Local directory to upload (default: app/static/uploads)",
+        default=_default_upload_source(),
+        help="Local directory (default: PA_UPLOAD_SOURCE or app/static/uploads)",
     )
     p.add_argument(
         "--remote-prefix",
-        default="/home/vericant/verikant-mysql/app/static/uploads",
-        help="Absolute path on PA where files should appear",
+        default=default_remote,
+        help="Absolute path on PA (default: PA_UPLOAD_REMOTE_PREFIX or .../uploads)",
     )
     p.add_argument(
         "--host",
-        default=os.environ.get("PA_API_HOST", "www.pythonanywhere.com"),
-        help="www.pythonanywhere.com or eu.pythonanywhere.com",
+        default=default_host,
+        help="www.pythonanywhere.com or eu.pythonanywhere.com (default: PA_API_HOST)",
     )
     p.add_argument(
         "--username",
-        default=os.environ.get("PA_DEPLOY_USERNAME", "").strip(),
-        help="PA username (or set PA_DEPLOY_USERNAME)",
+        default=default_user,
+        help="PA username (default: PA_DEPLOY_USERNAME)",
     )
     p.add_argument(
         "--token",
-        default=os.environ.get("PA_API_TOKEN", "").strip(),
-        help="API token (or set PA_API_TOKEN)",
+        default=default_token,
+        help="API token (default: PA_API_TOKEN from .env)",
     )
     p.add_argument(
         "--delay",
         type=float,
-        default=1.6,
-        help="Seconds between requests (stay under ~40/min)",
+        default=default_delay,
+        help="Seconds between requests (default: PA_UPLOAD_DELAY or 1.6)",
     )
     p.add_argument(
         "--dry-run",
@@ -108,7 +135,7 @@ def main() -> int:
     username = args.username
     if not token or not username:
         print(
-            "Set PA_API_TOKEN and PA_DEPLOY_USERNAME (or pass --token / --username).",
+            "Set PA_API_TOKEN and PA_DEPLOY_USERNAME in .env (or pass --token / --username).",
             file=sys.stderr,
         )
         return 1
