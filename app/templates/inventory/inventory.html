@@ -234,8 +234,17 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Photo (optionnel)</label>
                         <input type="file" name="product_image" id="add_product_image" accept="image/*"
                                class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
-                        <p class="text-xs text-gray-500 mt-1">Redimensionnée dans le navigateur avant envoi.</p>
-                        <img id="add_product_image_preview" src="" alt="" class="mt-2 max-h-28 rounded border border-gray-200 object-cover hidden" width="112" height="112">
+                        <p class="text-xs text-gray-500 mt-1 mb-2">Redimensionnée dans le navigateur avant envoi.</p>
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 w-24 h-24 rounded-lg border-2 border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center">
+                                <img id="add_product_image_preview" src="" alt="Aperçu" class="max-w-full max-h-full object-cover hidden" width="96" height="96">
+                                <span id="add_product_image_placeholder" class="text-xs text-gray-400 text-center px-2">Aperçu</span>
+                            </div>
+                            <div class="min-w-0 flex-1 pt-1">
+                                <p class="text-xs font-medium text-gray-600">Fichier sélectionné</p>
+                                <p id="add_product_image_filename" class="text-xs text-gray-500 truncate" title=""></p>
+                            </div>
+                        </div>
                     </div>
                     <div class="mb-6">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Produit</label>
@@ -308,14 +317,23 @@
                     <input type="hidden" name="product_id" id="edit_product_id">
                     <div class="mb-6">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Photo</label>
-                        <img id="edit_product_image_preview" src="" alt="" class="mb-2 max-h-28 rounded border border-gray-200 object-cover hidden" width="112" height="112">
                         <input type="file" name="product_image" id="edit_product_image" accept="image/*"
                                class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
-                        <label class="mt-2 flex items-center gap-2 text-sm text-gray-700">
+                        <p class="text-xs text-gray-500 mt-1 mb-2">Nouvelle image redimensionnée dans le navigateur. Aperçu ci-dessous après choix du fichier.</p>
+                        <div class="flex items-start gap-3 mt-2">
+                            <div class="flex-shrink-0 w-24 h-24 rounded-lg border-2 border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center">
+                                <img id="edit_product_image_preview" src="" alt="Aperçu" class="max-w-full max-h-full object-cover hidden" width="96" height="96">
+                                <span id="edit_product_image_placeholder" class="text-xs text-gray-400 text-center px-2">Aperçu</span>
+                            </div>
+                            <div class="min-w-0 flex-1 pt-1">
+                                <p class="text-xs font-medium text-gray-600">Fichier sélectionné</p>
+                                <p id="edit_product_image_filename" class="text-xs text-gray-500 truncate" title=""></p>
+                            </div>
+                        </div>
+                        <label class="mt-3 flex items-center gap-2 text-sm text-gray-700">
                             <input type="checkbox" name="remove_product_image" id="remove_product_image" value="1" class="rounded border-gray-300">
                             Supprimer la photo actuelle
                         </label>
-                        <p class="text-xs text-gray-500 mt-1">Nouvelle image redimensionnée dans le navigateur.</p>
                     </div>
                     <div class="mb-6">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Produit</label>
@@ -436,15 +454,26 @@ const addProductBuying = new Cleave('#add_product_buying', {
     numeralThousandsGroupStyle: 'thousand'
 });
 
-// Modal handling functions
+// Product image preview (object URLs revoked when replaced or modal resets)
+let addProductPreviewObjectUrl = null;
+let editProductPreviewObjectUrl = null;
+let editProductServerImageUrl = '';
 
 const openModal = (modalId) => {
     const modal = document.getElementById(modalId);
     if (modalId === 'addProductModal') {
+        if (addProductPreviewObjectUrl) {
+            URL.revokeObjectURL(addProductPreviewObjectUrl);
+            addProductPreviewObjectUrl = null;
+        }
         const af = document.getElementById('add_product_image');
         const ap = document.getElementById('add_product_image_preview');
+        const aph = document.getElementById('add_product_image_placeholder');
+        const afn = document.getElementById('add_product_image_filename');
         if (af) af.value = '';
         if (ap) { ap.classList.add('hidden'); ap.removeAttribute('src'); }
+        if (aph) aph.classList.remove('hidden');
+        if (afn) { afn.textContent = ''; afn.removeAttribute('title'); }
     }
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -486,14 +515,106 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const addImgInput = document.getElementById('add_product_image');
     const addImgPreview = document.getElementById('add_product_image_preview');
+    const addImgPlaceholder = document.getElementById('add_product_image_placeholder');
+    const addImgFilename = document.getElementById('add_product_image_filename');
     if (addImgInput && addImgPreview) {
         addImgInput.addEventListener('change', function () {
+            if (addProductPreviewObjectUrl) {
+                URL.revokeObjectURL(addProductPreviewObjectUrl);
+                addProductPreviewObjectUrl = null;
+            }
             if (!addImgInput.files[0]) {
                 addImgPreview.classList.add('hidden');
+                addImgPreview.removeAttribute('src');
+                if (addImgPlaceholder) addImgPlaceholder.classList.remove('hidden');
+                if (addImgFilename) { addImgFilename.textContent = ''; addImgFilename.removeAttribute('title'); }
                 return;
             }
-            addImgPreview.src = URL.createObjectURL(addImgInput.files[0]);
+            addProductPreviewObjectUrl = URL.createObjectURL(addImgInput.files[0]);
+            addImgPreview.src = addProductPreviewObjectUrl;
             addImgPreview.classList.remove('hidden');
+            if (addImgPlaceholder) addImgPlaceholder.classList.add('hidden');
+            if (addImgFilename) {
+                addImgFilename.textContent = addImgInput.files[0].name;
+                addImgFilename.setAttribute('title', addImgInput.files[0].name);
+            }
+        });
+    }
+
+    const editImgInput = document.getElementById('edit_product_image');
+    const editImgPreview = document.getElementById('edit_product_image_preview');
+    const editImgPlaceholder = document.getElementById('edit_product_image_placeholder');
+    const editImgFilename = document.getElementById('edit_product_image_filename');
+    function applyEditPreviewFromServer(url) {
+        if (editProductPreviewObjectUrl) {
+            URL.revokeObjectURL(editProductPreviewObjectUrl);
+            editProductPreviewObjectUrl = null;
+        }
+        if (!editImgPreview || !editImgPlaceholder) return;
+        if (url) {
+            editImgPreview.src = url;
+            editImgPreview.classList.remove('hidden');
+            editImgPlaceholder.classList.add('hidden');
+            editImgPlaceholder.textContent = 'Aperçu';
+            if (editImgFilename) {
+                editImgFilename.textContent = 'Photo actuelle';
+                editImgFilename.removeAttribute('title');
+            }
+        } else {
+            editImgPreview.removeAttribute('src');
+            editImgPreview.classList.add('hidden');
+            editImgPlaceholder.classList.remove('hidden');
+            editImgPlaceholder.textContent = 'Aperçu';
+            if (editImgFilename) { editImgFilename.textContent = ''; editImgFilename.removeAttribute('title'); }
+        }
+    }
+    if (editImgInput) {
+        editImgInput.addEventListener('change', function () {
+            if (!editImgInput.files[0]) {
+                applyEditPreviewFromServer(editProductServerImageUrl);
+                return;
+            }
+            if (editProductPreviewObjectUrl) {
+                URL.revokeObjectURL(editProductPreviewObjectUrl);
+                editProductPreviewObjectUrl = null;
+            }
+            editProductPreviewObjectUrl = URL.createObjectURL(editImgInput.files[0]);
+            if (editImgPreview) {
+                editImgPreview.src = editProductPreviewObjectUrl;
+                editImgPreview.classList.remove('hidden');
+            }
+            if (editImgPlaceholder) editImgPlaceholder.classList.add('hidden');
+            if (editImgFilename) {
+                editImgFilename.textContent = editImgInput.files[0].name;
+                editImgFilename.setAttribute('title', editImgInput.files[0].name);
+            }
+        });
+    }
+    var removePhotoCb = document.getElementById('remove_product_image');
+    if (removePhotoCb) {
+        removePhotoCb.addEventListener('change', function () {
+            if (editProductPreviewObjectUrl) {
+                URL.revokeObjectURL(editProductPreviewObjectUrl);
+                editProductPreviewObjectUrl = null;
+            }
+            if (editImgInput) editImgInput.value = '';
+            if (removePhotoCb.checked) {
+                if (editImgPreview) {
+                    editImgPreview.removeAttribute('src');
+                    editImgPreview.classList.add('hidden');
+                }
+                if (editImgPlaceholder) {
+                    editImgPlaceholder.textContent = 'Sera supprimée';
+                    editImgPlaceholder.classList.remove('hidden');
+                }
+                if (editImgFilename) {
+                    editImgFilename.textContent = 'Suppression à l\'enregistrement';
+                    editImgFilename.removeAttribute('title');
+                }
+            } else {
+                if (editImgPlaceholder) editImgPlaceholder.textContent = 'Aperçu';
+                applyEditPreviewFromServer(editProductServerImageUrl);
+            }
         });
     }
 
@@ -592,19 +713,38 @@ function editProduct(id, name, selling_price, buying_price, stock, min_stock, im
     document.getElementById('edit_stock').value = stock;
     document.getElementById('edit_min_stock').value = min_stock || 0;
 
+    if (editProductPreviewObjectUrl) {
+        URL.revokeObjectURL(editProductPreviewObjectUrl);
+        editProductPreviewObjectUrl = null;
+    }
+    editProductServerImageUrl = imageUrl || '';
+
     var removeCb = document.getElementById('remove_product_image');
     if (removeCb) removeCb.checked = false;
     var editFile = document.getElementById('edit_product_image');
     if (editFile) editFile.value = '';
+
     var prev = document.getElementById('edit_product_image_preview');
-    if (prev) {
-        if (imageUrl) {
+    var ph = document.getElementById('edit_product_image_placeholder');
+    var fn = document.getElementById('edit_product_image_filename');
+    if (ph) ph.textContent = 'Aperçu';
+    if (imageUrl) {
+        if (prev) {
             prev.src = imageUrl;
             prev.classList.remove('hidden');
-        } else {
+        }
+        if (ph) ph.classList.add('hidden');
+        if (fn) {
+            fn.textContent = 'Photo actuelle';
+            fn.removeAttribute('title');
+        }
+    } else {
+        if (prev) {
             prev.removeAttribute('src');
             prev.classList.add('hidden');
         }
+        if (ph) ph.classList.remove('hidden');
+        if (fn) { fn.textContent = ''; fn.removeAttribute('title'); }
     }
 
     openModal('editProductModal');
