@@ -137,6 +137,9 @@ function initCustomerEventListeners() {
  * Initialize customer-related event listeners
  */
 function initCustomerEvents() {
+    if (!customerSearch || !customerDetails) {
+        return;
+    }
     // Customer search with debounce
     customerSearch.addEventListener('input', debounce((e) => {
         searchCustomers(e.target.value.trim());
@@ -158,6 +161,7 @@ function initCustomerEvents() {
 }
 
 // Export functions for use in other modules
+window.initCustomerEventListeners = initCustomerEventListeners;
 window.customerUtils = {
     selectCustomer,
     clearCustomerSelection,

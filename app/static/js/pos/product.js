@@ -61,25 +61,7 @@ function loadProducts() {
             products = data.products;
             renderProducts(data);
             hideLoading();
-            
-            // Add event listeners to "Add to cart" buttons
-            document.querySelectorAll('.add-to-cart').forEach(button => {
-                button.addEventListener('click', function() {
-                    const productItem = this.closest('.product-item');
-                    if (productItem) {
-                        const productId = productItem.getAttribute('data-id');
-                        const productName = productItem.getAttribute('data-name');
-                        const productPrice = parseFloat(productItem.getAttribute('data-price'));
-                        const productStock = parseInt(productItem.getAttribute('data-stock'));
-                        
-                        if (productStock > 0) {
-                            addToCart(productId, productName, productPrice, 1);
-                        } else {
-                            showNotification('Ce produit est en rupture de stock', 'warning');
-                        }
-                    }
-                });
-            });
+            // Add-to-cart is handled by event delegation on #products-grid in cart.js
         })
         .catch(error => {
             console.error('Error loading products:', error);

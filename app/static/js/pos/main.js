@@ -22,7 +22,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize event listeners
     initCartEventListeners(cartItems, cartTotal, checkoutBtn);
     initCheckoutEventListeners();
-    initCustomerEventListeners(customerSearch, customerDetails);
+    if (typeof window.initCustomerEventListeners === 'function') {
+        window.initCustomerEventListeners(customerSearch, customerDetails);
+    }
     initModalEventListeners();
 
     // Global functions that need to be accessible

@@ -103,34 +103,37 @@ function updateCartDisplay() {
 function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
     // Add to cart using event delegation
     document.getElementById('products-grid').addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('add-to-cart')) {
-            const productCard = e.target.closest('.product-item');
-            const productId = productCard.getAttribute('data-id');
-            const productName = productCard.getAttribute('data-name');
-            const price = parseFloat(productCard.getAttribute('data-price'));
-            const stock = parseInt(productCard.getAttribute('data-stock'));
-
-            const existingItem = window.cart.find(item => item.productId === productId);
-            if (existingItem) {
-                if (existingItem.quantity < stock) {
-                    existingItem.quantity++;
-                } else {
-                    showNotification('Stock insuffisant !', 'error');
-                    return;
-                }
-            } else {
-                window.cart.push({
-                    productId,
-                    name: productName,
-                    originalPrice: price,
-                    price: price,
-                    quantity: 1,
-                    maxStock: stock
-                });
-            }
-            updateCartDisplay();
-            showNotification('Article ajouté au panier', 'success');
+        const addBtn = e.target.closest('.add-to-cart');
+        if (!addBtn || addBtn.disabled) {
+            return;
         }
+        const productCard = addBtn.closest('.product-item');
+        if (!productCard) return;
+        const productId = productCard.getAttribute('data-id');
+        const productName = productCard.getAttribute('data-name');
+        const price = parseFloat(productCard.getAttribute('data-price'));
+        const stock = parseInt(productCard.getAttribute('data-stock'));
+
+        const existingItem = window.cart.find(item => item.productId === productId);
+        if (existingItem) {
+            if (existingItem.quantity < stock) {
+                existingItem.quantity++;
+            } else {
+                showNotification('Stock insuffisant !', 'error');
+                return;
+            }
+        } else {
+            window.cart.push({
+                productId,
+                name: productName,
+                originalPrice: price,
+                price: price,
+                quantity: 1,
+                maxStock: stock
+            });
+        }
+        updateCartDisplay();
+        showNotification('Article ajouté au panier', 'success');
     });
 
     // Cart item controls using event delegation
