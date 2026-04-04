@@ -71,6 +71,13 @@ def create_app():
     if ssh_tunnel is not None:
         app.config['PA_SSH_TUNNEL_ACTIVE'] = True
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # MySQL (e.g. PythonAnywhere) often closes idle connections; pooled sockets
+    # then fail with OperationalError 2013 "Lost connection ... during query".
+    if database_url.startswith('mysql'):
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'pool_pre_ping': True,
+            'pool_recycle': 280,
+        }
 
     # Behind HTTPS reverse proxy (Google Cloud Run, etc.)
     if os.environ.get('K_SERVICE'):
