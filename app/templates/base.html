@@ -9,6 +9,13 @@
     <link rel="icon" type="image/x-icon" href="/static/images/vericant-icon.svg">
 </head>
 <body class="bg-gray-50">
+    <!-- Simple offline notice only (no service worker / form queue) -->
+    <div id="offlineAlert" class="hidden fixed top-0 left-0 right-0 bg-red-500 text-white p-4 text-center z-50">
+        <p class="flex items-center justify-center">
+            <i data-lucide="wifi-off" class="w-5 h-5 mr-2"></i>
+            Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées.
+        </p>
+    </div>
     {% if current_user.is_authenticated %}
     <div class="min-h-screen flex">
         <!-- Sidebar with mobile-only close button -->
@@ -570,74 +577,19 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
     function handleConnectionChange() {
-    const offlineAlert = document.getElementById('offlineAlert');
-
-    if (!navigator.onLine) {
-        offlineAlert.classList.remove('hidden');
-        // Store any unsaved form data in localStorage
-        saveFormsToLocalStorage();
-    } else {
-        offlineAlert.classList.add('hidden');
-        // Try to sync any stored data
-        syncStoredData();
-    }
-}
-
-// Listen for online/offline events
-window.addEventListener('online', handleConnectionChange);
-window.addEventListener('offline', handleConnectionChange);
-
-// Initial check
-handleConnectionChange();
-
-// Save form data when offline
-function saveFormsToLocalStorage() {
-    document.querySelectorAll('form').forEach(form => {
-        form.addEventListener('submit', (e) => {
-            if (!navigator.onLine) {
-                e.preventDefault();
-                const formData = new FormData(form);
-                const data = Object.fromEntries(formData.entries());
-                localStorage.setItem(`form_${Date.now()}`, JSON.stringify({
-                    action: form.action,
-                    method: form.method,
-                    data: data
-                }));
-                alert('Les données seront synchronisées lorsque vous serez en ligne.');
-            }
-        });
-    });
-}
-
-// Sync stored data when back online
-function syncStoredData() {
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('form_')) {
-            const storedData = JSON.parse(localStorage.getItem(key));
-            fetch(storedData.action, {
-                method: storedData.method,
-                body: JSON.stringify(storedData.data),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }).then(() => {
-                localStorage.removeItem(key);
-            }).catch(error => {
-                console.error('Sync failed:', error);
-            });
+        const offlineAlert = document.getElementById('offlineAlert');
+        if (!offlineAlert) return;
+        if (!navigator.onLine) {
+            offlineAlert.classList.remove('hidden');
+        } else {
+            offlineAlert.classList.add('hidden');
         }
     }
-}
-</script>
 
-<!-- Offline Alert Banner -->
-<div id="offlineAlert" class="hidden fixed top-0 left-0 right-0 bg-red-500 text-white p-4 text-center z-50">
-    <p class="flex items-center justify-center">
-        <i data-lucide="wifi-off" class="w-5 h-5 mr-2"></i>
-        Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées.
-    </p>
-</div>
+    window.addEventListener('online', handleConnectionChange);
+    window.addEventListener('offline', handleConnectionChange);
+    document.addEventListener('DOMContentLoaded', handleConnectionChange);
+</script>
 
 <!-- Mobile Bottom Navigation -->
 {% if current_user.is_authenticated %}
