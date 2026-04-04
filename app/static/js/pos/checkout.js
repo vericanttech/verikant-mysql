@@ -6,7 +6,10 @@ function getCartSubtotalHt() {
 
 function updateCheckoutTotals() {
     const receiptDataElement = document.getElementById('receipt-data');
-    if (!receiptDataElement) return;
+    if (!receiptDataElement) {
+        console.warn('[POS TVA] updateCheckoutTotals: #receipt-data missing');
+        return;
+    }
     const currency = receiptDataElement.dataset.shopCurrency;
     const subHt = getCartSubtotalHt();
     const applyEl = document.getElementById('vat-apply');
@@ -32,6 +35,15 @@ function updateCheckoutTotals() {
     window.__checkoutTtc = ttc;
     window.__checkoutApplyVat = !!(apply && ratePct > 0);
     window.__checkoutVatRatePercent = apply ? ratePct : 0;
+    console.log('[POS TVA] updateCheckoutTotals', {
+        subHt,
+        applyTva: apply,
+        ratePct,
+        vatAmt,
+        ttc,
+        __checkoutApplyVat: window.__checkoutApplyVat,
+        __checkoutVatRatePercent: window.__checkoutVatRatePercent
+    });
 }
 window.updateCheckoutTotals = updateCheckoutTotals;
 
@@ -51,8 +63,25 @@ function getCheckoutTotalTtc() {
 function initCheckoutEventListeners() {
     const vatApply = document.getElementById('vat-apply');
     const vatRate = document.getElementById('vat-rate-percent');
-    if (vatApply) vatApply.addEventListener('change', updateCheckoutTotals);
-    if (vatRate) vatRate.addEventListener('input', updateCheckoutTotals);
+    if (vatApply) {
+        vatApply.addEventListener('change', function (e) {
+            console.log('[POS TVA] vat-apply change', { checked: e.target.checked, id: e.target.id });
+            updateCheckoutTotals();
+        });
+        vatApply.addEventListener('click', function (e) {
+            console.log('[POS TVA] vat-apply click', { checked: e.target.checked });
+        });
+    } else {
+        console.warn('[POS TVA] #vat-apply not found — TVA checkbox missing from DOM');
+    }
+    if (vatRate) {
+        vatRate.addEventListener('input', function (e) {
+            console.log('[POS TVA] vat-rate-percent input', { value: e.target.value });
+            updateCheckoutTotals();
+        });
+    } else {
+        console.warn('[POS TVA] #vat-rate-percent not found');
+    }
 
     // Calculate change
     document.getElementById('cash-received').addEventListener('input', function () {
@@ -102,6 +131,7 @@ function initCheckoutEventListeners() {
 
             const applyVat = !!window.__checkoutApplyVat;
             const vatRatePct = window.__checkoutVatRatePercent;
+            console.log('[POS TVA] process_sale payload (vat)', { apply_vat: applyVat, vat_rate: applyVat ? vatRatePct : null });
 
             const response = await fetch('/api/process_sale', {
                 method: 'POST',

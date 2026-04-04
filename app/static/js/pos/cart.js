@@ -220,6 +220,7 @@ function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
         document.getElementById('cash-received').value = '';
         document.getElementById('change-amount').value = '';
         window.openModal('checkoutModal');
+        console.log('[POS TVA] checkout modal opened, cart lines:', window.cart?.length ?? 0);
         if (typeof window.updateCheckoutTotals === 'function') {
             window.updateCheckoutTotals();
         }
