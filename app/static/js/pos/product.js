@@ -116,9 +116,13 @@ function renderProducts(data) {
         productElement.setAttribute('data-price', product.selling_price);
         productElement.setAttribute('data-stock', product.stock);
         
+        const imgHtml = product.image_url
+            ? `<div class="mb-2"><img src="${product.image_url}" alt="" class="w-20 h-20 object-cover rounded border border-gray-100" loading="lazy" width="80" height="80"></div>`
+            : '';
         productElement.innerHTML = `
             <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow h-full">
                 <div class="p-4 flex flex-col items-center">
+                    ${imgHtml}
                     <h5 class="text-lg font-medium text-gray-900 mb-2">${product.name}</h5>
                     <p class="text-gray-600 mb-2">${product.currency || 'FCFA'} ${formatNumberFR(product.selling_price)}</p>
                     <p class="text-gray-500 mb-3">Stock : ${product.stock}</p>

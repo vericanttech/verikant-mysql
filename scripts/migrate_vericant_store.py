@@ -1,9 +1,12 @@
-import sys
-import os
+"""Legacy one-off: import from vericant-store SQLite into the app DB. Hardcoded SOURCE_DB — edit before use."""
 import sqlite3
+import sys
 from collections import defaultdict
+from pathlib import Path
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../flask_app/app')))
+_root = Path(__file__).resolve().parent.parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
 
 from app import create_app
 from app.extensions import db
@@ -101,4 +104,4 @@ def main():
         print('Migration from vericant-store.db complete.')
 
 if __name__ == '__main__':
-    main() 
+    main()

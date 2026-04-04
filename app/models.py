@@ -120,6 +120,8 @@ class Product(ShopModel, TimestampWithUpdateMixin):
     buying_price = db.Column(db.REAL, nullable=False)
     stock = db.Column(db.Integer, nullable=False, server_default='0')
     min_stock = db.Column(db.Integer, server_default='0')
+    # Relative to Flask static root, e.g. uploads/products/shop_1/uuid.jpg — optional thumbnail
+    image_path = db.Column(db.String(512), nullable=True)
 
     __table_args__ = (
         db.Index('idx_product_shop', 'shop_id'),

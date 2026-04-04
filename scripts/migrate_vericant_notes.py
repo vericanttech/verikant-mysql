@@ -1,8 +1,11 @@
-import sys
-import os
+"""Legacy one-off: import notes from vericant-notes SQLite. Hardcoded SOURCE_DB — edit before use."""
 import sqlite3
+import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+_root = Path(__file__).resolve().parent.parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
 
 from app import create_app
 from app.extensions import db
@@ -45,4 +48,4 @@ def main():
         print('Migration from vericant-notes.db complete.')
 
 if __name__ == '__main__':
-    main() 
+    main()

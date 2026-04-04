@@ -38,7 +38,7 @@ If `DATABASE_URL` or `SQLALCHEMY_DATABASE_URI` is set, the app uses it (with a s
 Prereqs: `gcloud` authenticated, APIs enabled (Cloud Run, Artifact Registry or Container Registry), billing enabled.
 
 ```bash
-cd pythonanywhere_pull
+cd verikant-mysql
 
 # Pick project / region
 gcloud config set project YOUR_PROJECT_ID

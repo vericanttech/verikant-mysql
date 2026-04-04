@@ -1,8 +1,21 @@
+"""Migrate notes from a JSON file into the app database (legacy one-off). Run from repo root:
+
+  python scripts/migration_script.py
+
+Uncomment and set ``notes_file_path`` at the bottom, or import ``migrate_notes_from_json``.
+"""
 import json
+import sys
 from datetime import datetime
-from app.extensions import db
-from app.models import Note  # Import your Note model
+from pathlib import Path
+
+_root = Path(__file__).resolve().parent.parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
+
 from app import create_app
+from app.extensions import db
+from app.models import Note
 
 
 def migrate_notes_from_json(json_file_path, shop_id=1, user_id=1):  # shop_id and user_id default to 1
@@ -75,5 +88,5 @@ def migrate_notes_from_json(json_file_path, shop_id=1, user_id=1):  # shop_id an
         return False
 
 
-#notes_file_path = r"C:\Users\casper\Desktop\sobafi2025\sobafi_notes.json"
-#migrate_notes_from_json(notes_file_path)  # shop_id and user_id will be 1 by default.
+# notes_file_path = r"C:\Users\casper\Desktop\sobafi2025\sobafi_notes.json"
+# migrate_notes_from_json(notes_file_path)  # shop_id and user_id will be 1 by default.

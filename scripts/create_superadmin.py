@@ -1,3 +1,4 @@
+"""Legacy SQLite helper: ensure superadmin column and user (hardcoded DB path — edit before use)."""
 import sqlite3
 from werkzeug.security import generate_password_hash
 

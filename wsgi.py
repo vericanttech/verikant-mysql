@@ -2,7 +2,7 @@
 WSGI entry point for PythonAnywhere (and other WSGI hosts).
 
 Web tab → WSGI configuration file should load this module and expose ``application``.
-Example path after upload: /home/YOURUSERNAME/pythonanywhere_pull/wsgi.py
+Example path on PythonAnywhere: /home/YOURUSERNAME/verikant-mysql/wsgi.py
 """
 from __future__ import annotations
 

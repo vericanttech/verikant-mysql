@@ -1,3 +1,9 @@
+import os
+import uuid
+from typing import Optional
+
+from werkzeug.utils import secure_filename
+
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, current_app, make_response
 from flask_login import login_required, current_user
 from app import db
@@ -13,6 +19,56 @@ from io import BytesIO
 
 
 inventory = Blueprint('inventory', __name__)
+
+_PRODUCT_IMAGE_MAX_BYTES = 900 * 1024  # after client resize; still guard on server
+_ALLOWED_IMAGE_EXT = {'jpg', 'jpeg', 'png', 'webp'}
+
+
+def _allowed_product_image(filename: str) -> bool:
+    if not filename or '.' not in filename:
+        return False
+    return filename.rsplit('.', 1)[1].lower() in _ALLOWED_IMAGE_EXT
+
+
+def _delete_product_image_file(relative_path: Optional[str]) -> None:
+    if not relative_path:
+        return
+    base = os.path.abspath(current_app.static_folder)
+    full = os.path.abspath(os.path.join(base, relative_path))
+    if not full.startswith(base + os.sep) and full != base:
+        return
+    if os.path.isfile(full):
+        try:
+            os.remove(full)
+        except OSError:
+            current_app.logger.exception('Could not remove product image %s', full)
+
+
+def _save_product_image(product: Product, file_storage) -> Optional[str]:
+    """Save uploaded file; return relative static path like uploads/products/shop_1/xxx.jpg"""
+    if not file_storage or not file_storage.filename:
+        return None
+    if not _allowed_product_image(file_storage.filename):
+        return None
+    file_storage.seek(0, os.SEEK_END)
+    size = file_storage.tell()
+    file_storage.seek(0)
+    if size > _PRODUCT_IMAGE_MAX_BYTES:
+        return None
+
+    shop_id = product.shop_id
+    folder = os.path.join(current_app.static_folder, 'uploads', 'products', f'shop_{shop_id}')
+    os.makedirs(folder, exist_ok=True)
+
+    ext = secure_filename(file_storage.filename).rsplit('.', 1)[-1].lower()
+    if ext == 'jpeg':
+        ext = 'jpg'
+    if ext not in _ALLOWED_IMAGE_EXT:
+        ext = 'jpg'
+    fname = f'{uuid.uuid4().hex}.{ext}'
+    full_path = os.path.join(folder, fname)
+    file_storage.save(full_path)
+    return f'uploads/products/shop_{shop_id}/{fname}'
 
 
 @inventory.route('/inventory', methods=['GET', 'POST'])
@@ -36,6 +92,14 @@ def product_list():
                 )
                 db.session.add(product)
                 db.session.flush()  # This gets us the product.id
+
+                img = request.files.get('product_image')
+                if img and img.filename:
+                    rel = _save_product_image(product, img)
+                    if rel:
+                        product.image_path = rel
+                    else:
+                        flash("L'image n'a pas été enregistrée (type ou taille non accepté).", 'warning')
 
                 # Create initial stock movement
                 initial_stock = int(request.form.get('stock'))
@@ -61,6 +125,9 @@ def product_list():
         elif 'edit_product' in request.form:
             try:
                 product = Product.query.get_or_404(request.form.get('product_id'))
+                if product.shop_id != shop_id:
+                    flash('Produit introuvable pour cette boutique.', 'error')
+                    return redirect(url_for('inventory.product_list'))
                 old_stock = product.stock
                 new_stock = int(request.form.get('stock'))
 
@@ -70,6 +137,19 @@ def product_list():
                 product.stock = new_stock
                 product.min_stock = int(request.form.get('min_stock', 0))
                 product.category_id = request.form.get('category_id')
+
+                if request.form.get('remove_product_image'):
+                    _delete_product_image_file(product.image_path)
+                    product.image_path = None
+                else:
+                    img = request.files.get('product_image')
+                    if img and img.filename:
+                        _delete_product_image_file(product.image_path)
+                        rel = _save_product_image(product, img)
+                        if rel:
+                            product.image_path = rel
+                        else:
+                            flash("L'image n'a pas été enregistrée (type ou taille non accepté).", 'warning')
 
                 # Create stock movement if stock changed
                 if new_stock != old_stock:
@@ -95,12 +175,17 @@ def product_list():
             try:
                 product_id = request.form.get('product_id')
                 product = Product.query.get_or_404(product_id)
+                if product.shop_id != shop_id:
+                    flash('Produit introuvable pour cette boutique.', 'error')
+                    return redirect(url_for('inventory.product_list'))
 
+                old_image = product.image_path
                 # Delete related stock movements first
                 StockMovement.query.filter_by(product_id=product.id).delete()
 
                 db.session.delete(product)
                 db.session.commit()
+                _delete_product_image_file(old_image)
                 flash('Product deleted successfully!', 'success')
             except Exception as e:
                 db.session.rollback()

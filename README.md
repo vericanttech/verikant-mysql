@@ -14,9 +14,10 @@ A comprehensive Point of Sale and Business Management System built with Flask.
 
 ## Installation
 
-1. Clone the repository:
+1. Clone the repository (default folder name matches the GitHub repo):
    ```bash
-   git clone https://github.com/yourusername/POS-Master.git
+   git clone https://github.com/vericanttech/verikant-mysql.git
+   cd verikant-mysql
    ```
 
 2. Create a virtual environment:

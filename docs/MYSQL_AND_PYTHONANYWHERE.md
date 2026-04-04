@@ -63,6 +63,7 @@ python scripts/migrate_sqlite_to_mysql.py --truncate --yes
 |------|------|
 | **`scripts/pa_reload_webapp.py`** | `POST` to the PA API to **reload** the web app after deploy. Env: `PA_API_TOKEN`, `PA_DEPLOY_USERNAME`, `PA_WEBAPP_DOMAIN`, `PA_API_HOST`. |
 | **`scripts/pa_upload_static_files.py`** | Uploads a local folder (default `app/static/uploads`) to PA via the **Files API**, file by file. Reads **`load_dotenv(.env)`**; supports `PA_API_TOKEN`, `PA_DEPLOY_USERNAME`, `PA_API_HOST`, `PA_UPLOAD_REMOTE_PREFIX`, `PA_UPLOAD_SOURCE`, `PA_UPLOAD_DELAY`. Requires `requests`. |
+| **`scripts/pull_pythonanywhere.py`** | **Download** a remote tree (default `/home/<user>/POS-Master`) into the **repo root** via the Files API. Env: `PA_API_TOKEN`, `PA_USERNAME`, `PA_REMOTE_PATH`, `PA_OUTPUT_DIR` (defaults to repo root), `PA_HOST`. |
 
 See [PythonAnywhere API help](https://help.pythonanywhere.com/pages/API/).
 
@@ -133,6 +134,8 @@ Full template: **`.env.example`**.
 
 ## 11. Index of files added or central to this work
 
+### 11a. Deployment & MySQL tooling (`scripts/`)
+
 | Path | Description |
 |------|-------------|
 | `scripts/migrate_sqlite_to_mysql.py` | Bulk copy SQLite → MySQL with FK order, dedup names, batching. |
@@ -140,6 +143,29 @@ Full template: **`.env.example`**.
 | `scripts/test_mysql_connection.py` | MySQL connection diagnostics. |
 | `scripts/pa_reload_webapp.py` | Reload PA web app via API. |
 | `scripts/pa_upload_static_files.py` | Upload local `uploads` tree via PA Files API (uses `.env`). |
+| `scripts/pull_pythonanywhere.py` | Download remote project folder into the repo via PA Files API. |
+
+### 11b. Other helper scripts (`scripts/` — not imported by the web app)
+
+Run from the **repository root** (e.g. `python scripts/<name>.py`). Each script adds the project root to `sys.path` so `from app import …` works.
+
+| Path | Description |
+|------|-------------|
+| `scripts/migration_script.py` | Import notes from JSON (`migrate_notes_from_json`; legacy paths in comments). |
+| `scripts/migrate_vericant_store.py` | One-off import from `vericant-store.db` (hardcoded `SOURCE_DB`). |
+| `scripts/migrate_vericant_notes.py` | One-off import from `vericant-notes.db`. |
+| `scripts/migrate_vericant_expenses.py` | One-off import from `vericant-expenses.db`. |
+| `scripts/init_db.py` | `db.create_all()` — dev only; production should use Alembic. |
+| `scripts/create_user.py` | Interactive CLI to create a user (`name` / password / role). |
+| `scripts/clean_store_data.py` | Deletes transactional data for one `shop_id` (destructive). |
+| `scripts/add_email_password_field.py` | Legacy raw `ALTER` for `shops.email_password` (SQLite-era). |
+| `scripts/create_superadmin.py` | Legacy SQLite: `superadmin` column + user (hardcoded `DB_PATH`). |
+| `scripts/create_employee_tables.py` | One-off `db.create_all()` for employee tables; prefer Alembic in production. |
+
+### 11c. App entry & deploy files
+
+| Path | Description |
+|------|-------------|
 | `wsgi.py` | WSGI `application` for hosting. |
 | `deploy/pythonanywhere_var_www_wsgi.py` | Paste-ready `/var/www/...` WSGI snippet for PA. |
 | `migrations/versions/b2c8e9f1a3d4_sales_bills_bill_number_bigint.py` | Alembic: `sales_bills.bill_number` → BIGINT. |

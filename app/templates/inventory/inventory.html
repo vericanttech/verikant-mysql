@@ -54,7 +54,7 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="mb-4 p-4 rounded {% if category == 'success' %}bg-green-100 text-green-700{% elif category == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                <div class="mb-4 p-4 rounded {% if category == 'success' %}bg-green-100 text-green-700{% elif category == 'error' %}bg-red-100 text-red-700{% elif category == 'warning' %}bg-amber-50 text-amber-900{% else %}bg-blue-100 text-blue-700{% endif %}">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -68,6 +68,7 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-20">Photo</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom du Produit</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prix de Vente</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prix d'Achat</th>
@@ -78,12 +79,19 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for product in products.items %}
                     <tr class="hover:bg-gray-50 {% if product.stock < 10 %}bg-red-50{% endif %}">
+                        <td class="px-4 py-3 whitespace-nowrap align-middle">
+                            {% if product.image_path %}
+                            <img src="{{ url_for('static', filename=product.image_path) }}" alt="" class="h-12 w-12 rounded object-cover border border-gray-200" loading="lazy" width="48" height="48">
+                            {% else %}
+                            <span class="inline-flex h-12 w-12 items-center justify-center rounded bg-gray-100 text-gray-400 text-xs">—</span>
+                            {% endif %}
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ product.name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ product.selling_price | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ product.buying_price | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap {% if product.stock < 10 %}text-red-600 font-medium{% endif %}">{{ product.stock }}</td>
                         <td class="px-6 py-4 whitespace-nowrap space-x-2">
-                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }})'>Modifier</button>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }}, {{ (url_for("static", filename=product.image_path) if product.image_path else "")|tojson }})'>Modifier</button>
 
                             <button class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm" onclick='deleteProduct({{ product.id }}, {{ product.name|tojson }})'>Supprimer</button>
 
@@ -100,12 +108,17 @@
         <div class="block sm:hidden">
             {% for product in products.items %}
             <div class="border p-4 rounded-lg shadow mb-4 {% if product.stock < 10 %}bg-red-50{% endif %}">
+                {% if product.image_path %}
+                <div class="mb-2">
+                    <img src="{{ url_for('static', filename=product.image_path) }}" alt="" class="h-20 w-20 rounded object-cover border border-gray-200" loading="lazy" width="80" height="80">
+                </div>
+                {% endif %}
                 <h3 class="text-lg font-bold">{{ product.name }}</h3>
                 <p class="text-gray-700">Prix de Vente: <span class="font-medium">{{ product.selling_price | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</span></p>
                 <p class="text-gray-700">Prix d'Achat: <span class="font-medium">{{ product.buying_price | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</span></p>
                 <p class="text-gray-700 {% if product.stock < 10 %}text-red-600 font-medium{% endif %}">Stock: {{ product.stock }}</p>
                 <div class="flex gap-2 mt-2">
-                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }})'>Modifier</button>
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }}, {{ (url_for("static", filename=product.image_path) if product.image_path else "")|tojson }})'>Modifier</button>
 
                     <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm" onclick='deleteProduct({{ product.id }}, {{ product.name|tojson }})'>Supprimer</button>
 
@@ -214,9 +227,16 @@
                     </svg>
                 </button>
             </div>
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 <div class="p-4">
                     <input type="hidden" name="add_product" value="1">
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Photo (optionnel)</label>
+                        <input type="file" name="product_image" id="add_product_image" accept="image/*"
+                               class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
+                        <p class="text-xs text-gray-500 mt-1">Redimensionnée dans le navigateur avant envoi.</p>
+                        <img id="add_product_image_preview" src="" alt="" class="mt-2 max-h-28 rounded border border-gray-200 object-cover hidden" width="112" height="112">
+                    </div>
                     <div class="mb-6">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Produit</label>
                         <input type="text" 
@@ -282,10 +302,21 @@
                     </svg>
                 </button>
             </div>
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 <div class="p-4">
                     <input type="hidden" name="edit_product" value="1">
                     <input type="hidden" name="product_id" id="edit_product_id">
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Photo</label>
+                        <img id="edit_product_image_preview" src="" alt="" class="mb-2 max-h-28 rounded border border-gray-200 object-cover hidden" width="112" height="112">
+                        <input type="file" name="product_image" id="edit_product_image" accept="image/*"
+                               class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
+                        <label class="mt-2 flex items-center gap-2 text-sm text-gray-700">
+                            <input type="checkbox" name="remove_product_image" id="remove_product_image" value="1" class="rounded border-gray-300">
+                            Supprimer la photo actuelle
+                        </label>
+                        <p class="text-xs text-gray-500 mt-1">Nouvelle image redimensionnée dans le navigateur.</p>
+                    </div>
                     <div class="mb-6">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Produit</label>
                         <input type="text" 
@@ -370,6 +401,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/product_image_resize.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
 <script>
 
@@ -408,6 +440,12 @@ const addProductBuying = new Cleave('#add_product_buying', {
 
 const openModal = (modalId) => {
     const modal = document.getElementById(modalId);
+    if (modalId === 'addProductModal') {
+        const af = document.getElementById('add_product_image');
+        const ap = document.getElementById('add_product_image_preview');
+        if (af) af.value = '';
+        if (ap) { ap.classList.add('hidden'); ap.removeAttribute('src'); }
+    }
     modal.classList.remove('hidden');
     modal.classList.add('flex');
 
@@ -446,31 +484,67 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.setAttribute('aria-hidden', 'true');
     });
 
-    // Handle Add Product form submission
+    const addImgInput = document.getElementById('add_product_image');
+    const addImgPreview = document.getElementById('add_product_image_preview');
+    if (addImgInput && addImgPreview) {
+        addImgInput.addEventListener('change', function () {
+            if (!addImgInput.files[0]) {
+                addImgPreview.classList.add('hidden');
+                return;
+            }
+            addImgPreview.src = URL.createObjectURL(addImgInput.files[0]);
+            addImgPreview.classList.remove('hidden');
+        });
+    }
+
+    // Handle Add Product form submission (resize image client-side, then submit)
     const addProductForm = document.querySelector('#addProductModal form');
     if (addProductForm) {
-        addProductForm.addEventListener('submit', function(e) {
-            // Get raw numeric values before submission
-            const sellingPrice = addProductSelling.getRawValue();
-            const buyingPrice = addProductBuying.getRawValue();
-
-            // Replace formatted values with raw values
-            document.getElementById('add_product_selling').value = sellingPrice;
-            document.getElementById('add_product_buying').value = buyingPrice;
+        addProductForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            document.getElementById('add_product_selling').value = addProductSelling.getRawValue();
+            document.getElementById('add_product_buying').value = addProductBuying.getRawValue();
+            const fileInput = document.getElementById('add_product_image');
+            if (fileInput && fileInput.files[0]) {
+                try {
+                    const blob = await resizeImageToBlob(fileInput.files[0], 480, 0.82);
+                    const dt = new DataTransfer();
+                    dt.items.add(new File([blob], 'product.jpg', { type: 'image/jpeg' }));
+                    fileInput.files = dt.files;
+                } catch (err) {
+                    console.error(err);
+                    alert('Image invalide ou trop lourde.');
+                    return;
+                }
+            }
+            addProductForm.submit();
         });
     }
 
     // Handle Edit Product form submission
     const editProductForm = document.querySelector('#editProductModal form');
     if (editProductForm) {
-        editProductForm.addEventListener('submit', function(e) {
-            // Get raw numeric values before submission
-            const sellingPrice = cleaveSelling.getRawValue();
-            const buyingPrice = cleaveBuying.getRawValue();
-
-            // Replace formatted values with raw values
-            document.getElementById('edit_selling_price').value = sellingPrice;
-            document.getElementById('edit_buying_price').value = buyingPrice;
+        editProductForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            document.getElementById('edit_selling_price').value = cleaveSelling.getRawValue();
+            document.getElementById('edit_buying_price').value = cleaveBuying.getRawValue();
+            const removeCb = document.getElementById('remove_product_image');
+            const fileInput = document.getElementById('edit_product_image');
+            if (removeCb && removeCb.checked) {
+                if (fileInput) fileInput.value = '';
+            } else if (fileInput && fileInput.files[0]) {
+                try {
+                    const blob = await resizeImageToBlob(fileInput.files[0], 480, 0.82);
+                    const dt = new DataTransfer();
+                    dt.items.add(new File([blob], 'product.jpg', { type: 'image/jpeg' }));
+                    fileInput.files = dt.files;
+                } catch (err) {
+                    console.error(err);
+                    alert('Image invalide ou trop lourde.');
+                    return;
+                }
+            }
+            editProductForm.submit();
         });
     }
 });
@@ -507,7 +581,7 @@ function exportAndSharePDF(event) {
 }
 
 // Product specific functions
-function editProduct(id, name, selling_price, buying_price, stock, min_stock) {
+function editProduct(id, name, selling_price, buying_price, stock, min_stock, imageUrl) {
     document.getElementById('edit_product_id').value = id;
     document.getElementById('edit_product_name').value = name;
 
@@ -517,6 +591,21 @@ function editProduct(id, name, selling_price, buying_price, stock, min_stock) {
 
     document.getElementById('edit_stock').value = stock;
     document.getElementById('edit_min_stock').value = min_stock || 0;
+
+    var removeCb = document.getElementById('remove_product_image');
+    if (removeCb) removeCb.checked = false;
+    var editFile = document.getElementById('edit_product_image');
+    if (editFile) editFile.value = '';
+    var prev = document.getElementById('edit_product_image_preview');
+    if (prev) {
+        if (imageUrl) {
+            prev.src = imageUrl;
+            prev.classList.remove('hidden');
+        } else {
+            prev.removeAttribute('src');
+            prev.classList.add('hidden');
+        }
+    }
 
     openModal('editProductModal');
 }

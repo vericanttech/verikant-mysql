@@ -1,7 +1,11 @@
-import sys
+"""Delete transactional data for one shop (destructive). Usage: python scripts/clean_store_data.py [shop_id]"""
 import os
+import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+_root = Path(__file__).resolve().parent.parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
 
 from app import create_app
 from app.extensions import db
@@ -48,5 +52,5 @@ def main():
         session.commit()
         print(f"All data for shop_id={shop_id} deleted.")
 
-if __name__ == '__main__':
-    main() 
+if __name__ == "__main__":
+    main()

@@ -173,7 +173,8 @@ def api_products():
             'name': product.name,
             'selling_price': product.selling_price,
             'stock': product.stock,
-            'currency': currency
+            'currency': currency,
+            'image_url': url_for('static', filename=product.image_path) if product.image_path else None,
         })
 
     # Build pagination data
@@ -203,7 +204,8 @@ def get_products():
         'name': p.name,
         'price': p.selling_price,
         'stock': p.stock,
-        'category': p.category.name if p.category else None
+        'category': p.category.name if p.category else None,
+        'image_url': url_for('static', filename=p.image_path) if p.image_path else None,
     } for p in products])
 
 
@@ -215,7 +217,8 @@ def get_product(product_id):
         'id': product.id,
         'name': product.name,
         'price': product.selling_price,
-        'stock': product.stock
+        'stock': product.stock,
+        'image_url': url_for('static', filename=product.image_path) if product.image_path else None,
     })
 
 
