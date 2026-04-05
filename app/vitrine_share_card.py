@@ -84,9 +84,6 @@ def _th(draw, text: str, font) -> int:
     bb = draw.textbbox((0, 0), text, font=font)
     return bb[3] - bb[1]
 
-def _right_text(draw, rx: int, y: int, text: str, font, fill):
-    draw.text((rx - _tw(draw, text, font), y), text, fill=fill, font=font)
-
 def _center_text(draw, cx: int, y: int, text: str, font, fill):
     draw.text((cx - _tw(draw, text, font) // 2, y), text, fill=fill, font=font)
 
@@ -225,6 +222,36 @@ def _pill_badge_right(img, draw, text: str, right_x: int, y: int,
     return pw, _pill_badge(img, draw, text, x, y, bg_rgba, text_color, border_rgba, font)[1]
 
 
+def _url_button_right(
+    img,
+    draw,
+    display_text: str,
+    right_x: int,
+    y_top: int,
+    font,
+    bg_rgba: tuple,
+    text_color: tuple,
+    border_rgba: tuple,
+) -> int:
+    """Discount-colored pill with URL text, right-aligned. Returns pill height."""
+    from PIL import Image, ImageDraw
+
+    tw = _tw(draw, display_text, font)
+    th = _th(draw, display_text, font)
+    pad_x, pad_y = 14, 11
+    pw = tw + pad_x * 2
+    ph = th + pad_y * 2
+    x0 = right_x - pw
+
+    pill = Image.new("RGBA", (pw, ph), (0, 0, 0, 0))
+    pd = ImageDraw.Draw(pill)
+    pd.rounded_rectangle([0, 0, pw, ph], radius=ph // 2, fill=bg_rgba,
+                         outline=border_rgba, width=2)
+    pd.text((pad_x, pad_y), display_text, fill=text_color, font=font)
+    img.paste(pill, (x0, y_top), pill)
+    return ph
+
+
 # ── Main generator ────────────────────────────────────────────────────────────
 
 def generate_share_card_jpeg(
@@ -341,17 +368,24 @@ def generate_share_card_jpeg(
                   fill=(*OFF_WHITE, 130), font=f_small)
         fy += 40
 
-    _right_text(draw, CARD_W - MARGIN, footer_y,
-                re.sub(r"https?://", "", vitrine_url)[:42], f_small, fill=GREEN)
+    url_display = re.sub(r"https?://", "", vitrine_url)[:42]
+    _url_button_right(
+        img, draw, url_display, CARD_W - MARGIN, footer_y,
+        font=f_small,
+        bg_rgba=(*GOLD, 220),
+        text_color=(28, 18, 0),
+        border_rgba=(*GOLD_LIGHT, 200),
+    )
+    draw = ImageDraw.Draw(img)
 
     _center_text(draw, CARD_W // 2, footer_y + FOOTER_H - 14,
                  "Prix indicatifs — à confirmer en caisse", f_tiny, fill=(255, 255, 255, 55))
 
-    draw.line([(MARGIN, footer_y - 18), (CARD_W - MARGIN, footer_y - 18)],
+    draw.line([(MARGIN, footer_y - 22), (CARD_W - MARGIN, footer_y - 22)],
               fill=(255, 255, 255, 25), width=1)
 
-    # 7. Price block (anchored above footer)
-    price_bot = footer_y - 36
+    # 7. Price block (anchored above footer; extra gap vs separator line)
+    price_bot = footer_y - 58
 
     if has_disc:
         price_str = f"{round(after):,}".replace(",", "\u202f")
@@ -440,7 +474,7 @@ def cache_key(
         str(selling_price),
         str(product_updated or ""),
         str(image_path or ""),
-        "v4",
+        "v6",
     ])
     return hashlib.sha256(raw.encode()).hexdigest()
 

@@ -57,16 +57,16 @@
         /* ── HERO ── */
         .hero {
             background: var(--card);
-            padding: max(36px, env(safe-area-inset-top)) 24px 28px;
+            padding: max(18px, env(safe-area-inset-top)) 18px 14px;
             text-align: center;
             border-bottom: 0.5px solid var(--border);
         }
 
         .logo-wrap {
-            width: 76px;
-            height: 76px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
-            margin: 0 auto 16px;
+            margin: 0 auto 8px;
             overflow: hidden;
             border: 2px solid #fff;
             box-shadow: 0 0 0 1.5px var(--border-med);
@@ -80,24 +80,24 @@
 
         .logo-initials {
             font-family: 'DM Serif Display', serif;
-            font-size: 28px;
+            font-size: 22px;
             color: var(--green);
         }
 
         .shop-name {
             font-family: 'DM Serif Display', serif;
-            font-size: 26px;
+            font-size: 22px;
             color: var(--text-primary);
             letter-spacing: -0.2px;
-            line-height: 1.2;
+            line-height: 1.15;
             word-break: break-word;
         }
 
         .shop-address {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
-            margin-top: 5px;
-            line-height: 1.4;
+            margin-top: 3px;
+            line-height: 1.35;
             word-break: break-word;
         }
 
@@ -105,19 +105,19 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 6px;
-            margin-top: 14px;
+            gap: 5px;
+            margin-top: 8px;
         }
 
         .phone-chip {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             background: var(--green-bg);
             border: 0.5px solid var(--green-border);
             border-radius: 999px;
-            padding: 6px 14px;
-            font-size: 13px;
+            padding: 4px 10px;
+            font-size: 12px;
             font-weight: 500;
             color: var(--green);
             text-decoration: none;
@@ -135,48 +135,62 @@
 
         /* ── CONTENT STACK ── */
         .content {
-            padding: 14px 14px 0;
+            padding: 10px 14px 0;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
-        /* ── PROMO BANNER ── */
+        /* ── PROMO BANNER (compact row: % + meta) ── */
         .promo-banner {
             background: var(--amber-bg);
             border: 0.5px solid var(--amber-border);
             border-radius: var(--radius-md);
-            padding: 20px 20px 16px;
-            text-align: center;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+        }
+
+        .promo-pct {
+            font-family: 'DM Serif Display', serif;
+            font-size: 34px;
+            color: var(--text-primary);
+            line-height: 0.95;
+            flex-shrink: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .promo-meta {
+            flex: 1;
+            min-width: 0;
         }
 
         .promo-eyebrow {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.08em;
             color: var(--amber);
+            margin-bottom: 2px;
         }
 
-        .promo-big {
-            font-family: 'DM Serif Display', serif;
-            font-size: 52px;
-            color: var(--text-primary);
-            line-height: 1;
-            margin: 6px 0 4px;
+        .promo-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.3;
         }
-
-        .promo-sub { font-size: 12px; color: var(--text-muted); }
 
         .promo-until {
             display: inline-block;
-            margin-top: 8px;
-            font-size: 11px;
+            margin-top: 4px;
+            font-size: 10px;
             font-weight: 500;
             color: var(--amber);
-            background: rgba(240,180,0,0.1);
+            background: rgba(240,180,0,0.12);
             border-radius: 999px;
-            padding: 3px 10px;
+            padding: 2px 8px;
         }
 
         /* ── BODY CARD ── */
@@ -482,12 +496,14 @@
 
         {% if has_global_promo %}
         <div class="promo-banner">
-            <div class="promo-eyebrow">Offre annoncée</div>
-            <div class="promo-big">−{{ shop.vitrine_discount_percent|round(0)|int }}%</div>
-            <div class="promo-sub">Indicatif — à confirmer en caisse</div>
-            {% if shop.vitrine_promo_end %}
-            <span class="promo-until">Jusqu'au {{ shop.vitrine_promo_end }}</span>
-            {% endif %}
+            <div class="promo-pct">−{{ shop.vitrine_discount_percent|round(0)|int }}%</div>
+            <div class="promo-meta">
+                <div class="promo-eyebrow">Offre annoncée</div>
+                <div class="promo-sub">Indicatif — à confirmer en caisse</div>
+                {% if shop.vitrine_promo_end %}
+                <span class="promo-until">Jusqu'au {{ shop.vitrine_promo_end }}</span>
+                {% endif %}
+            </div>
         </div>
         {% endif %}
 
