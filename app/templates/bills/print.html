@@ -577,18 +577,20 @@
          * html2pdf capture: full A4-width desktop layout (no new server route).
          * Cloned bill is placed here so mobile viewport CSS does not squeeze the table.
          */
+        /* On-screen but under the loading overlay (z-index 2000) so html2canvas paints reliably */
         .pdf-export-root {
             position: fixed;
-            left: -9999px;
+            left: 0;
             top: 0;
             width: 794px;
             max-width: 794px;
             padding: 8px 12px;
             background: #fff;
             box-sizing: border-box;
-            z-index: -1;
+            z-index: 1999;
             pointer-events: none;
             overflow: visible;
+            opacity: 1;
         }
 
         .pdf-export-force-desktop .bill-half {
@@ -908,18 +910,39 @@
                     imageTimeout: 20000,
                     logging: false,
                     onclone: function (clonedDoc) {
-                        const root = clonedDoc.getElementById('pdf-export-root');
+                        /* Inline layout so mobile @media rules cannot leave the clone empty */
+                        var root = clonedDoc.querySelector('.pdf-export-root');
                         if (root) {
                             root.style.overflow = 'visible';
                             root.style.height = 'auto';
+                            root.style.minHeight = 'auto';
+                            root.style.opacity = '1';
+                            root.style.visibility = 'visible';
+                            root.setAttribute('aria-hidden', 'false');
                         }
-                        const half = clonedDoc.querySelector('.pdf-export-root .bill-half');
+                        if (!root) return;
+                        root.querySelectorAll('.mobile-only').forEach(function (el) {
+                            el.style.setProperty('display', 'none', 'important');
+                        });
+                        root.querySelectorAll('.header.desktop-only, .bill-info.desktop-only, .total-letters.desktop-only').forEach(function (el) {
+                            el.style.setProperty('display', 'block', 'important');
+                        });
+                        root.querySelectorAll('table.items-table, table.total-section').forEach(function (el) {
+                            el.style.setProperty('display', 'table', 'important');
+                            el.style.width = '100%';
+                            el.style.setProperty('table-layout', 'fixed', 'important');
+                        });
+                        root.querySelectorAll('.signature-section.desktop-only').forEach(function (el) {
+                            el.style.setProperty('display', 'flex', 'important');
+                            el.style.justifyContent = 'space-between';
+                        });
+                        var half = root.querySelector('.bill-half');
                         if (half) {
                             half.style.overflow = 'visible';
                             half.style.height = 'auto';
                             half.style.maxHeight = 'none';
                         }
-                        clonedDoc.querySelectorAll('.pdf-export-root img').forEach(function (img) {
+                        root.querySelectorAll('img').forEach(function (img) {
                             img.style.maxWidth = '128px';
                             img.style.height = 'auto';
                         });
@@ -940,6 +963,26 @@
             overlay.innerHTML = '<div class="loading-spinner">Génération du PDF...</div>';
             document.body.appendChild(overlay);
             return overlay;
+        }
+
+        /** Force desktop bill layout on the live export host (clone has no inline styles until this runs). */
+        function applyPdfExportStyles(root) {
+            if (!root) return;
+            root.querySelectorAll('.mobile-only').forEach(function (el) {
+                el.style.setProperty('display', 'none', 'important');
+            });
+            root.querySelectorAll('.header.desktop-only, .bill-info.desktop-only, .total-letters.desktop-only').forEach(function (el) {
+                el.style.setProperty('display', 'block', 'important');
+            });
+            root.querySelectorAll('table.items-table, table.total-section').forEach(function (el) {
+                el.style.setProperty('display', 'table', 'important');
+                el.style.width = '100%';
+                el.style.setProperty('table-layout', 'fixed', 'important');
+            });
+            root.querySelectorAll('.signature-section.desktop-only').forEach(function (el) {
+                el.style.setProperty('display', 'flex', 'important');
+                el.style.justifyContent = 'space-between';
+            });
         }
 
         // Function to generate PDF and share
@@ -967,14 +1010,14 @@
                 }
 
                 exportHost = document.createElement('div');
-                exportHost.id = 'pdf-export-root';
                 exportHost.className = 'pdf-export-root pdf-export-force-desktop';
-                exportHost.setAttribute('aria-hidden', 'true');
                 exportHost.appendChild(source.cloneNode(true));
                 document.body.appendChild(exportHost);
+                applyPdfExportStyles(exportHost);
 
                 await waitForImages(exportHost);
                 await new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); });
+                await new Promise(function (r) { setTimeout(r, 50); });
 
                 var opts = buildPdfOptions();
                 var pdfBlob = await html2pdf()
