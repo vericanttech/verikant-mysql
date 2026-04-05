@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for,  make_response
 from flask_login import login_required, current_user
 from sqlalchemy import func
-from app.utils import admin_only_action
+from app.utils import admin_only_action, format_datetime
 from app import db
 from app.models import SalesBill, SalesDetail, Client, Product, PaymentTransaction, StockMovement, Shop
 from app.email_utils import send_balance_notifications
@@ -20,6 +20,8 @@ import csv
 from io import StringIO
 from datetime import date
 
+from app.vitrine_helpers import build_vitrine_shop_url, qr_png_data_url
+
 
 bills = Blueprint('bills', __name__)
 
@@ -29,6 +31,25 @@ def _parse_vat_from_request(data):
     apply_vat = data.get('apply_vat') in (True, 'true', '1', 1)
     raw = data.get('vat_rate')
     if not apply_vat or raw is None or raw == '':
+        return None
+    try:
+        r = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if r <= 0:
+        return None
+    if r > 1.0:
+        r = r / 100.0
+    if r > 1.0:
+        r = 1.0
+    return r
+
+
+def _parse_discount_from_request(data):
+    """Return discount_rate (0–1) or None from POS JSON. Applied on total HT des lignes before TVA."""
+    apply_discount = data.get('apply_discount') in (True, 'true', '1', 1)
+    raw = data.get('discount_rate_percent')
+    if not apply_discount or raw is None or raw == '':
         return None
     try:
         r = float(raw)
@@ -124,6 +145,7 @@ def print_bill(bill_id, print_format='standard'):
     shop_profile = get_shop_profile()
 
     if print_format == 'bluetooth':
+        gross_ht = sum(float(d.total_amount) for d in bill.sales_details)
         return jsonify({
             'bill_data': {
                 'company_name': shop_profile.name if shop_profile else '',
@@ -141,6 +163,9 @@ def print_bill(bill_id, print_format='standard'):
                     'price': detail.selling_price,
                     'total': detail.total_amount
                 } for detail in bill.sales_details],
+                'gross_amount_ht': gross_ht,
+                'discount_rate': bill.discount_rate,
+                'discount_amount': bill.discount_amount,
                 'amount_ht': bill.amount_ht,
                 'vat_rate': bill.vat_rate,
                 'vat_amount': bill.vat_amount,
@@ -151,12 +176,22 @@ def print_bill(bill_id, print_format='standard'):
         })
 
     template = 'bills/print_thermal.html' if print_format == 'thermal' else 'bills/print.html'
+    vitrine_public_url = None
+    vitrine_qr_data_url = None
+    if shop_profile and getattr(shop_profile, 'is_active', True):
+        vitrine_public_url = build_vitrine_shop_url(shop_profile.id)
+        try:
+            vitrine_qr_data_url = qr_png_data_url(vitrine_public_url)
+        except Exception:
+            vitrine_qr_data_url = None
     return render_template(
         template,
         bill=bill,
         details=bill.sales_details,
         payments=bill.payments,
-        shop_profile=shop_profile
+        shop_profile=shop_profile,
+        vitrine_public_url=vitrine_public_url,
+        vitrine_qr_data_url=vitrine_qr_data_url,
     )
 
 
@@ -257,7 +292,15 @@ def process_sale():
         return jsonify({'error': 'No items in sale'}), 400
 
     try:
-        amount_ht = sum(float(item['total']) for item in items)
+        gross_ht = sum(float(item['total']) for item in items)
+        discount_rate = _parse_discount_from_request(data)
+        if discount_rate is not None:
+            discount_amount = round(gross_ht * discount_rate, 2)
+            amount_ht = round(gross_ht - discount_amount, 2)
+        else:
+            discount_amount = 0.0
+            discount_rate = None
+            amount_ht = gross_ht
         vat_rate = _parse_vat_from_request(data)
         if vat_rate is not None:
             vat_amount = round(amount_ht * vat_rate, 2)
@@ -279,6 +322,8 @@ def process_sale():
             bill_number=int(data.get('bill_number')),
             client_id=client_id,
             amount_ht=amount_ht,
+            discount_rate=discount_rate,
+            discount_amount=discount_amount,
             vat_rate=vat_rate,
             vat_amount=vat_amount,
             total_amount=total_amount,
@@ -367,6 +412,8 @@ def bill_list():
                 bill_number=int(request.form.get('bill_number')),
                 client_id=client.id if client else None,
                 amount_ht=total_amount,
+                discount_rate=None,
+                discount_amount=0,
                 vat_rate=None,
                 vat_amount=0,
                 total_amount=total_amount,
@@ -758,19 +805,10 @@ def export_sales_pdf():
 
     data = [headers]
 
-    # Helper function to safely format dates
-    def format_date(date_value):
-        if isinstance(date_value, str):
-            return date_value[:10]  # Only take the date part if string
-        elif hasattr(date_value, 'strftime'):
-            return date_value.strftime('%d/%m/%Y')
-        else:
-            return str(date_value)
-
     # Add data rows
     for sale in sales:
         row = [
-            format_date(sale.bill.date),
+            format_datetime(sale.bill.date),
             str(sale.bill.bill_number),
             sale.product.name,
             str(sale.quantity),

@@ -57,7 +57,7 @@
                         {% for loan in loans.items %}
                         <tr class="even:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.borrower_name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.loan_date|format_date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.loan_date|format_datetime }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.paid_amount| fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (loan.amount - loan.paid_amount) | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
@@ -105,7 +105,7 @@
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="font-semibold">Date:</span>
-                            <span>{{ loan.loan_date|format_date }}</span>
+                            <span>{{ loan.loan_date|format_datetime }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="font-semibold">Montant:</span>

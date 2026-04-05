@@ -36,7 +36,7 @@
         <div class="bg-white border-b border-gray-200 p-4">
             <div class="grid grid-cols-2 gap-2">
                 <div class="text-sm text-gray-500">Date</div>
-                <div class="text-sm">{{ sale.bill.date|format_date}}</div>
+                <div class="text-sm">{{ sale.bill.date|format_datetime}}</div>
                 <div class="text-sm text-gray-500">Facture</div>
                 <div class="text-sm">{{ sale.bill.bill_number }}</div>
                 <div class="text-sm text-gray-500">Produit</div>
@@ -89,7 +89,7 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         {% for sale in sales %}
                         <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ sale.bill.date|format_date}}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ sale.bill.date|format_datetime}}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ sale.bill.bill_number }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ sale.product.name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ sale.quantity }}</td>

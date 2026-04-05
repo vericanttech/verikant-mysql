@@ -80,7 +80,7 @@
                                 {{ bill.total_amount | fr_thousands  }} {{ current_shop.currency|default('FCFA') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {{ bill.date|format_date }}
+                                {{ bill.date|format_datetime }}
                             </td>
                         </tr>
                         {% endfor %}
@@ -170,7 +170,7 @@
                                 {{ expense.amount | fr_thousands }} {{ current_shop.currency|default('FCFA') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-purple-600">
-                                {{ expense.date|format_date }}
+                                {{ expense.date|format_datetime }}
                             </td>
                         </tr>
                         {% endfor %}

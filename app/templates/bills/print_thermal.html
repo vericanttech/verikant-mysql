@@ -203,7 +203,7 @@
         <div class="bill-title">Facture #{{ bill.bill_number }}</div>
         <div>
             <span>Date:</span>
-            <span>{{ bill.date|format_date }}</span>
+            <span>{{ bill.date|format_datetime }}</span>
         </div>
         {% if bill.client %}
         <div>
@@ -241,7 +241,18 @@
     </table>
 
     <div class="total-section">
+        {% set show_discount = bill.discount_amount and bill.discount_amount > 0 %}
         {% set show_vat = (bill.vat_amount is not none and bill.vat_amount > 0) or (bill.vat_rate is not none and bill.vat_rate > 0) %}
+        {% if show_discount %}
+        <div class="total-row">
+            <span>Sous-total HT:</span>
+            <span>{{ "{:,.0f}".format(bill.gross_amount_ht) }}</span>
+        </div>
+        <div class="total-row">
+            <span>Remise{% if bill.discount_rate %} ({{ (bill.discount_rate * 100)|round(2) }}%){% endif %}:</span>
+            <span>-{{ "{:,.0f}".format(bill.discount_amount) }}</span>
+        </div>
+        {% endif %}
         {% if show_vat %}
         <div class="total-row">
             <span>Total HT:</span>
@@ -253,7 +264,7 @@
         </div>
         {% else %}
         <div class="total-row">
-            <span>Sous-total HT:</span>
+            <span>{% if show_discount %}HT après remise{% else %}Sous-total HT{% endif %}:</span>
             <span>{{ "{:,.0f}".format(bill.amount_ht) }}</span>
         </div>
         {% endif %}
@@ -276,6 +287,14 @@
     <div class="barcode-section">
         <svg id="barcode"></svg>
     </div>
+
+    {% if vitrine_public_url and vitrine_qr_data_url %}
+    <div style="text-align:center;margin-top:12px;padding-top:8px;border-top:1px dashed #ccc;">
+        <p style="font-size:11px;margin-bottom:4px;">Promos &amp; vitrine</p>
+        <img src="{{ vitrine_qr_data_url }}" alt="QR vitrine" style="max-width:120px;height:auto;" />
+        <p style="font-size:9px;word-break:break-all;margin-top:4px;">{{ vitrine_public_url }}</p>
+    </div>
+    {% endif %}
 
     <div class="footer">
         <p>Merci de votre confiance!</p>
@@ -310,7 +329,7 @@
         // Create the message to share
         const message = `Facture #{{ bill.bill_number }} - {{ shop_profile.name }}\n` +
                        `Total: {{ "{:,.0f}".format(bill.total_amount) }}\n` +
-                       `Date: {{ bill.date|format_date }}`;
+                       `Date: {{ bill.date|format_datetime }}`;
 
         // Encode the message for URL
         const encodedMessage = encodeURIComponent(message);

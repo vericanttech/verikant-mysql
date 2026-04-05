@@ -572,7 +572,7 @@
                     <span>No Facture:</span>
                     <span>{{ bill.bill_number }}</span>
                     <span>Date:</span>
-                    <span>{{ bill.date|format_date }}</span>
+                    <span>{{ bill.date|format_datetime }}</span>
                     {% if bill.client %}
                     <span>Client:</span>
                     <span>{{ bill.client.name }}</span>
@@ -588,7 +588,7 @@
                     <span class="mobile-info-label">👤 Caissière:</span>
                     <span class="mobile-info-value">{{ bill.user.name }}</span>
                     <span class="mobile-info-label">📅 Date:</span>
-                    <span class="mobile-info-value">{{ bill.date|format_date }}</span>
+                    <span class="mobile-info-value">{{ bill.date|format_datetime }}</span>
                     {% if bill.client %}
                     <span class="mobile-info-label">🏢 Client:</span>
                     <span class="mobile-info-value">{{ bill.client.name }}</span>
@@ -642,12 +642,21 @@
                 </tbody>
             </table>
 
+            {% set show_discount = bill.discount_amount and bill.discount_amount > 0 %}
             {% set show_vat = (bill.vat_amount is not none and bill.vat_amount > 0) or (bill.vat_rate is not none and bill.vat_rate > 0) %}
-            {% if show_vat %}
+            {% if show_discount or show_vat %}
             <div class="vat-summary">
+                {% if show_discount %}
+                <div class="vat-summary-line"><span>Sous-total HT</span><span>{{ bill.gross_amount_ht | fr_thousands }}</span></div>
+                <div class="vat-summary-line"><span>Remise{% if bill.discount_rate %} ({{ (bill.discount_rate * 100)|round(2) }}%){% endif %}</span><span>-{{ bill.discount_amount | fr_thousands }}</span></div>
+                {% endif %}
+                {% if show_vat %}
                 <div class="vat-summary-line"><span>Total HT</span><span>{{ bill.amount_ht | fr_thousands }}</span></div>
                 <div class="vat-summary-line"><span>TVA{% if bill.vat_rate %} ({{ (bill.vat_rate * 100)|round(2) }}%){% endif %}</span><span>{{ bill.vat_amount | fr_thousands }}</span></div>
                 <div class="vat-summary-line vat-summary-total"><span>Total TTC</span><span>{{ bill.total_amount | fr_thousands }}</span></div>
+                {% elif show_discount %}
+                <div class="vat-summary-line vat-summary-total"><span>Total</span><span>{{ bill.total_amount | fr_thousands }}</span></div>
+                {% endif %}
             </div>
             {% endif %}
 
@@ -705,6 +714,14 @@
                 <strong>✨ Total en lettres :</strong><br>
                 {{ bill.total_amount|number_to_words(shop_profile.currency|default('FCFA'))|upper }}
             </div>
+
+            {% if vitrine_public_url and vitrine_qr_data_url %}
+            <div class="vitrine-qr-print" style="text-align:center;margin-top:14px;padding-top:14px;border-top:1px dashed #ccc;">
+                <p style="font-size:13px;font-weight:600;margin-bottom:6px;">Promos &amp; vitrine</p>
+                <img src="{{ vitrine_qr_data_url }}" alt="QR vitrine" style="max-width:120px;height:auto;margin:0 auto;display:block;" />
+                <p style="font-size:11px;color:#555;word-break:break-all;margin-top:8px;">{{ vitrine_public_url }}</p>
+            </div>
+            {% endif %}
         </div>
         {% endfor %}
     </div>
@@ -779,7 +796,7 @@
                 // Create message for WhatsApp
                 const message = `Facture #{{ bill.bill_number }} - {{ shop_profile.name }}\n` +
                               `Total: {{ bill.total_amount | fr_thousands  }}\n` +
-                              `Date: {{ bill.date|format_date }}`;
+                              `Date: {{ bill.date|format_datetime }}`;
 
                 // Try to share using Web Share API first (mobile devices)
                 if (navigator.share && isMobile()) {

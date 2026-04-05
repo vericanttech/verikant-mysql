@@ -172,9 +172,9 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.loan_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.paid_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (loan.loan_amount - loan.paid_amount) | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.loan_date|format_date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.loan_date|format_datetime }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {% if loan.due_date %}{{ loan.due_date|format_date }}{% else %}-{% endif %}
+                                {% if loan.due_date %}{{ loan.due_date|format_datetime }}{% else %}-{% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 py-1 text-xs font-medium rounded-full
@@ -199,8 +199,8 @@
                     <div class="flex justify-between text-sm mb-1"><span>Montant:</span><span>{{ loan.loan_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span></div>
                     <div class="flex justify-between text-sm mb-1"><span>Payé:</span><span>{{ loan.paid_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span></div>
                     <div class="flex justify-between text-sm mb-1"><span>Restant:</span><span>{{ (loan.loan_amount - loan.paid_amount) | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span></div>
-                    <div class="flex justify-between text-sm mb-1"><span>Date du Prêt:</span><span>{{ loan.loan_date|format_date }}</span></div>
-                    <div class="flex justify-between text-sm mb-1"><span>Échéance:</span><span>{% if loan.due_date %}{{ loan.due_date|format_date }}{% else %}-{% endif %}</span></div>
+                    <div class="flex justify-between text-sm mb-1"><span>Date du Prêt:</span><span>{{ loan.loan_date|format_datetime }}</span></div>
+                    <div class="flex justify-between text-sm mb-1"><span>Échéance:</span><span>{% if loan.due_date %}{{ loan.due_date|format_datetime }}{% else %}-{% endif %}</span></div>
                     <div class="flex justify-between text-sm"><span>Statut:</span><span><span class="px-2 py-1 text-xs font-medium rounded-full {% if loan.status == 'active' %}bg-yellow-100 text-yellow-800{% elif loan.status == 'paid' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">{% if loan.status == 'active' %}Actif{% elif loan.status == 'paid' %}Payé{% else %}En défaut{% endif %}</span></span></div>
                 </div>
                 {% endfor %}

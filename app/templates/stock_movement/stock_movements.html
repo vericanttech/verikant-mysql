@@ -79,7 +79,7 @@
                     <div class="text-sm space-y-1">
                         <div class="flex justify-between">
                             <span class="text-gray-500">Date:</span>
-                            <span>{{movement.date|format_date}}</span>
+                            <span>{{movement.date|format_datetime}}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Type:</span>
@@ -143,7 +143,7 @@
                         {% for movement in movements.items %}
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                                {{movement.date|format_date}}
+                                {{movement.date|format_datetime}}
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                                 {{ movement.product.name }}

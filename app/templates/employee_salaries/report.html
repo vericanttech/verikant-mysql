@@ -158,7 +158,7 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ salary.employee.name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ salary.salary_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ salary.payment_date|format_date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ salary.payment_date|format_datetime }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {% if salary.payment_method == 'cash' %}Espèces
                                 {% elif salary.payment_method == 'bank' %}Banque
@@ -187,7 +187,7 @@
                 <div class="bg-gray-50 rounded-lg shadow p-4">
                     <div class="font-semibold text-gray-900 mb-2">{{ salary.employee.name }}</div>
                     <div class="flex justify-between text-sm mb-1"><span>Montant:</span><span>{{ salary.salary_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span></div>
-                    <div class="flex justify-between text-sm mb-1"><span>Date de Paiement:</span><span>{{ salary.payment_date|format_date }}</span></div>
+                    <div class="flex justify-between text-sm mb-1"><span>Date de Paiement:</span><span>{{ salary.payment_date|format_datetime }}</span></div>
                     <div class="flex justify-between text-sm mb-1"><span>Méthode:</span><span>{% if salary.payment_method == 'cash' %}Espèces{% elif salary.payment_method == 'bank' %}Banque{% elif salary.payment_method == 'check' %}Chèque{% else %}{{ salary.payment_method }}{% endif %}</span></div>
                     <div class="flex justify-between text-sm mb-1"><span>Mois/Année:</span><span>{{ salary.month_year }}</span></div>
                     <div class="flex justify-between text-sm"><span>Statut:</span><span><span class="px-2 py-1 text-xs font-medium rounded-full {% if salary.status == 'paid' %}bg-green-100 text-green-800{% elif salary.status == 'pending' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">{% if salary.status == 'paid' %}Payé{% elif salary.status == 'pending' %}En attente{% else %}Annulé{% endif %}</span></span></div>

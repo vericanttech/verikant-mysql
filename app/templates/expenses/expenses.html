@@ -59,7 +59,7 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for expense, category_name, user_name in expenses.items %}
                         <tr data-category="{{ category_name }}" class="even:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ expense.date|format_date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ expense.date|format_datetime }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ category_name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ expense.amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user_name }}</td>
@@ -89,7 +89,7 @@
         <div class="sm:hidden space-y-4">
             {% for expense, category_name, user_name in expenses.items %}
             <div class="bg-gray-100 p-4 rounded-lg shadow-md">
-                <p class="text-sm font-medium text-gray-900"><strong>Date:</strong> {{ expense.date|format_date }}</p>
+                <p class="text-sm font-medium text-gray-900"><strong>Date:</strong> {{ expense.date|format_datetime }}</p>
                 <p class="text-sm font-medium text-gray-900"><strong>Catégorie:</strong> {{ category_name }}</p>
                 <p class="text-sm font-medium text-gray-900"><strong>Montant:</strong> {{ expense.amount | fr_thousands}} {{ shop_profile.currency|default('FCFA') }}</p>
                 <p class="text-sm font-medium text-gray-900"><strong>Caissier:</strong> {{ user_name }}</p>

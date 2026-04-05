@@ -207,6 +207,10 @@
                             <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200"></i>
                         </button>
                         <div class="collapsible-content hidden space-y-1 pl-4">
+                            <a href="{{ url_for('vitrine.marketing_vitrine') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
+                                <i data-lucide="megaphone" class="w-5 h-5 mr-3"></i>
+                                <span class="font-medium">Vitrine &amp; promos</span>
+                            </a>
                             <a href="{{ url_for('auth.create_user') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="user-plus" class="w-5 h-5 mr-3"></i>
                                 <span class="font-medium">Créer Utilisateur</span>
@@ -226,7 +230,7 @@
             </div>
         </div>
 
-        <div class="flex-1 md:pl-64">
+        <div class="flex-1 min-w-0 md:pl-64">
             <!-- Desktop Header -->
             <div class="sticky top-0 z-40 bg-white shadow-sm hidden md:block">
                 <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
@@ -722,6 +726,10 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="mb-4">
             <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">Administration</h4>
             <div class="space-y-1">
+                <a href="{{ url_for('vitrine.marketing_vitrine') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
+                    <i data-lucide="megaphone" class="w-5 h-5 mr-3"></i>
+                    <span>Vitrine &amp; promos</span>
+                </a>
                 <a href="{{ url_for('auth.create_user') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="user-plus" class="w-5 h-5 mr-3"></i>
                     <span>Créer Utilisateur</span>

@@ -3,7 +3,7 @@ from flask import Flask, flash, redirect, url_for, request
 from flask_login import logout_user, current_user
 from app.cli import init_cli
 from app.extensions import db, migrate, login_manager
-from app.utils import format_date, number_to_words
+from app.utils import format_date, format_datetime, number_to_words
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -59,6 +59,7 @@ def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'your-secret-key'
     basedir = os.path.abspath(os.path.dirname(__file__))
+    # Fallback only when no DATABASE_URL / PA_MYSQL_BUILD_URL — production uses MySQL.
     db_path = os.path.join(os.path.dirname(basedir), 'instance', 'shop.db')
     default_sqlite = f'sqlite:///{db_path}'
     database_url = _resolve_database_url(default_sqlite)
@@ -89,6 +90,7 @@ def create_app():
 
     # Register Jinja filters
     app.jinja_env.filters['format_date'] = format_date
+    app.jinja_env.filters['format_datetime'] = format_datetime
     app.jinja_env.filters['number_to_words'] = number_to_words
 
     # Initialize extensions
@@ -232,5 +234,8 @@ def create_app():
 
     from .routes.admin_dashboard import admin_dashboard
     app.register_blueprint(admin_dashboard)
+
+    from .routes.vitrine import vitrine_bp
+    app.register_blueprint(vitrine_bp)
 
     return app

@@ -60,7 +60,7 @@
                     <tbody class="divide-y divide-gray-200">
                         {% for check in checks.items %}
                         <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 text-sm text-gray-700">{{ check.date|format_date  }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ check.date|format_datetime  }}</td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ check.payee_name }}</td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ check.withdrawal_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ check.user.name }}</td>
@@ -95,7 +95,7 @@
                 <div class="bg-white rounded-lg shadow p-4">
                     <div class="grid grid-cols-2 gap-2">
                         <div class="text-sm text-gray-500">Date</div>
-                        <div class="text-sm font-medium">{{ check.date|format_date }}</div>
+                        <div class="text-sm font-medium">{{ check.date|format_datetime }}</div>
 
                         <div class="text-sm text-gray-500">Nom</div>
                         <div class="text-sm font-medium">{{ check.payee_name }}</div>

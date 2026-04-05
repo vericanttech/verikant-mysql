@@ -135,7 +135,7 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ salary.employee_name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ salary.salary_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ salary.payment_date|format_date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ salary.payment_date|format_datetime }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {% if salary.payment_method == 'cash' %}Espèces
                                 {% elif salary.payment_method == 'bank' %}Banque
@@ -183,7 +183,7 @@
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="font-semibold">Date:</span>
-                            <span>{{ salary.payment_date|format_date }}</span>
+                            <span>{{ salary.payment_date|format_datetime }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="font-semibold">Méthode:</span>

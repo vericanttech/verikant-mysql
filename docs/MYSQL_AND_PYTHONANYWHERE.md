@@ -122,6 +122,30 @@ Full template: **`.env.example`**.
 6. **`flask db upgrade`** once against MySQL.
 7. **Reload** web app.
 
+### 9b. Updating an existing PythonAnywhere deploy (git pull + migrations)
+
+After you **push** from your PC, on PythonAnywhere open a **Bash console** and run (adjust the project path if yours differs):
+
+```bash
+cd ~/verikant-mysql
+source venv/bin/activate
+git pull origin main
+pip install -r requirements.txt
+```
+
+Ensure **`~/.env`** on the server (or **Web → Environment variables**) still has **`SECRET_KEY`**, **`PA_MYSQL_BUILD_URL=1`**, **`PA_MYSQL_*`**, and **`PUBLIC_BASE_URL`** (your live site URL, no trailing slash). For production web workers, **do not** set `SSH_TUNNEL=1` (tunnel is for local dev only).
+
+Apply new database revisions (vitrine, bill discount, etc.):
+
+```bash
+export FLASK_APP=wsgi.py
+flask db upgrade
+```
+
+Then **Reload** the web app (Web tab → green **Reload** button, or `scripts/pa_reload_webapp.py` if you use the API).
+
+**Share-card JPEG cache** lives on disk under `instance/vitrine_share_cards/` (not in MySQL). It is **gitignored** and is recreated on demand; no extra migration for it.
+
 ---
 
 ## 10. Security reminders
@@ -178,6 +202,6 @@ Related edits elsewhere: `app/__init__.py`, `app/ssh_tunnel_db.py`, `app/models.
 ## 12. Operational notes
 
 - **Performance:** App + MySQL on the same PythonAnywhere system is much faster than running the app on a PC with an SSH tunnel to MySQL.
-- **SQLite** remains a valid local fallback when `PA_MYSQL_BUILD_URL` is not set; default SQLite path is `instance/shop.db`.
+- **SQLite** is only an optional local fallback when no `DATABASE_URL` / `SQLALCHEMY_DATABASE_URI` / `PA_MYSQL_BUILD_URL` is configured (`instance/shop.db`). Production and normal setups use **MySQL**.
 
 If you change schema again, add Alembic migrations and re-run **`flask db upgrade`** before re-importing data if needed.

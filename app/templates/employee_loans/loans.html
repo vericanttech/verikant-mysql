@@ -143,9 +143,9 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.loan_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.paid_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (loan.loan_amount - loan.paid_amount) | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.loan_date|format_date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.loan_date|format_datetime }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {% if loan.due_date %}{{ loan.due_date|format_date }}{% else %}-{% endif %}
+                                {% if loan.due_date %}{{ loan.due_date|format_datetime }}{% else %}-{% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 py-1 text-xs font-medium rounded-full
@@ -198,7 +198,7 @@
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="font-semibold">Date:</span>
-                            <span>{{ loan.loan_date|format_date }}</span>
+                            <span>{{ loan.loan_date|format_datetime }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="font-semibold">Statut:</span>

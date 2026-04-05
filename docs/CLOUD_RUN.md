@@ -10,9 +10,9 @@ This project is a standard Flask factory app (`create_app` in `app/__init__.py`,
 
 ## Important: database
 
-The app defaults to **SQLite** under `instance/shop.db`. On Cloud Run the container filesystem is **ephemeral** — data is lost when the revision is replaced or scaled.
+**Do not rely on the built-in SQLite fallback on Cloud Run.** The container filesystem is **ephemeral** — anything under `instance/` is lost when the revision is replaced or scaled.
 
-For production, set a managed database and point the app at it:
+Set a managed database and point the app at it (same as a typical MySQL/Postgres deployment):
 
 ```bash
 # Cloud SQL Postgres (or any Postgres) connection string
@@ -54,7 +54,7 @@ gcloud run deploy "$SERVICE" \
   --set-env-vars "DATABASE_URL=postgresql+psycopg2://..."
 ```
 
-Adjust secrets/env to your setup (`--set-secrets` vs `--set-env-vars`). For a first smoke test without a DB, the container will start with SQLite in an empty `instance/` (you still need to run migrations / create schema — same as on PythonAnywhere).
+Adjust secrets/env to your setup (`--set-secrets` vs `--set-env-vars`). A smoke test without `DATABASE_URL` may still boot using the optional SQLite fallback in an empty `instance/`, but that is not a durable or recommended setup for Cloud Run.
 
 ## Local Docker test
 

@@ -3,6 +3,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import current_app
 from app.models import SalesBill, Client, Shop
+from app.utils import format_datetime
 from sqlalchemy.orm import joinedload
 import logging
 
@@ -206,7 +207,7 @@ def create_balance_email_html(shop, client, bills, total_remaining):
             <div class="bill-item">
                 <div class="bill-number">Facture #{bill.bill_number}</div>
                 <div class="bill-amount">{bill.remaining_amount:,.0f} {shop.currency}</div>
-                <div class="bill-date">Date : {bill.date}</div>
+                <div class="bill-date">Date : {format_datetime(bill.date)}</div>
             </div>
 """
     
@@ -251,7 +252,7 @@ Détails des factures impayées :
     for bill in bills:
         body += f"""
 - Facture #{bill.bill_number} : {bill.remaining_amount:,.0f} {shop.currency}
-  Date : {bill.date}
+  Date : {format_datetime(bill.date)}
 """
     
     body += f"""

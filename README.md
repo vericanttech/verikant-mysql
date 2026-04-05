@@ -33,10 +33,11 @@ A comprehensive Point of Sale and Business Management System built with Flask.
 
    **Optional (Node, for Tailwind / refreshing Lucide):** `npm install` copies `lucide.min.js` from the `lucide` package into `app/static/js/lib/` (also run `npm run copy-lucide` after upgrading `lucide` in `package.json`). The built file is committed so the app works without Node on the server.
 
-4. Configure the database (optional):
+4. Configure the database:
 
-   - **Default:** SQLite under `instance/shop.db` if you do not set a URI.
-   - **MySQL (e.g. PythonAnywhere, global US):** copy `.env.example` to `.env`, set `SQLALCHEMY_DATABASE_URI` (or `DATABASE_URL`) to a `mysql+pymysql://...` URL. Database names like `vericant$shop` must use `$` encoded as `%24` in the URL. Install deps already include `PyMySQL`.
+   - **Production and normal setups:** set `SQLALCHEMY_DATABASE_URI` or `DATABASE_URL` in `.env` (copy from `.env.example`). The app is used with **MySQL** in practice (see `docs/MYSQL_AND_PYTHONANYWHERE.md`).
+   - **MySQL (e.g. PythonAnywhere):** use a `mysql+pymysql://...` URL. Database names like `vericant$shop` must use `$` encoded as `%24` in the URL. Dependencies already include `PyMySQL`.
+   - **Optional local fallback:** if neither variable is set, the app falls back to **SQLite** at `instance/shop.db` (handy for a quick clone with no DB server; not what we use in production).
    - **SSH tunnel from your PC (if direct MySQL is blocked):** open a tunnel, then use `127.0.0.1` and the local port in your URI. Example:
      ```bash
      ssh -L 3306:vericant.mysql.pythonanywhere-services.com:3306 YOUR_PA_USER@ssh.pythonanywhere.com

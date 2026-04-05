@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{{ shop.name }} — Vitrine</title>
+    <meta property="og:title" content="{{ shop.name }}">
+    <meta property="og:description" content="{{ (shop.vitrine_body or '')[:160] }}">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #f4f3ee;
+            --card: #ffffff;
+            --border: rgba(0,0,0,0.07);
+            --border-med: rgba(0,0,0,0.11);
+            --text-primary: #111;
+            --text-secondary: #555;
+            --text-muted: #aaa;
+            --green: #2a7a4b;
+            --green-bg: #edf7f2;
+            --green-border: #b8dfc8;
+            --amber: #b07a00;
+            --amber-bg: #fffbeb;
+            --amber-border: #f5d87a;
+            --blue: #1d6aeb;
+            --blue-bg: #eff6ff;
+            --blue-border: #bfdbfe;
+            --red: #dc2626;
+            --red-bg: #fef2f2;
+            --red-border: #fecaca;
+            --radius-md: 16px;
+        }
+
+        html { overflow-x: hidden; }
+
+        body {
+            font-family: 'DM Sans', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            min-height: 100dvh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page {
+            max-width: 430px;
+            margin: 0 auto;
+            padding-bottom: max(2rem, env(safe-area-inset-bottom));
+        }
+
+        /* ── HERO ── */
+        .hero {
+            background: var(--card);
+            padding: max(36px, env(safe-area-inset-top)) 24px 28px;
+            text-align: center;
+            border-bottom: 0.5px solid var(--border);
+        }
+
+        .logo-wrap {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            overflow: hidden;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 1.5px var(--border-med);
+            background: var(--green-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+
+        .logo-initials {
+            font-family: 'DM Serif Display', serif;
+            font-size: 28px;
+            color: var(--green);
+        }
+
+        .shop-name {
+            font-family: 'DM Serif Display', serif;
+            font-size: 26px;
+            color: var(--text-primary);
+            letter-spacing: -0.2px;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .shop-address {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 5px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .phone-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 14px;
+        }
+
+        .phone-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--green-bg);
+            border: 0.5px solid var(--green-border);
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--green);
+            text-decoration: none;
+        }
+
+        .phone-chip::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            opacity: 0.5;
+        }
+
+        /* ── CONTENT STACK ── */
+        .content {
+            padding: 14px 14px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* ── PROMO BANNER ── */
+        .promo-banner {
+            background: var(--amber-bg);
+            border: 0.5px solid var(--amber-border);
+            border-radius: var(--radius-md);
+            padding: 20px 20px 16px;
+            text-align: center;
+        }
+
+        .promo-eyebrow {
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--amber);
+        }
+
+        .promo-big {
+            font-family: 'DM Serif Display', serif;
+            font-size: 52px;
+            color: var(--text-primary);
+            line-height: 1;
+            margin: 6px 0 4px;
+        }
+
+        .promo-sub { font-size: 12px; color: var(--text-muted); }
+
+        .promo-until {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--amber);
+            background: rgba(240,180,0,0.1);
+            border-radius: 999px;
+            padding: 3px 10px;
+        }
+
+        /* ── BODY CARD ── */
+        .body-card {
+            background: var(--card);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px 18px;
+        }
+
+        .body-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            white-space: pre-line;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        /* ── SECTION ── */
+        .section-label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            padding: 0 4px;
+            margin-bottom: 7px;
+        }
+
+        .section-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .section-dot.is-new   { background: var(--blue); }
+        .section-dot.is-promo { background: var(--amber); }
+        .section-dot.is-other { background: #c0bdb5; }
+
+        /* ── PRODUCT CARD ── */
+        .product-card {
+            background: var(--card);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .product-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 11px 14px;
+            border-bottom: 0.5px solid var(--border);
+            min-width: 0;
+        }
+
+        .product-row:last-child { border-bottom: none; }
+
+        /* Thumbnail */
+        .product-thumb {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 0.5px solid var(--border-med);
+            background: var(--bg);
+            display: block;
+        }
+
+        /* Subtle placeholder when no image */
+        .product-thumb-placeholder {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+            flex-shrink: 0;
+            background: var(--bg);
+            border: 0.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-thumb-placeholder span {
+            width: 18px;
+            height: 14px;
+            border-radius: 3px;
+            background: var(--border-med);
+            display: block;
+        }
+
+        /* min-width: 0 + flex-basis lets long text wrap instead of overflowing the row */
+        .product-left {
+            flex: 1 1 0;
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .product-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.4;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            -webkit-hyphens: auto;
+            hyphens: auto;
+        }
+
+        .badge-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 5px;
+        }
+
+        .badge {
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 0.5px solid transparent;
+        }
+
+        .badge.is-new   { background: var(--blue-bg);  color: var(--blue);  border-color: var(--blue-border); }
+        .badge.is-promo { background: var(--amber-bg); color: var(--amber); border-color: var(--amber-border); }
+        .badge.is-out   { background: var(--red-bg);   color: var(--red);   border-color: var(--red-border); }
+
+        .product-price {
+            text-align: right;
+            flex: 0 1 auto;
+            min-width: 0;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .price-main {
+            display: block;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--green);
+            white-space: nowrap;
+        }
+
+        /* Promo row: original vs remise — high contrast, easy to scan */
+        .price-promo-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--amber-bg) 0%, var(--green-bg) 100%);
+            border: 0.5px solid var(--amber-border);
+            box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .price-line {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .price-line-label {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .price-old {
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: line-through;
+            text-decoration-thickness: 1.5px;
+            opacity: 0.85;
+        }
+
+        .price-now-label {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--green);
+        }
+
+        .price-main--promo {
+            font-family: 'DM Serif Display', serif;
+            font-size: 20px;
+            font-weight: 400;
+            line-height: 1.1;
+            color: var(--green);
+            letter-spacing: -0.02em;
+        }
+
+        .price-arrow {
+            display: none;
+        }
+
+        @media (min-width: 360px) {
+            .price-promo-box {
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            .price-line { align-items: flex-end; }
+            .price-arrow {
+                display: block;
+                font-size: 14px;
+                color: var(--amber);
+                font-weight: 600;
+                line-height: 1;
+                padding: 0 2px;
+                opacity: 0.9;
+            }
+        }
+
+        /* Narrow phones: price block moves under the title so long names + promo box never fight */
+        @media (max-width: 420px) {
+            .product-row {
+                flex-wrap: wrap;
+            }
+            .product-thumb,
+            .product-thumb-placeholder {
+                margin-top: 2px;
+            }
+            .product-price {
+                flex-basis: 100%;
+                flex-direction: row;
+                justify-content: flex-end;
+                padding-left: 64px; /* 52px thumb + 12px gap — align with text column */
+                box-sizing: border-box;
+            }
+            .price-promo-box {
+                max-width: 100%;
+            }
+        }
+
+        /* ── FOOTER ── */
+        .vitrine-footer {
+            text-align: center;
+            padding: 24px 16px 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ── FADE-IN ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero { animation: fadeUp 0.3s ease both; }
+        .content > *              { animation: fadeUp 0.4s ease both; }
+        .content > *:nth-child(1) { animation-delay: 0.05s; }
+        .content > *:nth-child(2) { animation-delay: 0.10s; }
+        .content > *:nth-child(3) { animation-delay: 0.15s; }
+        .content > *:nth-child(4) { animation-delay: 0.20s; }
+        .content > *:nth-child(5) { animation-delay: 0.25s; }
+        .content > *:nth-child(6) { animation-delay: 0.30s; }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- HERO -->
+    <header class="hero">
+        <div class="logo-wrap">
+            {% if shop.logo_path %}
+            <img src="{{ url_for('static', filename=shop.logo_path) }}" alt="{{ shop.name }}">
+            {% else %}
+            <span class="logo-initials">{{ shop.name[:1] }}</span>
+            {% endif %}
+        </div>
+        <h1 class="shop-name">{{ shop.name }}</h1>
+        {% if shop.address %}
+        <p class="shop-address">{{ shop.address }}</p>
+        {% endif %}
+        {% if shop.phones %}
+        <div class="phone-list">
+            {% for ph in shop.phones %}
+            <a href="tel:{{ ph.phone }}" class="phone-chip" referrerpolicy="no-referrer">{{ ph.phone }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </header>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        {% set has_global_promo = shop.vitrine_discount_percent and shop.vitrine_discount_percent > 0 %}
+        {% set curr = shop.currency or 'FCFA' %}
+
+        {% if has_global_promo %}
+        <div class="promo-banner">
+            <div class="promo-eyebrow">Offre annoncée</div>
+            <div class="promo-big">−{{ shop.vitrine_discount_percent|round(0)|int }}%</div>
+            <div class="promo-sub">Indicatif — à confirmer en caisse</div>
+            {% if shop.vitrine_promo_end %}
+            <span class="promo-until">Jusqu'au {{ shop.vitrine_promo_end }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if shop.vitrine_body %}
+        <div class="body-card">
+            <p class="body-text">{{ shop.vitrine_body }}</p>
+        </div>
+        {% endif %}
+
+        {# ── ROW MACRO ── #}
+        {% macro vitrine_row(item, promo_section=false) %}
+        {% set p = item.product %}
+        <div class="product-row">
+
+            {% if p.image_path %}
+            <img class="product-thumb"
+                 src="{{ url_for('static', filename=p.image_path) }}"
+                 alt="{{ p.name }}"
+                 width="52" height="52"
+                 loading="lazy" decoding="async">
+            {% else %}
+            <div class="product-thumb-placeholder"><span></span></div>
+            {% endif %}
+
+            <div class="product-left">
+                <div class="product-name">{{ p.name }}</div>
+                <div class="badge-row">
+                    {% if item.is_new_arrival %}<span class="badge is-new">Nouveauté</span>{% endif %}
+                    {% if item.is_promo %}<span class="badge is-promo">Promo</span>{% endif %}
+                    {% if p.stock <= 0 %}<span class="badge is-out">Rupture</span>{% endif %}
+                </div>
+            </div>
+
+            <div class="product-price">
+                {% if promo_section and has_global_promo and item.is_promo %}
+                    {% set dpct = shop.vitrine_discount_percent | float %}
+                    {% set after_disc = (p.selling_price * (1 - dpct / 100)) %}
+                    <div class="price-promo-box" role="group" aria-label="Prix avant et après remise">
+                        <div class="price-line">
+                            <span class="price-line-label">Avant</span>
+                            <span class="price-old">{{ p.selling_price|round(0)|int }}&nbsp;{{ curr }}</span>
+                        </div>
+                        <span class="price-arrow" aria-hidden="true">→</span>
+                        <div class="price-line">
+                            <span class="price-now-label">Promo</span>
+                            <span class="price-main price-main--promo">{{ after_disc|round(0)|int }}&nbsp;{{ curr }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <span class="price-main">{{ p.selling_price|round(0)|int }}&nbsp;{{ curr }}</span>
+                {% endif %}
+            </div>
+
+        </div>
+        {% endmacro %}
+
+        {% if vitrine_new_items %}
+        <div>
+            <div class="section-label">
+                <span class="section-dot is-new"></span>
+                Nouveautés
+            </div>
+            <div class="product-card">
+                {% for item in vitrine_new_items %}{{ vitrine_row(item, false) }}{% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if vitrine_promo_items %}
+        <div>
+            <div class="section-label">
+                <span class="section-dot is-promo"></span>
+                Promos
+            </div>
+            <div class="product-card">
+                {% for item in vitrine_promo_items %}{{ vitrine_row(item, true) }}{% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if vitrine_other_items %}
+        <div>
+            <div class="section-label">
+                <span class="section-dot is-other"></span>
+                À la une
+            </div>
+            <div class="product-card">
+                {% for item in vitrine_other_items %}{{ vitrine_row(item, false) }}{% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div><!-- /content -->
+
+    <p class="vitrine-footer">
+        {% if vitrine_items %}Prix indicatifs · {% endif %}{{ shop.name }}
+    </p>
+
+</div><!-- /page -->
+</body>
+</html>

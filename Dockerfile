@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements-cloud.txt
 
 COPY . .
 
-# SQLite fallback (ephemeral on Cloud Run — use DATABASE_URL for Postgres)
+# Optional SQLite fallback if DATABASE_URL unset (ephemeral on Cloud Run — set DATABASE_URL in prod)
 RUN mkdir -p instance
 
 # run.py exposes `app` for Gunicorn

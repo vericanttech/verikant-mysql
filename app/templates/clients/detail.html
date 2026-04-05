@@ -87,13 +87,7 @@
                             {% for bill in bills.items %}
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 text-sm text-gray-700">{{ bill.bill_number }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-700">
-                                    {% if bill.date is string %}
-                                        {{ bill.date }}
-                                    {% else %}
-                                        {{ bill.date.strftime('%d-%m-%Y') }}
-                                    {% endif %}
-                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ bill.date|format_datetime }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-700">{{ bill.total_amount|round(2) }} {{ current_shop.currency|default('FCFA') }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-700">{{ bill.paid_amount|round(2) }} {{ current_shop.currency|default('FCFA') }}</td>
                                 <td class="px-4 py-3 text-sm">
@@ -115,13 +109,7 @@
                     <div class="border border-gray-200 rounded-lg p-4 shadow-sm">
                         <div class="flex justify-between items-center mb-2">
                             <p class="font-semibold">{{ bill.bill_number }}</p>
-                            <p class="text-sm text-gray-600">
-                                {% if bill.date is string %}
-                                    {{ bill.date }}
-                                {% else %}
-                                    {{ bill.date.strftime('%d-%m-%Y') }}
-                                {% endif %}
-                            </p>
+                            <p class="text-sm text-gray-600">{{ bill.date|format_datetime }}</p>
                         </div>
                         <div class="grid grid-cols-2 gap-2 mb-3">
                             <p class="text-sm text-gray-600">Total: <span class="font-medium">{{ bill.total_amount|round(2) }} {{ current_shop.currency|default('FCFA') }} </span></p>

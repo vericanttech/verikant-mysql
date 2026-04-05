@@ -11,7 +11,20 @@ function updateCheckoutTotals() {
         return;
     }
     const currency = receiptDataElement.dataset.shopCurrency;
-    const subHt = getCartSubtotalHt();
+    const grossHt = getCartSubtotalHt();
+    const discountApplyEl = document.getElementById('discount-apply');
+    const discountPctEl = document.getElementById('discount-rate-percent');
+    const discountApply = discountApplyEl && discountApplyEl.checked;
+    let discountPct = 0;
+    if (discountPctEl && discountPctEl.value !== '') {
+        discountPct = parseFloat(String(discountPctEl.value).replace(',', '.')) || 0;
+    }
+    let discountAmt = 0;
+    let netHt = grossHt;
+    if (discountApply && discountPct > 0) {
+        discountAmt = Math.round(grossHt * (discountPct / 100) * 100) / 100;
+        netHt = Math.round((grossHt - discountAmt) * 100) / 100;
+    }
     const applyEl = document.getElementById('vat-apply');
     const rateEl = document.getElementById('vat-rate-percent');
     const apply = applyEl && applyEl.checked;
@@ -21,29 +34,33 @@ function updateCheckoutTotals() {
     }
     const rate = ratePct / 100;
     let vatAmt = 0;
-    let ttc = subHt;
+    let ttc = netHt;
     if (apply && ratePct > 0) {
-        vatAmt = Math.round(subHt * rate * 100) / 100;
-        ttc = subHt + vatAmt;
+        vatAmt = Math.round(netHt * rate * 100) / 100;
+        ttc = netHt + vatAmt;
     }
     const subEl = document.getElementById('checkout-subtotal-ht');
+    const netEl = document.getElementById('checkout-net-ht');
+    const discountRow = document.getElementById('checkout-discount-row');
+    const discountAmtEl = document.getElementById('checkout-discount-amount');
     const vatDisplay = document.getElementById('checkout-vat-amount');
     const modalTotal = document.getElementById('modal-total');
-    if (subEl) subEl.textContent = `${formatNumberFR(subHt.toFixed(2))} ${currency}`;
+    if (subEl) subEl.textContent = `${formatNumberFR(grossHt.toFixed(2))} ${currency}`;
+    if (netEl) netEl.textContent = `${formatNumberFR(netHt.toFixed(2))} ${currency}`;
+    if (discountRow && discountAmtEl) {
+        const showDisc = discountApply && discountPct > 0 && discountAmt > 0;
+        discountRow.classList.toggle('hidden', !showDisc);
+        discountAmtEl.textContent = showDisc
+            ? `− ${formatNumberFR(discountAmt.toFixed(2))} ${currency} (${discountPct.toFixed(2).replace(/\.?0+$/, '')}%)`
+            : '—';
+    }
     if (vatDisplay) vatDisplay.textContent = `${formatNumberFR(vatAmt.toFixed(2))} ${currency}`;
     if (modalTotal) modalTotal.value = `${formatNumberFR(ttc.toFixed(2))} ${currency}`;
     window.__checkoutTtc = ttc;
     window.__checkoutApplyVat = !!(apply && ratePct > 0);
     window.__checkoutVatRatePercent = apply ? ratePct : 0;
-    console.log('[POS TVA] updateCheckoutTotals', {
-        subHt,
-        applyTva: apply,
-        ratePct,
-        vatAmt,
-        ttc,
-        __checkoutApplyVat: window.__checkoutApplyVat,
-        __checkoutVatRatePercent: window.__checkoutVatRatePercent
-    });
+    window.__checkoutApplyDiscount = !!(discountApply && discountPct > 0);
+    window.__checkoutDiscountPercent = discountApply ? discountPct : 0;
 }
 window.updateCheckoutTotals = updateCheckoutTotals;
 
@@ -81,6 +98,18 @@ function initCheckoutEventListeners() {
         });
     } else {
         console.warn('[POS TVA] #vat-rate-percent not found');
+    }
+    const discountApply = document.getElementById('discount-apply');
+    const discountRate = document.getElementById('discount-rate-percent');
+    if (discountApply) {
+        discountApply.addEventListener('change', function () {
+            updateCheckoutTotals();
+        });
+    }
+    if (discountRate) {
+        discountRate.addEventListener('input', function () {
+            updateCheckoutTotals();
+        });
     }
 
     // Calculate change
@@ -131,6 +160,8 @@ function initCheckoutEventListeners() {
 
             const applyVat = !!window.__checkoutApplyVat;
             const vatRatePct = window.__checkoutVatRatePercent;
+            const applyDiscount = !!window.__checkoutApplyDiscount;
+            const discountPct = window.__checkoutDiscountPercent || 0;
             console.log('[POS TVA] process_sale payload (vat)', { apply_vat: applyVat, vat_rate: applyVat ? vatRatePct : null });
 
             const response = await fetch('/api/process_sale', {
@@ -150,7 +181,9 @@ function initCheckoutEventListeners() {
                     initial_payment: cashReceivedAmount,
                     payment_method: 'cash',
                     apply_vat: applyVat,
-                    vat_rate: applyVat ? vatRatePct : null
+                    vat_rate: applyVat ? vatRatePct : null,
+                    apply_discount: applyDiscount,
+                    discount_rate_percent: applyDiscount ? discountPct : null
                 })
             });
 
@@ -338,12 +371,23 @@ function formatReceiptData(data) {
     // Format currency correctly
     const currencyText = ` ${shopCurrency}`;
 
+    const discAmt = data.discount_amount != null ? Number(data.discount_amount) : 0;
+    const grossHt = data.gross_amount_ht != null ? Number(data.gross_amount_ht) : null;
+    if (discAmt > 0 && grossHt != null) {
+        cmds += `Sous-total HT:${" ".repeat(Math.max(0, lineWidth - 14 - formatNumber(grossHt).length - currencyText.length))}${formatNumber(grossHt)}${currencyText}\n`;
+        const dr = data.discount_rate != null ? Number(data.discount_rate) : 0;
+        const dPct = dr > 0 && dr <= 1 ? (dr * 100).toFixed(2).replace(/\.?0+$/, '') : '';
+        cmds += `Remise${dPct ? ' (' + dPct + '%)' : ''}:${" ".repeat(Math.max(0, lineWidth - 8 - formatNumber(discAmt).length - currencyText.length))}-${formatNumber(discAmt)}${currencyText}\n`;
+    }
     const vatAmt = data.vat_amount != null ? Number(data.vat_amount) : 0;
     if (vatAmt > 0 && data.amount_ht != null) {
         cmds += `Total HT:${" ".repeat(Math.max(0, lineWidth - 9 - formatNumber(data.amount_ht).length - currencyText.length))}${formatNumber(data.amount_ht)}${currencyText}\n`;
         const vr = data.vat_rate != null ? Number(data.vat_rate) : 0;
         const ratePctDisplay = vr > 0 && vr <= 1 ? (vr * 100).toFixed(2).replace(/\.?0+$/, '') : (vr > 0 ? String(vr) : '');
         cmds += `TVA${ratePctDisplay ? ' (' + ratePctDisplay + '%)' : ''}:${" ".repeat(Math.max(0, lineWidth - 6 - formatNumber(vatAmt).length - currencyText.length))}${formatNumber(vatAmt)}${currencyText}\n`;
+        cmds += '-'.repeat(45) + '\n';
+    } else if (discAmt > 0 && data.amount_ht != null && vatAmt <= 0) {
+        cmds += `HT apres remise:${" ".repeat(Math.max(0, lineWidth - 15 - formatNumber(data.amount_ht).length - currencyText.length))}${formatNumber(data.amount_ht)}${currencyText}\n`;
         cmds += '-'.repeat(45) + '\n';
     }
 

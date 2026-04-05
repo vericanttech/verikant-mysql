@@ -49,7 +49,7 @@
                             <td class="px-6 py-4 whitespace-nowrap">{{ bill.amount | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">{{ bill.paid_amount | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">{{ (bill.amount - bill.paid_amount) | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ bill.date|format_date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ bill.date|format_datetime }}</td>
                             <td class="px-6 py-4 whitespace-nowrap space-x-2">
                             <button class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm"
                                     onclick="editBill({{ bill.id }}, '{{ bill.supplier.name }}', '{{ bill.bill_number }}', {{ bill.amount }}, {{ bill.paid_amount }})">
@@ -83,7 +83,7 @@
                     <p><strong>Montant:</strong> {{ bill.amount | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</p>
                     <p><strong>Montant Payé:</strong> {{ bill.paid_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</p>
                     <p><strong>Reste:</strong> {{ (bill.amount - bill.paid_amount) | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</p>
-                    <p><strong>Date:</strong> {{ bill.date|format_date }}</p>
+                    <p><strong>Date:</strong> {{ bill.date|format_datetime }}</p>
                     <div class="mt-2 space-y-2">  <button class="w-full bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm mb-2" onclick="editBill({{ bill.id }}, '{{ bill.supplier.name }}', '{{ bill.bill_number }}', {{ bill.amount }}, {{ bill.paid_amount }})">Modifier</button>
                     <button
                         class="text-white px-2 py-1 rounded text-sm

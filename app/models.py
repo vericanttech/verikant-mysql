@@ -43,6 +43,13 @@ class Shop(ShopModel, TimestampWithUpdateMixin):
     currency = db.Column(db.Text, default='FCFA')
     logo_path = db.Column(db.Text)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
+    # Legacy: anciens liens /v/<slug> uniquement (redirection vers /v/<id>). L’URL publique est /v/<shop_id>.
+    vitrine_slug = db.Column(db.String(128), nullable=True, unique=True)
+    vitrine_enabled = db.Column(db.Boolean, nullable=False, default=False)
+    vitrine_title = db.Column(db.Text)
+    vitrine_body = db.Column(db.Text)
+    vitrine_discount_percent = db.Column(db.REAL, nullable=True)
+    vitrine_promo_end = db.Column(db.String(32), nullable=True)
     phones = db.relationship('ShopPhone', backref='shop', lazy=True, cascade='all, delete-orphan')
 
     __table_args__ = (
@@ -156,8 +163,10 @@ class SalesBill(ShopModel, TimestampMixin):
     client_id = db.Column(db.Integer, db.ForeignKey('clients.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     total_amount = db.Column(db.REAL, nullable=False)
-    # HT = sum of line totals (hors TVA). TTC = amount_ht + vat_amount.
+    # HT après remise = sum(lignes HT) - remise. TTC = amount_ht + vat_amount.
     amount_ht = db.Column(db.REAL, nullable=False)
+    discount_rate = db.Column(db.REAL, nullable=True)
+    discount_amount = db.Column(db.REAL, nullable=False, server_default='0')
     vat_rate = db.Column(db.REAL, nullable=True)
     vat_amount = db.Column(db.REAL, nullable=False, server_default='0')
     paid_amount = db.Column(db.REAL, nullable=False, server_default='0')
@@ -173,6 +182,37 @@ class SalesBill(ShopModel, TimestampMixin):
         db.Index('idx_sales_bill_date', 'date'),
         db.Index('idx_sales_bill_status', 'status'),
         CheckConstraint("status IN ('pending', 'paid', 'partially_paid', 'cancelled')"),
+    )
+
+    @property
+    def gross_amount_ht(self):
+        """Total HT des lignes avant remise globale."""
+        return sum(float(d.total_amount) for d in self.sales_details)
+
+
+class VitrineVisit(ShopModel, TimestampMixin):
+    __tablename__ = 'vitrine_visits'
+    id = db.Column(db.Integer, primary_key=True)
+    shop_id = db.Column(db.Integer, db.ForeignKey('shops.id'), nullable=False)
+    visitor_key = db.Column(db.String(64), nullable=False)
+
+    __table_args__ = (db.Index('idx_vitrine_visit_shop', 'shop_id'),)
+
+
+class VitrineProductSelection(ShopModel, TimestampMixin):
+    """Produits choisis pour la page vitrine (pas tout le stock)."""
+
+    __tablename__ = 'vitrine_product_selections'
+    id = db.Column(db.Integer, primary_key=True)
+    shop_id = db.Column(db.Integer, db.ForeignKey('shops.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id', ondelete='CASCADE'), nullable=False)
+    sort_order = db.Column(db.Integer, nullable=False, server_default='0')
+    is_promo = db.Column(db.Boolean, nullable=False, server_default='0')
+    is_new_arrival = db.Column(db.Boolean, nullable=False, server_default='0')
+
+    __table_args__ = (
+        db.UniqueConstraint('shop_id', 'product_id', name='uq_vitrine_shop_product'),
+        db.Index('idx_vitrine_sel_shop_order', 'shop_id', 'sort_order'),
     )
 
 
@@ -374,6 +414,10 @@ Shop.checks = db.relationship('Check', backref='shop', lazy=True)
 Shop.employee_salaries = db.relationship('EmployeeSalary', backref='shop', lazy=True)
 Shop.employee_loans = db.relationship('EmployeeLoan', backref='shop', lazy=True)
 Shop.employee_loan_payments = db.relationship('EmployeeLoanPayment', backref='shop', lazy=True)
+Shop.vitrine_visits = db.relationship('VitrineVisit', backref='shop', lazy='dynamic')
+Shop.vitrine_product_selections = db.relationship(
+    'VitrineProductSelection', backref='shop', lazy='dynamic', cascade='all, delete-orphan'
+)
 
 # Add relationships to other models as needed
 Category.expenses = db.relationship('Expense', backref='category', lazy=True)
@@ -384,6 +428,7 @@ Client.sales_bills = db.relationship('SalesBill', backref='client', lazy=True)
 
 Product.sales_details = db.relationship('SalesDetail', backref='product', lazy=True)
 Product.stock_movements = db.relationship('StockMovement', backref='product', lazy=True)
+Product.vitrine_selections = db.relationship('VitrineProductSelection', backref='product', lazy=True)
 
 SalesBill.sales_details = db.relationship('SalesDetail', backref='bill', lazy=True)
 SalesBill.payments = db.relationship('PaymentTransaction', backref='bill', lazy=True)

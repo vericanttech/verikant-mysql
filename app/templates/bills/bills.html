@@ -98,7 +98,7 @@ function filterOverduePayments() {
                             <td class="px-2 sm:px-6 py-4 whitespace-nowrap">{{ bill.paid_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
                             <td class="px-2 sm:px-6 py-4 whitespace-nowrap">{{ bill.remaining_amount | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</td>
                             <td class="px-2 sm:px-6 py-4 whitespace-nowrap">{{ bill.user.name if bill.user else 'N/A' }}</td>
-                            <td class="px-2 sm:px-6 py-4 whitespace-nowrap">{{ bill.date|format_date}}</td>
+                            <td class="px-2 sm:px-6 py-4 whitespace-nowrap">{{ bill.date|format_datetime}}</td>
                             <td class="px-2 sm:px-6 py-4 whitespace-nowrap space-x-2">
                                 <a href="{{ url_for('bills.bill_detail', bill_id=bill.id) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm">
                                     Détails
@@ -152,7 +152,7 @@ function filterOverduePayments() {
                         </div>
                         <div class="flex justify-between">
                             <span class="font-semibold">Date:</span>
-                            <span>{{ bill.date|format_date}}</span>
+                            <span>{{ bill.date|format_datetime}}</span>
                         </div>
                         <div class="flex justify-end space-x-2 mt-4">
                             <a href="{{ url_for('bills.bill_detail', bill_id=bill.id) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm">
