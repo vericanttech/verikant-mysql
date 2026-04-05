@@ -572,6 +572,87 @@
                 display: none;
             }
         }
+
+        /*
+         * html2pdf capture: full A4-width desktop layout (no new server route).
+         * Cloned bill is placed here so mobile viewport CSS does not squeeze the table.
+         */
+        .pdf-export-root {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: 794px;
+            max-width: 794px;
+            padding: 8px 12px;
+            background: #fff;
+            box-sizing: border-box;
+            z-index: -1;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        .pdf-export-force-desktop .bill-half {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            background: #fff !important;
+            padding: 0 !important;
+            overflow: visible !important;
+        }
+
+        .pdf-export-force-desktop .mobile-only {
+            display: none !important;
+        }
+
+        .pdf-export-force-desktop .header,
+        .pdf-export-force-desktop .bill-info,
+        .pdf-export-force-desktop .total-letters {
+            display: block !important;
+        }
+
+        .pdf-export-force-desktop .items-table,
+        .pdf-export-force-desktop .total-section {
+            display: table !important;
+            width: 100% !important;
+            table-layout: fixed;
+        }
+
+        .pdf-export-force-desktop .items-table th:nth-child(1),
+        .pdf-export-force-desktop .items-table td:nth-child(1) {
+            width: 10%;
+        }
+
+        .pdf-export-force-desktop .items-table th:nth-child(2),
+        .pdf-export-force-desktop .items-table td:nth-child(2) {
+            width: 42%;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .pdf-export-force-desktop .items-table th:nth-child(3),
+        .pdf-export-force-desktop .items-table td:nth-child(3) {
+            width: 24%;
+            text-align: right;
+        }
+
+        .pdf-export-force-desktop .items-table th:nth-child(4),
+        .pdf-export-force-desktop .items-table td:nth-child(4) {
+            width: 24%;
+            text-align: right;
+        }
+
+        .pdf-export-force-desktop .signature-section {
+            display: flex !important;
+            justify-content: space-between;
+        }
+
+        .pdf-export-force-desktop .vat-summary {
+            max-width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
     </style>
 </head>
 <body>
@@ -827,13 +908,18 @@
                     imageTimeout: 20000,
                     logging: false,
                     onclone: function (clonedDoc) {
-                        const half = clonedDoc.querySelector('.bill-half');
+                        const root = clonedDoc.getElementById('pdf-export-root');
+                        if (root) {
+                            root.style.overflow = 'visible';
+                            root.style.height = 'auto';
+                        }
+                        const half = clonedDoc.querySelector('.pdf-export-root .bill-half');
                         if (half) {
                             half.style.overflow = 'visible';
                             half.style.height = 'auto';
                             half.style.maxHeight = 'none';
                         }
-                        clonedDoc.querySelectorAll('img').forEach(function (img) {
+                        clonedDoc.querySelectorAll('.pdf-export-root img').forEach(function (img) {
                             img.style.maxWidth = '128px';
                             img.style.height = 'auto';
                         });
@@ -872,31 +958,39 @@
 
         async function generateAndShare() {
             const loadingOverlay = showLoading();
+            var exportHost = null;
             try {
                 window.scrollTo(0, 0);
-                const element = document.querySelector('.bill-half');
-                if (!element) {
+                var source = document.querySelector('.bill-half');
+                if (!source) {
                     throw new Error('Contenu facture introuvable');
                 }
 
-                await waitForImages(element);
+                exportHost = document.createElement('div');
+                exportHost.id = 'pdf-export-root';
+                exportHost.className = 'pdf-export-root pdf-export-force-desktop';
+                exportHost.setAttribute('aria-hidden', 'true');
+                exportHost.appendChild(source.cloneNode(true));
+                document.body.appendChild(exportHost);
+
+                await waitForImages(exportHost);
                 await new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); });
 
-                const opts = buildPdfOptions();
-                const pdfBlob = await html2pdf()
+                var opts = buildPdfOptions();
+                var pdfBlob = await html2pdf()
                     .set(opts)
-                    .from(element)
+                    .from(exportHost)
                     .output('blob');
 
                 // Create message for WhatsApp
-                const message = `Facture #{{ bill.bill_number }} - {{ shop_profile.name }}\n` +
+                var message = `Facture #{{ bill.bill_number }} - {{ shop_profile.name }}\n` +
                               `Total: {{ bill.total_amount | fr_thousands  }}\n` +
                               `Date: {{ bill.date|format_datetime }}`;
 
                 // Try to share using Web Share API first (mobile devices)
                 if (navigator.share && isMobile()) {
                     try {
-                        const file = new File([pdfBlob], opts.filename, {
+                        var file = new File([pdfBlob], opts.filename, {
                             type: 'application/pdf'
                         });
 
@@ -910,14 +1004,15 @@
                         shareViaWhatsAppUrl(message);
                     }
                 } else {
-                    // Fallback to WhatsApp URL sharing
                     shareViaWhatsAppUrl(message);
                 }
             } catch (error) {
                 console.error('Error generating PDF:', error);
                 alert('Une erreur est survenue lors de la génération du PDF.');
             } finally {
-                // Remove loading overlay
+                if (exportHost && exportHost.parentNode) {
+                    exportHost.parentNode.removeChild(exportHost);
+                }
                 loadingOverlay.remove();
             }
         }
