@@ -175,19 +175,44 @@
             color: #212529;
         }
 
-        /* Table styles */
+        /* Table styles (desktop + print) */
         .items-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 10px;
             font-size: 12px;
+            table-layout: fixed;
         }
 
         .items-table th,
         .items-table td {
             border: 1px solid #000;
-            padding: 4px;
+            padding: 6px 8px;
             text-align: left;
+        }
+
+        .items-table th:nth-child(1),
+        .items-table td:nth-child(1) {
+            width: 10%;
+            text-align: center;
+        }
+
+        .items-table th:nth-child(2),
+        .items-table td:nth-child(2) {
+            width: 42%;
+            word-wrap: break-word;
+        }
+
+        .items-table th:nth-child(3),
+        .items-table td:nth-child(3) {
+            width: 24%;
+            text-align: right;
+        }
+
+        .items-table th:nth-child(4),
+        .items-table td:nth-child(4) {
+            width: 24%;
+            text-align: right;
         }
 
         .items-table th {
@@ -255,13 +280,18 @@
             border-collapse: collapse;
             margin-bottom: 10px;
             font-size: 12px;
+            table-layout: fixed;
         }
 
         .total-section td {
             border: 1px solid #000;
-            padding: 4px;
+            padding: 6px 8px;
             text-align: center;
         }
+
+        .total-section td:nth-child(1) { width: 34%; }
+        .total-section td:nth-child(2) { width: 33%; }
+        .total-section td:nth-child(3) { width: 33%; }
 
         /* Mobile totals styling */
         .mobile-total-section {
@@ -441,8 +471,8 @@
         /* TVA block (no Tailwind — print view does not load Tailwind) */
         .vat-summary {
             width: 100%;
-            max-width: 22rem;
-            margin: 0.75rem 0 0.75rem auto;
+            max-width: 100%;
+            margin: 0.75rem 0;
             font-size: 0.875rem;
         }
         .vat-summary-line {
@@ -464,18 +494,24 @@
                 padding: 0;
                 font-size: 9pt;
             }
-            .no-print {
-                display: none !important;
-            }
-            /* Screen layout uses desktop/mobile; when printing, show desktop layout */
             .mobile-only {
                 display: none !important;
             }
-            .desktop-only {
-                display: block !important;
+            /* Do NOT use .desktop-only { display: block } — it breaks <table> and overrides .no-print on buttons */
+            table.items-table.desktop-only,
+            table.total-section.desktop-only {
+                display: table !important;
+                width: 100% !important;
+                table-layout: fixed !important;
             }
-            @page {
-                margin: 5mm;
+            .signature-section.desktop-only {
+                display: flex !important;
+                justify-content: space-between !important;
+            }
+            .header.desktop-only,
+            .bill-info.desktop-only,
+            .total-letters.desktop-only {
+                display: block !important;
             }
             .bill-half {
                 width: 49% !important;
@@ -483,7 +519,16 @@
             }
             .vat-summary {
                 display: block !important;
-                max-width: 100%;
+                max-width: 100% !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
+            @page {
+                margin: 5mm;
+            }
+            /* Must stay last so Imprimer / WhatsApp stay hidden (they had desktop-only + no-print) */
+            .no-print {
+                display: none !important;
             }
         }
 
@@ -869,8 +914,8 @@
         {% endfor %}
     </div>
 
-    <!-- Desktop Action Buttons -->
-    <div class="action-buttons no-print desktop-only">
+    <!-- Desktop Action Buttons (no desktop-only: it fought .no-print in @media print) -->
+    <div class="action-buttons no-print">
         <button onclick="window.print()" class="action-button print-button">
             <i class="fas fa-print"></i> Imprimer
         </button>
