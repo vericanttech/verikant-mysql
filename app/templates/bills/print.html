@@ -630,10 +630,11 @@
             position: absolute;
             left: 0;
             top: 0;
-            /* Slightly wider inner canvas so last table column is not clipped by html2canvas rounding */
-            width: 802px;
-            max-width: 802px;
-            padding: 8px 10px 8px 10px;
+            /* Shrink-wrap to table width so nothing is clipped; min-width keeps A4-ish layout */
+            width: max-content;
+            min-width: 780px;
+            max-width: none;
+            padding: 8px 24px 8px 12px;
             background: #fff;
             box-sizing: border-box;
             z-index: 1999;
@@ -656,7 +657,13 @@
             display: block !important;
         }
 
-        .pdf-export-root table.items-table.desktop-only,
+        .pdf-export-root table.items-table.desktop-only {
+            display: table !important;
+            width: auto !important;
+            min-width: 100%;
+            table-layout: auto !important;
+        }
+
         .pdf-export-root table.total-section.desktop-only {
             display: table !important;
             width: 100% !important;
@@ -669,8 +676,9 @@
         }
 
         .pdf-export-force-desktop .bill-half {
-            width: 100% !important;
-            max-width: 100% !important;
+            /* Let width follow the table (max-content root); 100% here forces viewport-wide box and clips html2canvas */
+            width: auto !important;
+            max-width: none !important;
             margin: 0 !important;
             box-shadow: none !important;
             border-radius: 0 !important;
@@ -689,7 +697,15 @@
             display: block !important;
         }
 
-        .pdf-export-force-desktop .items-table,
+        .pdf-export-force-desktop .items-table {
+            display: table !important;
+            width: auto !important;
+            min-width: 100%;
+            /* auto layout respects min-width on € columns — fixed % + borders often clipped last col in html2canvas */
+            table-layout: auto !important;
+            overflow: visible !important;
+        }
+
         .pdf-export-force-desktop .total-section {
             display: table !important;
             width: 100% !important;
@@ -697,38 +713,37 @@
             overflow: visible !important;
         }
 
-        /* PDF capture: tighter padding + more room for numeric columns (was clipping “Prix total”) */
+        /* PDF line items: room for amounts; designation column takes remaining space */
         .pdf-export-force-desktop .items-table th,
         .pdf-export-force-desktop .items-table td {
             box-sizing: border-box;
-            padding: 4px 5px !important;
+            padding: 4px 6px !important;
             overflow: visible !important;
             vertical-align: top;
         }
 
         .pdf-export-force-desktop .items-table th:nth-child(1),
         .pdf-export-force-desktop .items-table td:nth-child(1) {
-            width: 8%;
+            width: 1%;
+            white-space: nowrap;
+            text-align: center;
         }
 
         .pdf-export-force-desktop .items-table th:nth-child(2),
         .pdf-export-force-desktop .items-table td:nth-child(2) {
-            width: 34%;
+            max-width: 340px;
             min-width: 0;
             word-wrap: break-word;
             overflow-wrap: anywhere;
         }
 
         .pdf-export-force-desktop .items-table th:nth-child(3),
-        .pdf-export-force-desktop .items-table td:nth-child(3) {
-            width: 29%;
-            text-align: right;
-        }
-
+        .pdf-export-force-desktop .items-table td:nth-child(3),
         .pdf-export-force-desktop .items-table th:nth-child(4),
         .pdf-export-force-desktop .items-table td:nth-child(4) {
-            width: 29%;
+            min-width: 7rem;
             text-align: right;
+            white-space: nowrap;
         }
 
         .pdf-export-force-desktop .signature-section {
@@ -1012,6 +1027,8 @@
                             root.style.minHeight = 'auto';
                             root.style.opacity = '1';
                             root.style.visibility = 'visible';
+                            root.style.width = 'max-content';
+                            root.style.maxWidth = 'none';
                             root.setAttribute('aria-hidden', 'false');
                         }
                         if (!root) return;
@@ -1021,9 +1038,15 @@
                         root.querySelectorAll('.header.desktop-only, .bill-info.desktop-only, .total-letters.desktop-only').forEach(function (el) {
                             el.style.setProperty('display', 'block', 'important');
                         });
-                        root.querySelectorAll('table.items-table, table.total-section').forEach(function (el) {
+                        root.querySelectorAll('table.items-table').forEach(function (el) {
                             el.style.setProperty('display', 'table', 'important');
-                            el.style.width = '100%';
+                            el.style.setProperty('width', 'auto', 'important');
+                            el.style.setProperty('min-width', '100%', 'important');
+                            el.style.setProperty('table-layout', 'auto', 'important');
+                        });
+                        root.querySelectorAll('table.total-section').forEach(function (el) {
+                            el.style.setProperty('display', 'table', 'important');
+                            el.style.setProperty('width', '100%', 'important');
                             el.style.setProperty('table-layout', 'fixed', 'important');
                         });
                         root.querySelectorAll('.signature-section.desktop-only').forEach(function (el) {
@@ -1035,6 +1058,8 @@
                             half.style.overflow = 'visible';
                             half.style.height = 'auto';
                             half.style.maxHeight = 'none';
+                            half.style.width = 'auto';
+                            half.style.maxWidth = 'none';
                         }
                         root.querySelectorAll('img').forEach(function (img) {
                             img.style.maxWidth = '128px';
@@ -1072,9 +1097,15 @@
             root.querySelectorAll('.header.desktop-only, .bill-info.desktop-only, .total-letters.desktop-only').forEach(function (el) {
                 el.style.setProperty('display', 'block', 'important');
             });
-            root.querySelectorAll('table.items-table, table.total-section').forEach(function (el) {
+            root.querySelectorAll('table.items-table').forEach(function (el) {
                 el.style.setProperty('display', 'table', 'important');
-                el.style.width = '100%';
+                el.style.setProperty('width', 'auto', 'important');
+                el.style.setProperty('min-width', '100%', 'important');
+                el.style.setProperty('table-layout', 'auto', 'important');
+            });
+            root.querySelectorAll('table.total-section').forEach(function (el) {
+                el.style.setProperty('display', 'table', 'important');
+                el.style.setProperty('width', '100%', 'important');
                 el.style.setProperty('table-layout', 'fixed', 'important');
             });
             root.querySelectorAll('.signature-section.desktop-only').forEach(function (el) {
@@ -1117,9 +1148,12 @@
                 await new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); });
                 await new Promise(function (r) { setTimeout(r, 50); });
 
-                /* Explicit dimensions help html2canvas on mobile (avoids blank or extra empty pages). */
-                var w = exportHost.offsetWidth || 802;
-                var h = Math.max(exportHost.scrollHeight, exportHost.offsetHeight, 1);
+                /*
+                 * Canvas width must be >= scrollWidth or html2canvas clips the right edge (last column).
+                 * Small buffer for borders/subpixels. Do not use offsetWidth alone.
+                 */
+                var w = Math.ceil(Math.max(exportHost.scrollWidth || 0, exportHost.offsetWidth || 0, 800)) + 24;
+                var h = Math.ceil(Math.max(exportHost.scrollHeight || 0, exportHost.offsetHeight || 0, 1)) + 16;
                 var opts = buildPdfOptions({
                     width: w,
                     height: h,
