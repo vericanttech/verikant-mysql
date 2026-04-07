@@ -622,9 +622,12 @@
          * html2pdf capture: full A4-width desktop layout (no new server route).
          * Cloned bill is placed here so mobile viewport CSS does not squeeze the table.
          */
-        /* On-screen but under the loading overlay (z-index 2000) so html2canvas paints reliably */
+        /*
+         * Use absolute (not fixed): html2canvas often returns blank or wrong pages on iOS/Safari
+         * when capturing position:fixed nodes. Stays under the loading overlay (z-index 2000).
+         */
         .pdf-export-root {
-            position: fixed;
+            position: absolute;
             left: 0;
             top: 0;
             width: 794px;
@@ -636,6 +639,32 @@
             pointer-events: none;
             overflow: visible;
             opacity: 1;
+        }
+
+        /*
+         * Undo mobile @media rules inside the export root (higher specificity than .desktop-only alone).
+         * Prevents html2canvas from rasterizing an empty bill on narrow viewports.
+         */
+        .pdf-export-root .mobile-only {
+            display: none !important;
+        }
+
+        .pdf-export-root .header.desktop-only,
+        .pdf-export-root .bill-info.desktop-only,
+        .pdf-export-root .total-letters.desktop-only {
+            display: block !important;
+        }
+
+        .pdf-export-root table.items-table.desktop-only,
+        .pdf-export-root table.total-section.desktop-only {
+            display: table !important;
+            width: 100% !important;
+            table-layout: fixed !important;
+        }
+
+        .pdf-export-root .signature-section.desktop-only {
+            display: flex !important;
+            justify-content: space-between !important;
         }
 
         .pdf-export-force-desktop .bill-half {
@@ -942,18 +971,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
 
     <script>
-        function buildPdfOptions() {
-            return {
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        function buildPdfOptions(html2canvasOverrides) {
+            var mobile = isMobile();
+            var base = {
                 margin: [5, 8, 8, 8],
                 filename: 'facture_{{ bill.bill_number }}.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
                 html2canvas: {
-                    scale: 2,
+                    /* Lower scale on phones: large canvases often fail or yield blank pages on WebKit */
+                    scale: mobile ? 1.5 : 2,
                     useCORS: true,
                     allowTaint: true,
                     letterRendering: true,
                     imageTimeout: 20000,
                     logging: false,
+                    foreignObjectRendering: false,
                     onclone: function (clonedDoc) {
                         /* Inline layout so mobile @media rules cannot leave the clone empty */
                         var root = clonedDoc.querySelector('.pdf-export-root');
@@ -999,6 +1036,10 @@
                     orientation: 'portrait'
                 }
             };
+            if (html2canvasOverrides && typeof html2canvasOverrides === 'object') {
+                Object.assign(base.html2canvas, html2canvasOverrides);
+            }
+            return base;
         }
 
         // Function to show loading overlay
@@ -1064,7 +1105,19 @@
                 await new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); });
                 await new Promise(function (r) { setTimeout(r, 50); });
 
-                var opts = buildPdfOptions();
+                /* Explicit dimensions help html2canvas on mobile (avoids blank or extra empty pages). */
+                var w = exportHost.offsetWidth || 794;
+                var h = Math.max(exportHost.scrollHeight, exportHost.offsetHeight, 1);
+                var opts = buildPdfOptions({
+                    width: w,
+                    height: h,
+                    windowWidth: w,
+                    windowHeight: h,
+                    scrollX: 0,
+                    scrollY: 0,
+                    x: 0,
+                    y: 0
+                });
                 var pdfBlob = await html2pdf()
                     .set(opts)
                     .from(exportHost)
@@ -1103,11 +1156,6 @@
                 }
                 loadingOverlay.remove();
             }
-        }
-
-        // Function to check if device is mobile
-        function isMobile() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         }
 
         // Function to share via WhatsApp URL
