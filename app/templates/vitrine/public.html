@@ -248,7 +248,24 @@
 
         .product-row:last-child { border-bottom: none; }
 
-        /* Thumbnail */
+        /* Thumbnail (tap to open lightbox) */
+        .product-thumb-wrap {
+            flex-shrink: 0;
+            padding: 0;
+            margin: 0;
+            border: none;
+            background: none;
+            cursor: zoom-in;
+            border-radius: 10px;
+            line-height: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .product-thumb-wrap:focus-visible {
+            outline: 2px solid var(--green);
+            outline-offset: 2px;
+        }
+
         .product-thumb {
             width: 52px;
             height: 52px;
@@ -258,6 +275,7 @@
             border: 0.5px solid var(--border-med);
             background: var(--bg);
             display: block;
+            pointer-events: none;
         }
 
         /* Subtle placeholder when no image */
@@ -440,6 +458,61 @@
         }
 
         /* ── FOOTER ── */
+        /* Full-screen image viewer */
+        .vitrine-lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+                    max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+            background: rgba(0, 0, 0, 0.9);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .vitrine-lightbox.is-open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .vitrine-lightbox img {
+            max-width: 100%;
+            max-height: min(92dvh, 900px);
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .vitrine-lightbox-close {
+            position: absolute;
+            top: max(10px, env(safe-area-inset-top));
+            right: max(10px, env(safe-area-inset-right));
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font-size: 26px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .vitrine-lightbox-close:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+
         .vitrine-footer {
             text-align: center;
             padding: 24px 16px 8px;
@@ -519,11 +592,13 @@
         <div class="product-row">
 
             {% if p.image_path %}
-            <img class="product-thumb"
-                 src="{{ url_for('static', filename=p.image_path) }}"
-                 alt="{{ p.name }}"
-                 width="52" height="52"
-                 loading="lazy" decoding="async">
+            <button type="button" class="product-thumb-wrap" aria-label="Agrandir la photo : {{ p.name|e }}" data-product-name="{{ p.name|e }}">
+                <img class="product-thumb"
+                     src="{{ url_for('static', filename=p.image_path) }}"
+                     alt=""
+                     width="52" height="52"
+                     loading="lazy" decoding="async">
+            </button>
             {% else %}
             <div class="product-thumb-placeholder"><span></span></div>
             {% endif %}
@@ -603,5 +678,61 @@
     </p>
 
 </div><!-- /page -->
+
+<div id="vitrine-lightbox" class="vitrine-lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Photo produit">
+    <button type="button" class="vitrine-lightbox-close" aria-label="Fermer">&times;</button>
+    <img id="vitrine-lightbox-img" alt="" decoding="async">
+</div>
+
+<script>
+(function () {
+    var lb = document.getElementById('vitrine-lightbox');
+    var lbImg = document.getElementById('vitrine-lightbox-img');
+    var closeBtn = lb && lb.querySelector('.vitrine-lightbox-close');
+    if (!lb || !lbImg || !closeBtn) return;
+
+    function openLightbox(src, alt) {
+        lbImg.src = src;
+        lbImg.alt = alt || '';
+        lb.classList.add('is-open');
+        lb.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        closeBtn.focus();
+    }
+
+    function closeLightbox() {
+        lb.classList.remove('is-open');
+        lb.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        lbImg.removeAttribute('src');
+        lbImg.alt = '';
+    }
+
+    document.querySelectorAll('.product-thumb-wrap').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var img = btn.querySelector('img');
+            if (!img || !img.src) return;
+            var name = btn.getAttribute('data-product-name') || '';
+            openLightbox(img.currentSrc || img.src, name);
+        });
+    });
+
+    closeBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        closeLightbox();
+    });
+
+    lb.addEventListener('click', function (e) {
+        if (e.target === lb) closeLightbox();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && lb.classList.contains('is-open')) {
+            e.preventDefault();
+            closeLightbox();
+        }
+    });
+})();
+</script>
 </body>
 </html>

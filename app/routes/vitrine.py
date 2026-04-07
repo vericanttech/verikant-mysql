@@ -135,7 +135,6 @@ def marketing_vitrine():
         return redirect(url_for('bills.pos'))
 
     if request.method == 'POST':
-        body = (request.form.get('vitrine_body') or '').strip() or None
         promo_end = (request.form.get('vitrine_promo_end') or '').strip() or None
         raw_pct = (request.form.get('vitrine_discount_percent') or '').strip()
         discount_pct = None
@@ -145,7 +144,9 @@ def marketing_vitrine():
             except ValueError:
                 discount_pct = None
 
-        shop.vitrine_body = body
+        # Only update welcome text when the field is posted (admin form may omit it).
+        if 'vitrine_body' in request.form:
+            shop.vitrine_body = (request.form.get('vitrine_body') or '').strip() or None
         shop.vitrine_promo_end = promo_end
         shop.vitrine_discount_percent = discount_pct
 

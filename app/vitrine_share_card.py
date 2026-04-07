@@ -192,13 +192,14 @@ def _paste_logo_circle(img, shop, static_root: str, cx: int, cy: int, radius: in
 # ── Pill badge ────────────────────────────────────────────────────────────────
 
 def _pill_badge(img, draw, text: str, x: int, y: int,
-                bg_rgba, text_color, border_rgba=None, font=None):
+                bg_rgba, text_color, border_rgba=None, font=None,
+                pad_x: int = 28, pad_y: int = 12):
     from PIL import Image, ImageDraw
     if font is None:
         font = _font(28, bold=True)
     tw = _tw(draw, text, font)
     th = _th(draw, text, font)
-    px, py = 28, 12
+    px, py = pad_x, pad_y
     pw, ph = tw + px * 2, th + py * 2
     pill = Image.new("RGBA", (pw, ph), (0, 0, 0, 0))
     pd = ImageDraw.Draw(pill)
@@ -220,36 +221,6 @@ def _pill_badge_right(img, draw, text: str, right_x: int, y: int,
     pw = tw + px * 2
     x = right_x - pw
     return pw, _pill_badge(img, draw, text, x, y, bg_rgba, text_color, border_rgba, font)[1]
-
-
-def _url_button_right(
-    img,
-    draw,
-    display_text: str,
-    right_x: int,
-    y_top: int,
-    font,
-    bg_rgba: tuple,
-    text_color: tuple,
-    border_rgba: tuple,
-) -> int:
-    """Discount-colored pill with URL text, right-aligned. Returns pill height."""
-    from PIL import Image, ImageDraw
-
-    tw = _tw(draw, display_text, font)
-    th = _th(draw, display_text, font)
-    pad_x, pad_y = 14, 11
-    pw = tw + pad_x * 2
-    ph = th + pad_y * 2
-    x0 = right_x - pw
-
-    pill = Image.new("RGBA", (pw, ph), (0, 0, 0, 0))
-    pd = ImageDraw.Draw(pill)
-    pd.rounded_rectangle([0, 0, pw, ph], radius=ph // 2, fill=bg_rgba,
-                         outline=border_rgba, width=2)
-    pd.text((pad_x, pad_y), display_text, fill=text_color, font=font)
-    img.paste(pill, (x0, y_top), pill)
-    return ph
 
 
 # ── Main generator ────────────────────────────────────────────────────────────
@@ -363,20 +334,20 @@ def generate_share_card_jpeg(
     footer_y  = CARD_H - FOOTER_H - 30
     phones    = [str(ph.phone) for ph in (shop.phones or [])][:2]
     fy = footer_y
+    phone_pill_gap = 8
     for ph in phones:
-        draw.text((MARGIN, fy), re.sub(r"\s+", " ", ph)[:38],
-                  fill=(*OFF_WHITE, 130), font=f_small)
-        fy += 40
-
-    url_display = re.sub(r"https?://", "", vitrine_url)[:42]
-    _url_button_right(
-        img, draw, url_display, CARD_W - MARGIN, footer_y,
-        font=f_small,
-        bg_rgba=(*GOLD, 220),
-        text_color=(28, 18, 0),
-        border_rgba=(*GOLD_LIGHT, 200),
-    )
-    draw = ImageDraw.Draw(img)
+        label = re.sub(r"\s+", " ", ph)[:38]
+        _, ph_h = _pill_badge(
+            img, draw, label, MARGIN, fy,
+            bg_rgba=(*GOLD, 220),
+            text_color=(28, 18, 0),
+            border_rgba=(*GOLD_LIGHT, 200),
+            font=f_small,
+            pad_x=14,
+            pad_y=10,
+        )
+        draw = ImageDraw.Draw(img)
+        fy += ph_h + phone_pill_gap
 
     _center_text(draw, CARD_W // 2, footer_y + FOOTER_H - 14,
                  "Prix indicatifs — à confirmer en caisse", f_tiny, fill=(255, 255, 255, 55))
@@ -474,7 +445,7 @@ def cache_key(
         str(selling_price),
         str(product_updated or ""),
         str(image_path or ""),
-        "v6",
+        "v8",
     ])
     return hashlib.sha256(raw.encode()).hexdigest()
 
