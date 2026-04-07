@@ -630,9 +630,10 @@
             position: absolute;
             left: 0;
             top: 0;
-            width: 794px;
-            max-width: 794px;
-            padding: 8px 12px;
+            /* Slightly wider inner canvas so last table column is not clipped by html2canvas rounding */
+            width: 802px;
+            max-width: 802px;
+            padding: 8px 10px 8px 10px;
             background: #fff;
             box-sizing: border-box;
             z-index: 1999;
@@ -693,29 +694,40 @@
             display: table !important;
             width: 100% !important;
             table-layout: fixed;
+            overflow: visible !important;
+        }
+
+        /* PDF capture: tighter padding + more room for numeric columns (was clipping “Prix total”) */
+        .pdf-export-force-desktop .items-table th,
+        .pdf-export-force-desktop .items-table td {
+            box-sizing: border-box;
+            padding: 4px 5px !important;
+            overflow: visible !important;
+            vertical-align: top;
         }
 
         .pdf-export-force-desktop .items-table th:nth-child(1),
         .pdf-export-force-desktop .items-table td:nth-child(1) {
-            width: 10%;
+            width: 8%;
         }
 
         .pdf-export-force-desktop .items-table th:nth-child(2),
         .pdf-export-force-desktop .items-table td:nth-child(2) {
-            width: 42%;
+            width: 34%;
+            min-width: 0;
             word-wrap: break-word;
             overflow-wrap: anywhere;
         }
 
         .pdf-export-force-desktop .items-table th:nth-child(3),
         .pdf-export-force-desktop .items-table td:nth-child(3) {
-            width: 24%;
+            width: 29%;
             text-align: right;
         }
 
         .pdf-export-force-desktop .items-table th:nth-child(4),
         .pdf-export-force-desktop .items-table td:nth-child(4) {
-            width: 24%;
+            width: 29%;
             text-align: right;
         }
 
@@ -1106,7 +1118,7 @@
                 await new Promise(function (r) { setTimeout(r, 50); });
 
                 /* Explicit dimensions help html2canvas on mobile (avoids blank or extra empty pages). */
-                var w = exportHost.offsetWidth || 794;
+                var w = exportHost.offsetWidth || 802;
                 var h = Math.max(exportHost.scrollHeight, exportHost.offsetHeight, 1);
                 var opts = buildPdfOptions({
                     width: w,
