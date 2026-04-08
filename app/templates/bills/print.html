@@ -630,11 +630,10 @@
             position: absolute;
             left: 0;
             top: 0;
-            /* Shrink-wrap to table width so nothing is clipped; min-width keeps A4-ish layout */
-            width: max-content;
-            min-width: 780px;
-            max-width: none;
-            padding: 8px 24px 8px 12px;
+            /* Fixed width: max-content + bill-half:auto broke html2canvas on mobile (empty PDFs). */
+            width: 802px;
+            max-width: 802px;
+            padding: 8px 14px 8px 10px;
             background: #fff;
             box-sizing: border-box;
             z-index: 1999;
@@ -659,8 +658,7 @@
 
         .pdf-export-root table.items-table.desktop-only {
             display: table !important;
-            width: auto !important;
-            min-width: 100%;
+            width: 100% !important;
             table-layout: auto !important;
         }
 
@@ -676,9 +674,8 @@
         }
 
         .pdf-export-force-desktop .bill-half {
-            /* Let width follow the table (max-content root); 100% here forces viewport-wide box and clips html2canvas */
-            width: auto !important;
-            max-width: none !important;
+            width: 100% !important;
+            max-width: 100% !important;
             margin: 0 !important;
             box-shadow: none !important;
             border-radius: 0 !important;
@@ -699,9 +696,8 @@
 
         .pdf-export-force-desktop .items-table {
             display: table !important;
-            width: auto !important;
-            min-width: 100%;
-            /* auto layout respects min-width on € columns — fixed % + borders often clipped last col in html2canvas */
+            width: 100% !important;
+            /* auto + min-width on price cols fits inside fixed 802px root without max-content parent */
             table-layout: auto !important;
             overflow: visible !important;
         }
@@ -741,7 +737,7 @@
         .pdf-export-force-desktop .items-table td:nth-child(3),
         .pdf-export-force-desktop .items-table th:nth-child(4),
         .pdf-export-force-desktop .items-table td:nth-child(4) {
-            min-width: 7rem;
+            min-width: 5.5rem;
             text-align: right;
             white-space: nowrap;
         }
@@ -1027,8 +1023,8 @@
                             root.style.minHeight = 'auto';
                             root.style.opacity = '1';
                             root.style.visibility = 'visible';
-                            root.style.width = 'max-content';
-                            root.style.maxWidth = 'none';
+                            root.style.width = '802px';
+                            root.style.maxWidth = '802px';
                             root.setAttribute('aria-hidden', 'false');
                         }
                         if (!root) return;
@@ -1040,8 +1036,7 @@
                         });
                         root.querySelectorAll('table.items-table').forEach(function (el) {
                             el.style.setProperty('display', 'table', 'important');
-                            el.style.setProperty('width', 'auto', 'important');
-                            el.style.setProperty('min-width', '100%', 'important');
+                            el.style.setProperty('width', '100%', 'important');
                             el.style.setProperty('table-layout', 'auto', 'important');
                         });
                         root.querySelectorAll('table.total-section').forEach(function (el) {
@@ -1058,8 +1053,8 @@
                             half.style.overflow = 'visible';
                             half.style.height = 'auto';
                             half.style.maxHeight = 'none';
-                            half.style.width = 'auto';
-                            half.style.maxWidth = 'none';
+                            half.style.width = '100%';
+                            half.style.maxWidth = '100%';
                         }
                         root.querySelectorAll('img').forEach(function (img) {
                             img.style.maxWidth = '128px';
@@ -1099,8 +1094,7 @@
             });
             root.querySelectorAll('table.items-table').forEach(function (el) {
                 el.style.setProperty('display', 'table', 'important');
-                el.style.setProperty('width', 'auto', 'important');
-                el.style.setProperty('min-width', '100%', 'important');
+                el.style.setProperty('width', '100%', 'important');
                 el.style.setProperty('table-layout', 'auto', 'important');
             });
             root.querySelectorAll('table.total-section').forEach(function (el) {
@@ -1148,22 +1142,8 @@
                 await new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); });
                 await new Promise(function (r) { setTimeout(r, 50); });
 
-                /*
-                 * Canvas width must be >= scrollWidth or html2canvas clips the right edge (last column).
-                 * Small buffer for borders/subpixels. Do not use offsetWidth alone.
-                 */
-                var w = Math.ceil(Math.max(exportHost.scrollWidth || 0, exportHost.offsetWidth || 0, 800)) + 24;
-                var h = Math.ceil(Math.max(exportHost.scrollHeight || 0, exportHost.offsetHeight || 0, 1)) + 16;
-                var opts = buildPdfOptions({
-                    width: w,
-                    height: h,
-                    windowWidth: w,
-                    windowHeight: h,
-                    scrollX: 0,
-                    scrollY: 0,
-                    x: 0,
-                    y: 0
-                });
+                /* Let html2pdf measure the node; explicit width/height + scrollWidth buffer caused empty PDFs on mobile. */
+                var opts = buildPdfOptions();
                 var pdfBlob = await html2pdf()
                     .set(opts)
                     .from(exportHost)
