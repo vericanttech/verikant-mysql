@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for,  make_response
 from flask_login import login_required, current_user
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload
 from app.utils import admin_only_action, format_datetime
 from app import db
 from app.models import SalesBill, SalesDetail, Client, Product, PaymentTransaction, StockMovement, Shop
@@ -11,7 +12,6 @@ from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 from io import BytesIO
 from flask import current_app
@@ -21,6 +21,7 @@ from io import StringIO
 from datetime import date
 
 from app.vitrine_helpers import build_vitrine_shop_url, qr_png_data_url
+from app.invoice_pdf import build_invoice_pdf_buffer
 
 
 bills = Blueprint('bills', __name__)
@@ -84,6 +85,28 @@ def get_shop_profile():
     current_shop = Shop.query.get(current_user.current_shop_id)
 
     return current_shop
+
+
+@bills.route("/bills/<int:bill_id>/invoice.pdf")
+@login_required
+def export_bill_invoice_pdf(bill_id):
+    bill = (
+        get_shop_filtered_query(SalesBill)
+        .options(
+            joinedload(SalesBill.sales_details).joinedload(SalesDetail.product),
+            joinedload(SalesBill.client),
+            joinedload(SalesBill.user),
+        )
+        .filter_by(id=bill_id)
+        .first_or_404()
+    )
+    shop_profile = get_shop_profile()
+    buf = build_invoice_pdf_buffer(bill, shop_profile)
+    fn = f"facture_{bill.bill_number}.pdf"
+    resp = make_response(buf.getvalue())
+    resp.headers["Content-Type"] = "application/pdf"
+    resp.headers["Content-Disposition"] = f'inline; filename="{fn}"'
+    return resp
 
 
 @bills.route('/api/customers/search')

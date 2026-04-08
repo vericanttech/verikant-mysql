@@ -617,141 +617,6 @@
                 display: none;
             }
         }
-
-        /*
-         * html2pdf capture: full A4-width desktop layout (no new server route).
-         * Cloned bill is placed here so mobile viewport CSS does not squeeze the table.
-         */
-        /*
-         * Use absolute (not fixed): html2canvas often returns blank or wrong pages on iOS/Safari
-         * when capturing position:fixed nodes. Stays under the loading overlay (z-index 2000).
-         */
-        .pdf-export-root {
-            position: absolute;
-            left: 0;
-            top: 0;
-            /* Fixed width: max-content + bill-half:auto broke html2canvas on mobile (empty PDFs). */
-            width: 802px;
-            max-width: 802px;
-            padding: 8px 14px 8px 10px;
-            background: #fff;
-            box-sizing: border-box;
-            z-index: 1999;
-            pointer-events: none;
-            overflow: visible;
-            opacity: 1;
-        }
-
-        /*
-         * Undo mobile @media rules inside the export root (higher specificity than .desktop-only alone).
-         * Prevents html2canvas from rasterizing an empty bill on narrow viewports.
-         */
-        .pdf-export-root .mobile-only {
-            display: none !important;
-        }
-
-        .pdf-export-root .header.desktop-only,
-        .pdf-export-root .bill-info.desktop-only,
-        .pdf-export-root .total-letters.desktop-only {
-            display: block !important;
-        }
-
-        .pdf-export-root table.items-table.desktop-only {
-            display: table !important;
-            width: 100% !important;
-            table-layout: auto !important;
-        }
-
-        .pdf-export-root table.total-section.desktop-only {
-            display: table !important;
-            width: 100% !important;
-            table-layout: fixed !important;
-        }
-
-        .pdf-export-root .signature-section.desktop-only {
-            display: flex !important;
-            justify-content: space-between !important;
-        }
-
-        .pdf-export-force-desktop .bill-half {
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-            box-shadow: none !important;
-            border-radius: 0 !important;
-            background: #fff !important;
-            padding: 0 !important;
-            overflow: visible !important;
-        }
-
-        .pdf-export-force-desktop .mobile-only {
-            display: none !important;
-        }
-
-        .pdf-export-force-desktop .header,
-        .pdf-export-force-desktop .bill-info,
-        .pdf-export-force-desktop .total-letters {
-            display: block !important;
-        }
-
-        .pdf-export-force-desktop .items-table {
-            display: table !important;
-            width: 100% !important;
-            /* auto + min-width on price cols fits inside fixed 802px root without max-content parent */
-            table-layout: auto !important;
-            overflow: visible !important;
-        }
-
-        .pdf-export-force-desktop .total-section {
-            display: table !important;
-            width: 100% !important;
-            table-layout: fixed;
-            overflow: visible !important;
-        }
-
-        /* PDF line items: room for amounts; designation column takes remaining space */
-        .pdf-export-force-desktop .items-table th,
-        .pdf-export-force-desktop .items-table td {
-            box-sizing: border-box;
-            padding: 4px 6px !important;
-            overflow: visible !important;
-            vertical-align: top;
-        }
-
-        .pdf-export-force-desktop .items-table th:nth-child(1),
-        .pdf-export-force-desktop .items-table td:nth-child(1) {
-            width: 1%;
-            white-space: nowrap;
-            text-align: center;
-        }
-
-        .pdf-export-force-desktop .items-table th:nth-child(2),
-        .pdf-export-force-desktop .items-table td:nth-child(2) {
-            max-width: 340px;
-            min-width: 0;
-            word-wrap: break-word;
-            overflow-wrap: anywhere;
-        }
-
-        .pdf-export-force-desktop .items-table th:nth-child(3),
-        .pdf-export-force-desktop .items-table td:nth-child(3),
-        .pdf-export-force-desktop .items-table th:nth-child(4),
-        .pdf-export-force-desktop .items-table td:nth-child(4) {
-            min-width: 5.5rem;
-            text-align: right;
-            white-space: nowrap;
-        }
-
-        .pdf-export-force-desktop .signature-section {
-            display: flex !important;
-            justify-content: space-between;
-        }
-
-        .pdf-export-force-desktop .vat-summary {
-            max-width: 100% !important;
-            margin-left: 0 !important;
-            margin-right: 0 !important;
-        }
     </style>
 </head>
 <body>
@@ -989,92 +854,16 @@
     </div>
 
 
-    <!-- Required scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
 
     <script>
+        var INVOICE_PDF_URL = "{{ url_for('bills.export_bill_invoice_pdf', bill_id=bill.id) }}";
+        var INVOICE_PDF_NAME = "facture_{{ bill.bill_number }}.pdf";
+
         function isMobile() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         }
 
-        function buildPdfOptions(html2canvasOverrides) {
-            var mobile = isMobile();
-            var base = {
-                margin: [5, 8, 8, 8],
-                filename: 'facture_{{ bill.bill_number }}.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-                html2canvas: {
-                    /* Lower scale on phones: large canvases often fail or yield blank pages on WebKit */
-                    scale: mobile ? 1.5 : 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    letterRendering: true,
-                    imageTimeout: 20000,
-                    logging: false,
-                    foreignObjectRendering: false,
-                    onclone: function (clonedDoc) {
-                        /* Inline layout so mobile @media rules cannot leave the clone empty */
-                        var root = clonedDoc.querySelector('.pdf-export-root');
-                        if (root) {
-                            root.style.overflow = 'visible';
-                            root.style.height = 'auto';
-                            root.style.minHeight = 'auto';
-                            root.style.opacity = '1';
-                            root.style.visibility = 'visible';
-                            root.style.width = '802px';
-                            root.style.maxWidth = '802px';
-                            root.setAttribute('aria-hidden', 'false');
-                        }
-                        if (!root) return;
-                        root.querySelectorAll('.mobile-only').forEach(function (el) {
-                            el.style.setProperty('display', 'none', 'important');
-                        });
-                        root.querySelectorAll('.header.desktop-only, .bill-info.desktop-only, .total-letters.desktop-only').forEach(function (el) {
-                            el.style.setProperty('display', 'block', 'important');
-                        });
-                        root.querySelectorAll('table.items-table').forEach(function (el) {
-                            el.style.setProperty('display', 'table', 'important');
-                            el.style.setProperty('width', '100%', 'important');
-                            el.style.setProperty('table-layout', 'auto', 'important');
-                        });
-                        root.querySelectorAll('table.total-section').forEach(function (el) {
-                            el.style.setProperty('display', 'table', 'important');
-                            el.style.setProperty('width', '100%', 'important');
-                            el.style.setProperty('table-layout', 'fixed', 'important');
-                        });
-                        root.querySelectorAll('.signature-section.desktop-only').forEach(function (el) {
-                            el.style.setProperty('display', 'flex', 'important');
-                            el.style.justifyContent = 'space-between';
-                        });
-                        var half = root.querySelector('.bill-half');
-                        if (half) {
-                            half.style.overflow = 'visible';
-                            half.style.height = 'auto';
-                            half.style.maxHeight = 'none';
-                            half.style.width = '100%';
-                            half.style.maxWidth = '100%';
-                        }
-                        root.querySelectorAll('img').forEach(function (img) {
-                            img.style.maxWidth = '128px';
-                            img.style.height = 'auto';
-                        });
-                    }
-                },
-                jsPDF: {
-                    unit: 'mm',
-                    format: 'a4',
-                    orientation: 'portrait'
-                }
-            };
-            if (html2canvasOverrides && typeof html2canvasOverrides === 'object') {
-                Object.assign(base.html2canvas, html2canvasOverrides);
-            }
-            return base;
-        }
-
-        // Function to show loading overlay
         function showLoading() {
             const overlay = document.createElement('div');
             overlay.className = 'loading-overlay';
@@ -1083,111 +872,59 @@
             return overlay;
         }
 
-        /** Force desktop bill layout on the live export host (clone has no inline styles until this runs). */
-        function applyPdfExportStyles(root) {
-            if (!root) return;
-            root.querySelectorAll('.mobile-only').forEach(function (el) {
-                el.style.setProperty('display', 'none', 'important');
-            });
-            root.querySelectorAll('.header.desktop-only, .bill-info.desktop-only, .total-letters.desktop-only').forEach(function (el) {
-                el.style.setProperty('display', 'block', 'important');
-            });
-            root.querySelectorAll('table.items-table').forEach(function (el) {
-                el.style.setProperty('display', 'table', 'important');
-                el.style.setProperty('width', '100%', 'important');
-                el.style.setProperty('table-layout', 'auto', 'important');
-            });
-            root.querySelectorAll('table.total-section').forEach(function (el) {
-                el.style.setProperty('display', 'table', 'important');
-                el.style.setProperty('width', '100%', 'important');
-                el.style.setProperty('table-layout', 'fixed', 'important');
-            });
-            root.querySelectorAll('.signature-section.desktop-only').forEach(function (el) {
-                el.style.setProperty('display', 'flex', 'important');
-                el.style.justifyContent = 'space-between';
-            });
-        }
-
-        // Function to generate PDF and share
-        function waitForImages(root) {
-            const imgs = root.querySelectorAll('img');
-            const pending = [];
-            imgs.forEach(function (img) {
-                if (img.complete && img.naturalWidth > 0) return;
-                pending.push(new Promise(function (resolve) {
-                    img.addEventListener('load', resolve, { once: true });
-                    img.addEventListener('error', resolve, { once: true });
-                }));
-            });
-            return Promise.all(pending);
+        function downloadPdfBlob(blob) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = INVOICE_PDF_NAME;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
         }
 
         async function generateAndShare() {
             const loadingOverlay = showLoading();
-            var exportHost = null;
             try {
-                window.scrollTo(0, 0);
-                var source = document.querySelector('.bill-half');
-                if (!source) {
-                    throw new Error('Contenu facture introuvable');
+                var resp = await fetch(INVOICE_PDF_URL, { credentials: 'same-origin' });
+                if (!resp.ok) {
+                    throw new Error('HTTP ' + resp.status);
                 }
+                var pdfBlob = await resp.blob();
 
-                exportHost = document.createElement('div');
-                exportHost.className = 'pdf-export-root pdf-export-force-desktop';
-                exportHost.appendChild(source.cloneNode(true));
-                document.body.appendChild(exportHost);
-                applyPdfExportStyles(exportHost);
-
-                await waitForImages(exportHost);
-                await new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); });
-                await new Promise(function (r) { setTimeout(r, 50); });
-
-                /* Let html2pdf measure the node; explicit width/height + scrollWidth buffer caused empty PDFs on mobile. */
-                var opts = buildPdfOptions();
-                var pdfBlob = await html2pdf()
-                    .set(opts)
-                    .from(exportHost)
-                    .output('blob');
-
-                // Create message for WhatsApp
                 var message = `Facture #{{ bill.bill_number }} - {{ shop_profile.name }}\n` +
                               `Total: {{ bill.total_amount | fr_thousands  }}\n` +
                               `Date: {{ bill.date|format_datetime }}`;
 
-                // Try to share using Web Share API first (mobile devices)
                 if (navigator.share && isMobile()) {
                     try {
-                        var file = new File([pdfBlob], opts.filename, {
-                            type: 'application/pdf'
-                        });
-
+                        var file = new File([pdfBlob], INVOICE_PDF_NAME, { type: 'application/pdf' });
                         await navigator.share({
                             title: 'Facture VERICANT',
                             text: message,
                             files: [file]
                         });
+                        return;
                     } catch (shareError) {
-                        console.log('Share API failed, falling back to WhatsApp URL');
+                        console.log('Share API failed, download + WhatsApp');
+                        downloadPdfBlob(pdfBlob);
                         shareViaWhatsAppUrl(message);
+                        return;
                     }
-                } else {
-                    shareViaWhatsAppUrl(message);
                 }
+                downloadPdfBlob(pdfBlob);
+                shareViaWhatsAppUrl(message);
             } catch (error) {
                 console.error('Error generating PDF:', error);
                 alert('Une erreur est survenue lors de la génération du PDF.');
             } finally {
-                if (exportHost && exportHost.parentNode) {
-                    exportHost.parentNode.removeChild(exportHost);
-                }
                 loadingOverlay.remove();
             }
         }
 
-        // Function to share via WhatsApp URL
         function shareViaWhatsAppUrl(message) {
-            const encodedMessage = encodeURIComponent(message);
-            window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+            var encodedMessage = encodeURIComponent(message);
+            window.open('https://wa.me/?text=' + encodedMessage, '_blank');
         }
     </script>
 </body>
