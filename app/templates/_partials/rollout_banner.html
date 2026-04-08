@@ -1,8 +1,7 @@
 {% if show_rollout_banner %}
 <div id="rolloutBanner"
      class="sticky top-0 z-[60] w-full border-b border-amber-200 bg-amber-50 text-amber-950 shadow-sm"
-     role="status"
-     data-banner-id="{{ rollout_banner_id }}">
+     role="status">
     <div class="max-w-7xl mx-auto flex items-start gap-3 px-3 py-2.5 sm:px-4 text-sm leading-snug">
         <span class="mt-0.5 flex-shrink-0 text-amber-600" aria-hidden="true">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -21,16 +20,9 @@
 (function () {
     var el = document.getElementById('rolloutBanner');
     if (!el) return;
-    var id = el.getAttribute('data-banner-id') || '1';
-    var key = 'vericant_rollout_dismiss_' + id;
-    if (localStorage.getItem(key) === '1') {
-        el.remove();
-        return;
-    }
     var btn = document.getElementById('rolloutBannerClose');
     if (btn) {
         btn.addEventListener('click', function () {
-            try { localStorage.setItem(key, '1'); } catch (e) {}
             el.remove();
         });
     }

@@ -90,10 +90,9 @@ def create_app():
 
     app.config['APP_SW_VERSION'] = (os.environ.get('APP_SW_VERSION') or '1').strip() or '1'
     app.config['SHOW_ROLLOUT_BANNER'] = _env_bool('SHOW_ROLLOUT_BANNER', False)
-    app.config['ROLLOUT_BANNER_ID'] = (os.environ.get('ROLLOUT_BANNER_ID') or '1').strip() or '1'
     _rollout_txt = (os.environ.get('ROLLOUT_BANNER_TEXT') or '').strip()
     app.config['ROLLOUT_BANNER_TEXT'] = _rollout_txt or (
-        'Nouvelle version déployée. En cas de problème, contactez-nous.'
+        'Nouvelle version déployée. En cas de problème, contactez-nous au 76 572 58 06.'
     )
 
     # Behind HTTPS reverse proxy (Google Cloud Run, etc.)
@@ -126,7 +125,6 @@ def create_app():
     def inject_ui_config():
         return dict(
             show_rollout_banner=app.config.get('SHOW_ROLLOUT_BANNER', False),
-            rollout_banner_id=app.config.get('ROLLOUT_BANNER_ID', '1'),
             rollout_banner_text=app.config.get('ROLLOUT_BANNER_TEXT', ''),
             app_sw_version=app.config.get('APP_SW_VERSION', '1'),
         )
