@@ -66,15 +66,17 @@
                 <span class="text-2xl md:text-3xl font-bold text-gray-800">cant</span>
             </div>
             
-            <!-- Desktop Navigation -->
-            <div class="hidden md:flex items-center space-x-6 lg:space-x-8">
-                <a href="#fonctionnalites" class="text-gray-600 hover:text-blue-600 transition-colors font-medium">Fonctionnalités</a>
-                <a href="#contact" class="text-gray-600 hover:text-blue-600 transition-colors font-medium">Contact</a>
+            <!-- Nav: links (md+), Connexion + PWA install (all breakpoints — hero duplicate removed) -->
+            <div class="flex items-center gap-2 sm:gap-3 md:gap-4">
+                <div class="hidden md:flex items-center space-x-6 lg:space-x-8">
+                    <a href="#fonctionnalites" class="text-gray-600 hover:text-blue-600 transition-colors font-medium">Fonctionnalités</a>
+                    <a href="#contact" class="text-gray-600 hover:text-blue-600 transition-colors font-medium">Contact</a>
+                </div>
                 <a href="{{ url_for('auth.login') }}"
-                   class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:shadow-lg hover:scale-105 transition-all duration-200 font-medium">
+                   class="px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:shadow-lg hover:scale-105 transition-all duration-200 font-medium text-sm sm:text-base whitespace-nowrap">
                     Connexion
                 </a>
-                <button id="installApp" class="hidden px-5 py-2.5 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white hover:shadow-lg hover:scale-105 transition-all duration-200 font-medium">
+                <button id="installApp" type="button" class="hidden px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white hover:shadow-lg hover:scale-105 transition-all duration-200 font-medium text-sm sm:text-base whitespace-nowrap">
                     Installer l'app
                 </button>
             </div>
@@ -106,16 +108,14 @@
                         Nous contacter
                     </a>
 
+                    {# Android APK download disabled
                     <a href="{{ url_for('auth.download_android') }}" id="androidDownloadBtn" class="hidden px-6 py-3.5 md:px-8 md:py-4 rounded-xl bg-gradient-to-r from-green-600 to-green-700 text-white hover:shadow-xl hover:scale-105 transition-all duration-200 font-semibold text-center flex items-center justify-center gap-2">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5508 0 .9993.4486.9993.9993.0004.5511-.4485.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5508 0 .9993.4486.9993.9993-.0004.5511-.4485.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.2439 13.8533 7.8508 12 7.8508s-3.5902.3931-5.1349 1.1157L4.8429 5.4634a.4161.4161 0 00-.5676-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.186.8535 12.3074.8535 13.8218c0 1.5145 4.1252 2.7429 9.1465 2.7429s9.1465-1.2284 9.1465-2.7429c0-1.5144-1.8354-2.6355-4.3286-3.5004M12 0C5.3726 0 0 5.3726 0 12s5.3726 12 12 12 12-5.3726 12-12S18.6274 0 12 0"/>
                         </svg>
                         Télécharger Android
                     </a>
-
-                    <button id="mobile-installApp" class="hidden px-6 py-3.5 md:px-8 md:py-4 rounded-xl bg-gradient-to-r from-green-600 to-green-700 text-white hover:shadow-xl hover:scale-105 transition-all duration-200 font-semibold">
-                        📱 Installer l'app
-                    </button>
+                    #}
                 </div>
             </div>
             
@@ -337,9 +337,9 @@
         }
     });
 
-    // PWA Install functionality
+    // PWA install (Android APK download button remains disabled in template)
     let deferredPrompt;
-    const installButtons = document.querySelectorAll('#installApp, #mobile-installApp');
+    const installButtons = document.querySelectorAll('#installApp');
 
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
@@ -364,66 +364,6 @@
     window.addEventListener('appinstalled', () => {
         installButtons.forEach(button => button.classList.add('hidden'));
     });
-
-    // Android device detection for better UX
-    function detectAndroid() {
-        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        return /android/i.test(userAgent);
-    }
-
-    // Android download button - show only on Android devices
-    document.addEventListener('DOMContentLoaded', function() {
-        const androidDownloadBtn = document.getElementById('androidDownloadBtn');
-        
-        if (!androidDownloadBtn) return;
-        
-        // Only show button on Android devices
-        if (detectAndroid()) {
-            androidDownloadBtn.classList.remove('hidden');
-            // Highlight Android button on Android devices
-            androidDownloadBtn.classList.add('ring-2', 'ring-green-400', 'ring-offset-2');
-            
-            // Show notification when download starts
-            androidDownloadBtn.addEventListener('click', function(e) {
-                showDownloadNotification('Téléchargement démarré...', 'Le fichier est en cours de téléchargement. Cela peut prendre quelques instants.');
-            });
-        } else {
-            // Hide button on non-Android devices
-            androidDownloadBtn.classList.add('hidden');
-        }
-    });
-    
-    // Function to show download notification
-    function showDownloadNotification(title, message) {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 max-w-sm animate-slideIn';
-        notification.innerHTML = `
-            <div class="flex items-start gap-3">
-                <svg class="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <div>
-                    <p class="font-semibold">${title}</p>
-                    <p class="text-sm text-green-100 mt-1">${message}</p>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateX(100%)';
-            notification.style.transition = 'all 0.3s ease-out';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 5000);
-    }
 
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
