@@ -8,10 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
     <link rel="icon" type="image/x-icon" href="/static/images/vericant-icon.svg">
-    <!-- PWA Implementation -->
-    <meta name="theme-color" content="#2563eb">
-    <link rel="manifest" href="/static/manifest.json">
-    <link rel="apple-touch-icon" href="/static/images/vericant-icon-192.png">
+    {% include '_partials/pwa_head.html' %}
 </head>
 
 <style>
@@ -58,6 +55,7 @@
 </style>
 
 <body class="bg-gradient-to-br from-blue-50 via-white to-gray-50">
+{% include '_partials/rollout_banner.html' %}
 <!-- Navigation -->
 <nav class="bg-white/90 backdrop-blur-md shadow-sm fixed w-full z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -697,6 +695,7 @@
         }
     });
 </script>
+{% include '_partials/pwa_scripts.html' %}
 
 </body>
 </html>

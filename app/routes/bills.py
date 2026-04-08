@@ -1,3 +1,5 @@
+import os
+
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for,  make_response
 from flask_login import login_required, current_user
 from sqlalchemy import func
@@ -87,6 +89,14 @@ def get_shop_profile():
     return current_shop
 
 
+def _shop_logo_fs_path(shop):
+    """Absolute path to shop logo file under the static folder, or None."""
+    if not shop or not getattr(shop, "logo_path", None):
+        return None
+    path = os.path.join(current_app.static_folder, shop.logo_path)
+    return path if os.path.isfile(path) else None
+
+
 @bills.route("/bills/<int:bill_id>/invoice.pdf")
 @login_required
 def export_bill_invoice_pdf(bill_id):
@@ -101,7 +111,17 @@ def export_bill_invoice_pdf(bill_id):
         .first_or_404()
     )
     shop_profile = get_shop_profile()
-    buf = build_invoice_pdf_buffer(bill, shop_profile)
+    vitrine_public_url = None
+    if shop_profile and getattr(shop_profile, "is_active", True):
+        vitrine_public_url = url_for(
+            "vitrine.public_vitrine", shop_id=shop_profile.id, _external=True
+        )
+    buf = build_invoice_pdf_buffer(
+        bill,
+        shop_profile,
+        vitrine_public_url=vitrine_public_url,
+        logo_fs_path=_shop_logo_fs_path(shop_profile),
+    )
     fn = f"facture_{bill.bill_number}.pdf"
     resp = make_response(buf.getvalue())
     resp.headers["Content-Type"] = "application/pdf"

@@ -1,0 +1,16 @@
+<script>
+(function () {
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.register('{{ url_for("service_worker") }}', { scope: '/' }).then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+            var w = reg.installing;
+            if (!w) return;
+            w.addEventListener('statechange', function () {
+                if (w.state === 'installed' && navigator.serviceWorker.controller) {
+                    window.location.reload();
+                }
+            });
+        });
+    }).catch(function () {});
+})();
+</script>

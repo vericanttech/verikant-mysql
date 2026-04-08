@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_partials/pwa_head.html' %}
     <title>Système de Gestion d'Entreprise</title>
     <script src="{{ url_for('static', filename='js/lib/lucide.min.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -16,6 +17,7 @@
             Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées.
         </p>
     </div>
+    {% include '_partials/rollout_banner.html' %}
     {% if current_user.is_authenticated %}
     <div class="min-h-screen flex">
         <!-- Sidebar with mobile-only close button -->
@@ -774,6 +776,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 </style>
-
+{% include '_partials/pwa_scripts.html' %}
 </body>
 </html>

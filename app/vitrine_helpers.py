@@ -26,15 +26,20 @@ def build_vitrine_shop_url(shop_id: int) -> str:
     return f"{public_base_url()}/v/{int(shop_id)}"
 
 
-def qr_png_data_url(text: str) -> str:
+def qr_png_bytes(text: str) -> bytes:
+    """PNG image bytes for a QR code encoding ``text`` (e.g. vitrine URL)."""
     import qrcode
 
     buf = io.BytesIO()
     qr = qrcode.QRCode(version=1, box_size=4, border=2)
     qr.add_data(text)
     qr.make(fit=True)
-    img = qr.make_image(fill_color='black', back_color='white')
-    img.save(buf, format='PNG')
-    return 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode()
+    img = qr.make_image(fill_color="black", back_color="white")
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def qr_png_data_url(text: str) -> str:
+    return "data:image/png;base64," + base64.b64encode(qr_png_bytes(text)).decode()
 
 

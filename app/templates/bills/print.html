@@ -446,6 +446,10 @@
             background: linear-gradient(135deg, #25D366, #128C7E);
         }
 
+        .mobile-invoice-download {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+
         /* Loading overlay */
         .loading-overlay {
             position: fixed;
@@ -848,8 +852,10 @@
             <i class="fas fa-print"></i> Imprimer
         </button>
         -->
-        <button onclick="generateAndShare()" class="mobile-action-button mobile-whatsapp-button">
-            <i class="fab fa-whatsapp"></i> Partager
+        <button type="button" id="mobile-invoice-action" onclick="generateAndShare()"
+            class="mobile-action-button mobile-whatsapp-button"
+            aria-label="Partager la facture PDF">
+            <i class="fab fa-whatsapp" aria-hidden="true"></i> Partager
         </button>
     </div>
 
@@ -862,6 +868,50 @@
 
         function isMobile() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        /** True if Web Share can target a PDF file (e.g. WhatsApp). If false, use download fallback. */
+        function canSharePdfFile(blob) {
+            if (!navigator.share) {
+                return false;
+            }
+            if (typeof navigator.canShare !== 'function') {
+                return true;
+            }
+            try {
+                var file = new File([blob], INVOICE_PDF_NAME, { type: 'application/pdf' });
+                return navigator.canShare({ files: [file] });
+            } catch (e) {
+                return false;
+            }
+        }
+
+        /** Tiny valid PDF used only to probe navigator.canShare (no network). */
+        function minimalPdfBlob() {
+            var s = '%PDF-1.1\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n' +
+                '2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n' +
+                '3 0 obj<</Type/Page/MediaBox[0 0 3 3]>>endobj\n' +
+                'trailer<</Root 1 0 R>>\n%%EOF\n';
+            return new Blob([s], { type: 'application/pdf' });
+        }
+
+        /** Mobile only: show “Partager” + WhatsApp style when native PDF share works, else “Télécharger”. */
+        function setupMobileInvoiceButtonLabel() {
+            var btn = document.getElementById('mobile-invoice-action');
+            if (!btn || !isMobile()) {
+                return;
+            }
+            if (canSharePdfFile(minimalPdfBlob())) {
+                btn.classList.add('mobile-whatsapp-button');
+                btn.classList.remove('mobile-invoice-download');
+                btn.innerHTML = '<i class="fab fa-whatsapp" aria-hidden="true"></i> Partager';
+                btn.setAttribute('aria-label', 'Partager la facture PDF');
+            } else {
+                btn.classList.remove('mobile-whatsapp-button');
+                btn.classList.add('mobile-invoice-download');
+                btn.innerHTML = '<i class="fas fa-download" aria-hidden="true"></i> Télécharger';
+                btn.setAttribute('aria-label', 'Télécharger la facture PDF');
+            }
         }
 
         function showLoading() {
@@ -896,7 +946,8 @@
                               `Total: {{ bill.total_amount | fr_thousands  }}\n` +
                               `Date: {{ bill.date|format_datetime }}`;
 
-                if (navigator.share && isMobile()) {
+                var tryNativeShare = isMobile() && canSharePdfFile(pdfBlob);
+                if (tryNativeShare) {
                     try {
                         var file = new File([pdfBlob], INVOICE_PDF_NAME, { type: 'application/pdf' });
                         await navigator.share({
@@ -906,10 +957,10 @@
                         });
                         return;
                     } catch (shareError) {
-                        console.log('Share API failed, download + WhatsApp');
-                        downloadPdfBlob(pdfBlob);
-                        shareViaWhatsAppUrl(message);
-                        return;
+                        if (shareError.name === 'AbortError') {
+                            return;
+                        }
+                        console.log('Share API failed, falling back to download:', shareError);
                     }
                 }
                 downloadPdfBlob(pdfBlob);
@@ -926,6 +977,8 @@
             var encodedMessage = encodeURIComponent(message);
             window.open('https://wa.me/?text=' + encodedMessage, '_blank');
         }
+
+        setupMobileInvoiceButtonLabel();
     </script>
 </body>
 </html>

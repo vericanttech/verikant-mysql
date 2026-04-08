@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date, datetime
 
 import os
 
@@ -33,6 +34,28 @@ from app.vitrine_public_guard import (
 from app.vitrine_share_card import get_or_create_cached_jpeg
 
 vitrine_bp = Blueprint('vitrine', __name__)
+
+
+def _promo_countdown_info(promo_end_str):
+    """Calendar days until promo end (vs server local date) and visual urgency tier."""
+    if not promo_end_str:
+        return None, None
+    s = (promo_end_str or '').strip()
+    if len(s) < 10:
+        return None, None
+    try:
+        end = datetime.strptime(s[:10], '%Y-%m-%d').date()
+    except ValueError:
+        return None, None
+    today = date.today()
+    days_left = (end - today).days
+    if days_left < 0:
+        return days_left, 'expired'
+    if days_left <= 1:
+        return days_left, 'critical'
+    if days_left <= 3:
+        return days_left, 'soon'
+    return days_left, 'steady'
 
 
 def _current_shop_admin():
@@ -95,6 +118,8 @@ def public_vitrine(shop_id):
         x for x in vitrine_items if not x['is_new_arrival'] and not x['is_promo']
     ]
 
+    promo_days_left, promo_urgency = _promo_countdown_info(shop.vitrine_promo_end)
+
     resp = make_response(
         render_template(
             'vitrine/public.html',
@@ -104,6 +129,8 @@ def public_vitrine(shop_id):
             vitrine_promo_items=vitrine_promo_items,
             vitrine_other_items=vitrine_other_items,
             vitrine_url=build_vitrine_shop_url(shop.id),
+            promo_days_left=promo_days_left,
+            promo_urgency=promo_urgency,
         )
     )
     resp.set_cookie(

@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{{ shop.name }} — Vitrine</title>
     <meta property="og:title" content="{{ shop.name }}">
-    <meta property="og:description" content="{{ (shop.vitrine_body or '')[:160] }}">
+    <meta property="og:description" content="{{ shop.name }} — Vitrine">
     <meta name="robots" content="noindex,nofollow">
     <meta name="referrer" content="strict-origin-when-cross-origin">
+    {% include '_partials/pwa_head.html' %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -153,6 +154,15 @@
             text-align: left;
         }
 
+        .promo-banner--pct-only {
+            justify-content: center;
+            padding: 12px 14px;
+        }
+
+        .promo-banner--pct-only .promo-pct {
+            font-size: 38px;
+        }
+
         .promo-pct {
             font-family: 'DM Serif Display', serif;
             font-size: 34px;
@@ -167,21 +177,6 @@
             min-width: 0;
         }
 
-        .promo-eyebrow {
-            font-size: 9px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--amber);
-            margin-bottom: 2px;
-        }
-
-        .promo-sub {
-            font-size: 11px;
-            color: var(--text-muted);
-            line-height: 1.3;
-        }
-
         .promo-until {
             display: inline-block;
             margin-top: 4px;
@@ -191,6 +186,93 @@
             background: rgba(240,180,0,0.12);
             border-radius: 999px;
             padding: 2px 8px;
+        }
+
+        .promo-banner--critical {
+            background: linear-gradient(135deg, #fff5f5 0%, var(--amber-bg) 55%);
+            border-color: var(--red-border);
+            animation: promo-banner-pulse 2.8s ease-in-out infinite;
+        }
+
+        .promo-banner--soon {
+            background: linear-gradient(135deg, #fffbeb 0%, #fff7ed 100%);
+            border-color: #fbbf24;
+        }
+
+        .promo-banner--expired {
+            opacity: 0.82;
+        }
+
+        @keyframes promo-banner-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.12); }
+            50% { box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.08); }
+        }
+
+        .promo-countdown {
+            margin-top: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+        }
+
+        .promo-countdown-main {
+            font-family: 'DM Serif Display', serif;
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--red);
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+        }
+
+        .promo-banner--soon .promo-countdown-main {
+            color: #b45309;
+            font-size: 16px;
+        }
+
+        .promo-countdown-sub {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .promo-countdown--expired .promo-countdown-sub {
+            font-style: italic;
+        }
+
+        /* Promo section + rows: match urgency when fin de promo proche */
+        .product-card--promo-critical {
+            border: 0.5px solid var(--red-border);
+            box-shadow: 0 2px 14px rgba(220, 38, 38, 0.1);
+            background: linear-gradient(180deg, #fffbfb 0%, var(--card) 44px);
+        }
+
+        .product-card--promo-soon {
+            border: 0.5px solid #fcd34d;
+            box-shadow: 0 2px 12px rgba(245, 158, 11, 0.14);
+            background: linear-gradient(180deg, #fffbeb 0%, var(--card) 40px);
+        }
+
+        .product-row--promo-critical {
+            background: rgba(254, 242, 242, 0.4);
+        }
+
+        .product-row--promo-soon {
+            background: rgba(255, 251, 235, 0.55);
+        }
+
+        .product-row--promo-critical .price-promo-box {
+            border-color: rgba(220, 38, 38, 0.35);
+            background: linear-gradient(135deg, #fff5f5 0%, var(--green-bg) 100%);
+        }
+
+        .product-row--promo-soon .price-promo-box {
+            border-color: rgba(245, 158, 11, 0.45);
+        }
+
+        .section-label--promo-urgent {
+            color: var(--amber);
+            font-weight: 600;
         }
 
         /* ── BODY CARD ── */
@@ -214,6 +296,7 @@
         .section-label {
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 7px;
             font-size: 10px;
             font-weight: 500;
@@ -222,6 +305,28 @@
             color: var(--text-muted);
             padding: 0 4px;
             margin-bottom: 7px;
+        }
+
+        .section-urgency-tag {
+            text-transform: none;
+            letter-spacing: 0.02em;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: var(--amber-bg);
+            border: 0.5px solid var(--amber-border);
+            color: var(--amber);
+        }
+
+        .section-label--promo-urgent .section-urgency-tag {
+            margin-left: auto;
+        }
+
+        .section-urgency-tag--critical {
+            background: var(--red-bg);
+            border-color: var(--red-border);
+            color: var(--red);
         }
 
         .section-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
@@ -568,28 +673,47 @@
         {% set curr = shop.currency or 'FCFA' %}
 
         {% if has_global_promo %}
-        <div class="promo-banner">
+        <div class="promo-banner{% if not shop.vitrine_promo_end %} promo-banner--pct-only{% endif %}{% if shop.vitrine_promo_end and promo_urgency == 'critical' %} promo-banner--critical{% elif shop.vitrine_promo_end and promo_urgency == 'soon' %} promo-banner--soon{% elif shop.vitrine_promo_end and promo_urgency == 'expired' %} promo-banner--expired{% endif %}">
             <div class="promo-pct">−{{ shop.vitrine_discount_percent|round(0)|int }}%</div>
+            {% if shop.vitrine_promo_end %}
             <div class="promo-meta">
-                <div class="promo-eyebrow">Offre annoncée</div>
-                <div class="promo-sub">Indicatif — à confirmer en caisse</div>
-                {% if shop.vitrine_promo_end %}
+                {% if promo_days_left is not none %}
+                    {% if promo_urgency == 'expired' %}
+                    <div class="promo-countdown promo-countdown--expired">
+                        <span class="promo-countdown-sub">Fin prévue le {{ shop.vitrine_promo_end }}</span>
+                    </div>
+                    {% else %}
+                    <div class="promo-countdown">
+                        {% if promo_days_left == 0 %}
+                        <span class="promo-countdown-main">Dernière jour</span>
+                        {% elif promo_days_left == 1 %}
+                        <span class="promo-countdown-main">Plus que 1 jour</span>
+                        {% else %}
+                        <span class="promo-countdown-main">Plus que {{ promo_days_left }} jours</span>
+                        {% endif %}
+                        <span class="promo-countdown-sub">Jusqu'au {{ shop.vitrine_promo_end }}</span>
+                    </div>
+                    {% endif %}
+                {% else %}
                 <span class="promo-until">Jusqu'au {{ shop.vitrine_promo_end }}</span>
                 {% endif %}
             </div>
+            {% endif %}
         </div>
         {% endif %}
 
+        {# Texte d’accueil (vitrine_body) — masqué tant que l’édition est désactivée dans marketing/vitrine_settings ; réactiver ce bloc en même temps que le textarea
         {% if shop.vitrine_body %}
         <div class="body-card">
             <p class="body-text">{{ shop.vitrine_body }}</p>
         </div>
         {% endif %}
+        #}
 
         {# ── ROW MACRO ── #}
-        {% macro vitrine_row(item, promo_section=false) %}
+        {% macro vitrine_row(item, promo_section=false, row_urgency='') %}
         {% set p = item.product %}
-        <div class="product-row">
+        <div class="product-row{% if promo_section and row_urgency == 'critical' %} product-row--promo-critical{% elif promo_section and row_urgency == 'soon' %} product-row--promo-soon{% endif %}">
 
             {% if p.image_path %}
             <button type="button" class="product-thumb-wrap" aria-label="Agrandir la photo : {{ p.name|e }}" data-product-name="{{ p.name|e }}">
@@ -649,12 +773,17 @@
 
         {% if vitrine_promo_items %}
         <div>
-            <div class="section-label">
+            <div class="section-label{% if promo_urgency == 'critical' or promo_urgency == 'soon' %} section-label--promo-urgent{% endif %}">
                 <span class="section-dot is-promo"></span>
                 Promos
+                {% if promo_urgency == 'critical' %}
+                <span class="section-urgency-tag section-urgency-tag--critical">Bientôt terminé</span>
+                {% elif promo_urgency == 'soon' %}
+                <span class="section-urgency-tag">Se termine bientôt</span>
+                {% endif %}
             </div>
-            <div class="product-card">
-                {% for item in vitrine_promo_items %}{{ vitrine_row(item, true) }}{% endfor %}
+            <div class="product-card{% if promo_urgency == 'critical' %} product-card--promo-critical{% elif promo_urgency == 'soon' %} product-card--promo-soon{% endif %}">
+                {% for item in vitrine_promo_items %}{{ vitrine_row(item, true, promo_urgency or '') }}{% endfor %}
             </div>
         </div>
         {% endif %}
@@ -734,5 +863,6 @@
     });
 })();
 </script>
+{% include '_partials/pwa_scripts.html' %}
 </body>
 </html>

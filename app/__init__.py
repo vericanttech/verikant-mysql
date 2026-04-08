@@ -1,5 +1,5 @@
 # app/__init__.py
-from flask import Flask, flash, redirect, url_for, request
+from flask import Flask, flash, redirect, url_for, request, Response
 from flask_login import logout_user, current_user
 from app.cli import init_cli
 from app.extensions import db, migrate, login_manager
@@ -9,6 +9,14 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import current_app, jsonify #import jsonify
 from app.ssh_tunnel_db import maybe_start_ssh_tunnel as _maybe_start_ssh_tunnel
+from app.sw_worker import build_sw_js
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    v = (os.environ.get(name) or '').strip().lower()
+    if not v:
+        return default
+    return v in ('1', 'true', 'yes', 'on')
 
 
 def _resolve_database_url(default_sqlite: str) -> str:
@@ -80,6 +88,14 @@ def create_app():
             'pool_recycle': 280,
         }
 
+    app.config['APP_SW_VERSION'] = (os.environ.get('APP_SW_VERSION') or '1').strip() or '1'
+    app.config['SHOW_ROLLOUT_BANNER'] = _env_bool('SHOW_ROLLOUT_BANNER', False)
+    app.config['ROLLOUT_BANNER_ID'] = (os.environ.get('ROLLOUT_BANNER_ID') or '1').strip() or '1'
+    _rollout_txt = (os.environ.get('ROLLOUT_BANNER_TEXT') or '').strip()
+    app.config['ROLLOUT_BANNER_TEXT'] = _rollout_txt or (
+        'Nouvelle version déployée. En cas de problème, contactez-nous.'
+    )
+
     # Behind HTTPS reverse proxy (Google Cloud Run, etc.)
     if os.environ.get('K_SERVICE'):
         from werkzeug.middleware.proxy_fix import ProxyFix
@@ -98,6 +114,22 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
+
+    @app.route('/sw.js')
+    def service_worker():
+        body = build_sw_js(app.config.get('APP_SW_VERSION', '1'))
+        resp = Response(body, mimetype='application/javascript')
+        resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        return resp
+
+    @app.context_processor
+    def inject_ui_config():
+        return dict(
+            show_rollout_banner=app.config.get('SHOW_ROLLOUT_BANNER', False),
+            rollout_banner_id=app.config.get('ROLLOUT_BANNER_ID', '1'),
+            rollout_banner_text=app.config.get('ROLLOUT_BANNER_TEXT', ''),
+            app_sw_version=app.config.get('APP_SW_VERSION', '1'),
+        )
 
     @app.before_request
     def redirect_to_www():

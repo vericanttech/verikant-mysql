@@ -5,9 +5,15 @@ optional SSH_TUNNEL=1 for PythonAnywhere from your PC.
 
 Run from project root:
   python scripts/migrate_sqlite_to_mysql.py --sqlite instance/shop.db
+  python scripts/migrate_sqlite_to_mysql.py --fetch-from-pythonanywhere
+  python scripts/migrate_sqlite_to_mysql.py --fetch-from-pythonanywhere --force-fetch
   python scripts/migrate_sqlite_to_mysql.py --dry-run
   python scripts/migrate_sqlite_to_mysql.py --truncate --yes
   python scripts/migrate_sqlite_to_mysql.py --truncate --yes --batch-size 1000
+
+``--fetch-from-pythonanywhere`` downloads the live SQLite from PythonAnywhere (``PA_API_TOKEN``;
+account name from ``PA_USERNAME`` or ``PA_MYSQL_USER``) into ``scripts/sqlite/shop_from_pa.db``, then migrates. Reuses the file if it is
+less than 1 hour old unless ``--force-fetch`` is passed. Override path with ``--sqlite``.
 
 --truncate deletes all rows from app tables on MySQL (in FK-safe order) before import.
 
@@ -43,6 +49,8 @@ if str(_root) not in sys.path:
 from dotenv import load_dotenv
 
 load_dotenv(_root / ".env")
+
+from scripts.sqlite.pa_fetch import fetch_pythonanywhere_sqlite
 
 from app import create_app
 from app.extensions import db
@@ -357,12 +365,31 @@ def migrate(
 
 
 def main() -> None:
+    default_sqlite = _root / "instance" / "shop.db"
+    default_fetched = _root / "scripts" / "sqlite" / "shop_from_pa.db"
     parser = argparse.ArgumentParser(description="Migrate instance/shop.db to MySQL.")
     parser.add_argument(
         "--sqlite",
         type=Path,
-        default=_root / "instance" / "shop.db",
-        help="Path to SQLite file (default: instance/shop.db)",
+        default=None,
+        help=(
+            "Path to SQLite file (default: instance/shop.db; with "
+            "--fetch-from-pythonanywhere: scripts/sqlite/shop_from_pa.db)"
+        ),
+    )
+    parser.add_argument(
+        "--fetch-from-pythonanywhere",
+        action="store_true",
+        help=(
+            "Download SQLite from PythonAnywhere into scripts/sqlite/shop_from_pa.db "
+            "(or --sqlite path), then migrate. Skips download if file is < 1h old unless "
+            "--force-fetch."
+        ),
+    )
+    parser.add_argument(
+        "--force-fetch",
+        action="store_true",
+        help="With --fetch-from-pythonanywhere: always re-download from PythonAnywhere.",
     )
     parser.add_argument(
         "--dry-run",
@@ -394,8 +421,20 @@ def main() -> None:
     if args.batch_size < 1:
         raise SystemExit("--batch-size must be >= 1")
 
+    if args.force_fetch and not args.fetch_from_pythonanywhere:
+        raise SystemExit("--force-fetch only applies with --fetch-from-pythonanywhere")
+
+    if args.fetch_from_pythonanywhere:
+        dest = args.sqlite if args.sqlite is not None else default_fetched
+        sqlite_path = fetch_pythonanywhere_sqlite(
+            local_path=dest,
+            force=args.force_fetch,
+        )
+    else:
+        sqlite_path = args.sqlite if args.sqlite is not None else default_sqlite
+
     try:
-        migrate(args.sqlite, args.dry_run, args.truncate, args.batch_size)
+        migrate(sqlite_path, args.dry_run, args.truncate, args.batch_size)
     except IntegrityError as e:
         raise SystemExit(f"MySQL rejected a row (duplicate or FK): {e}") from e
 

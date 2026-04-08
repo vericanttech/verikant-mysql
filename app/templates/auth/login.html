@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_partials/pwa_head.html' %}
     <title>Connexion - Vericant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="icon" type="image/x-icon" href="/static/images/vericant-icon.svg">
@@ -16,6 +17,7 @@
     </style>
 </head>
 <body class="min-h-screen bg-pattern flex flex-col justify-center items-center px-4">
+    {% include '_partials/rollout_banner.html' %}
     <div class="max-w-md w-full space-y-6 p-8 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg">
         <div class="text-center">
             <h1 class="text-4xl font-bold">
@@ -86,5 +88,6 @@
             }
         }
     </script>
+{% include '_partials/pwa_scripts.html' %}
 </body>
 </html>
