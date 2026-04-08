@@ -24,6 +24,30 @@ CACHE_MAX_AGE_SEC = 24 * 60 * 60
 JPEG_QUALITY      = 92
 CARD_W, CARD_H    = 1080, 1350
 
+
+def _safe_static_file(static_root: str, relative: str | None) -> Path | None:
+    """
+    Resolve a path stored like Flask ``url_for('static', filename=...)``:
+    strip slashes, ``static/`` prefix, normalize ``\\`` → ``/``, ensure file is under
+    ``static_root`` (avoids traversal). Returns None if missing or invalid.
+    """
+    if not relative:
+        return None
+    s = str(relative).strip().replace("\\", "/")
+    while s.startswith("/"):
+        s = s[1:]
+    if s.lower().startswith("static/"):
+        s = s[7:]
+    if not s or ".." in s.split("/"):
+        return None
+    try:
+        root = Path(os.path.abspath(static_root)).resolve()
+        fp = (root / s).resolve()
+        fp.relative_to(root)
+    except (ValueError, OSError):
+        return None
+    return fp if fp.is_file() else None
+
 # ── Palette ───────────────────────────────────────────────────────────────────
 GREEN       = (90, 186, 122)
 GREEN_DIM   = (42, 122, 75)
@@ -161,18 +185,17 @@ def _paste_logo_circle(img, shop, static_root: str, cx: int, cy: int, radius: in
     cd = ImageDraw.Draw(circle_img)
     pasted = False
 
-    if shop.logo_path:
-        lpath = Path(static_root) / shop.logo_path
-        if lpath.is_file():
-            try:
-                lg = Image.open(lpath).convert("RGB").resize((size, size), Image.Resampling.LANCZOS)
-                mask = Image.new("L", (size, size), 0)
-                ImageDraw.Draw(mask).ellipse([0, 0, size, size], fill=255)
-                r, g, b = lg.split()
-                circle_img = Image.merge("RGBA", (r, g, b, mask))
-                pasted = True
-            except OSError:
-                pass
+    lpath = _safe_static_file(static_root, shop.logo_path)
+    if lpath:
+        try:
+            lg = Image.open(lpath).convert("RGB").resize((size, size), Image.Resampling.LANCZOS)
+            mask = Image.new("L", (size, size), 0)
+            ImageDraw.Draw(mask).ellipse([0, 0, size, size], fill=255)
+            r, g, b = lg.split()
+            circle_img = Image.merge("RGBA", (r, g, b, mask))
+            pasted = True
+        except OSError:
+            pass
 
     if not pasted:
         cd.ellipse([0, 0, size, size], fill=(*GREEN_DIM, 230))
@@ -237,16 +260,15 @@ def generate_share_card_jpeg(
     img  = Image.new("RGB", (CARD_W, CARD_H), FALLBACK_BG)
     draw = ImageDraw.Draw(img)
 
-    # 1. Full-bleed product photo
+    # 1. Full-bleed product photo (path must match url_for('static', filename=...))
     has_photo = False
-    if product.image_path:
-        ppath = Path(static_root) / product.image_path
-        if ppath.is_file():
-            try:
-                img.paste(_load_and_cover(ppath, CARD_W, CARD_H), (0, 0))
-                has_photo = True
-            except OSError:
-                pass
+    ppath = _safe_static_file(static_root, product.image_path)
+    if ppath:
+        try:
+            img.paste(_load_and_cover(ppath, CARD_W, CARD_H), (0, 0))
+            has_photo = True
+        except (OSError, ValueError):
+            pass
 
     if not has_photo:
         _render_fallback_bg(img, draw)
@@ -445,7 +467,7 @@ def cache_key(
         str(selling_price),
         str(product_updated or ""),
         str(image_path or ""),
-        "v8",
+        "v9",
     ])
     return hashlib.sha256(raw.encode()).hexdigest()
 

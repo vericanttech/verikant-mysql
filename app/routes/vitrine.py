@@ -425,7 +425,7 @@ def vitrine_share_card_jpeg(row_id):
         abort(404)
 
     vitrine_url = build_vitrine_shop_url(shop.id)
-    static_root = os.path.join(current_app.root_path, 'static')
+    static_root = current_app.static_folder
 
     data = get_or_create_cached_jpeg(
         current_app.instance_path,
