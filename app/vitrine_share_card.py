@@ -1,8 +1,7 @@
 """Generate JPEG share cards for vitrine products (Pillow). Cached on disk 24h.
 
-Design: product photo scaled to **fit** inside the card (no side/top/bottom crop),
-letterboxed on a dark background; gradient overlays top + bottom, shop identity on top,
-product name + price overlaid at bottom.
+Design: full-bleed product photo as background (smart cover crop), gradient overlays
+top + bottom, shop identity on top, product name + price overlaid at bottom.
 1080×1350px — Instagram Stories / WhatsApp portrait safe zone compliant.
 """
 from __future__ import annotations
@@ -27,11 +26,6 @@ CARD_W, CARD_H    = 1080, 1350
 
 
 def _safe_static_file(static_root: str, relative: str | None) -> Path | None:
-    """
-    Resolve a path stored like Flask ``url_for('static', filename=...)``:
-    strip slashes, ``static/`` prefix, normalize ``\\`` → ``/``, ensure file is under
-    ``static_root`` (avoids traversal). Returns None if missing or invalid.
-    """
     if not relative:
         return None
     s = str(relative).strip().replace("\\", "/")
@@ -48,6 +42,7 @@ def _safe_static_file(static_root: str, relative: str | None) -> Path | None:
     except (ValueError, OSError):
         return None
     return fp if fp.is_file() else None
+
 
 # ── Palette ───────────────────────────────────────────────────────────────────
 GREEN       = (90, 186, 122)
@@ -133,7 +128,6 @@ def _vertical_gradient_overlay(img, y_start: int, height: int,
 # ── Fallback background (no product photo) ────────────────────────────────────
 
 def _render_fallback_bg(img, draw):
-    """Dark editorial background when no product photo is available."""
     for y in range(CARD_H):
         t = y / (CARD_H - 1)
         r = int(FALLBACK_BG[0] * (1 - t * 0.3))
@@ -141,7 +135,6 @@ def _render_fallback_bg(img, draw):
         b = FALLBACK_BG[2]
         draw.line([(0, y), (CARD_W, y)], fill=(r, g, b))
 
-    # Diagonal gold slash
     from PIL import Image, ImageDraw as PID
     slash = Image.new("RGBA", (CARD_W, CARD_H), (0, 0, 0, 0))
     sd = PID.Draw(slash)
@@ -154,10 +147,8 @@ def _render_fallback_bg(img, draw):
     sd.polygon([rot(-hw,-hh), rot(hw,-hh), rot(hw,hh), rot(-hw,hh)], fill=(*GOLD, 22))
     img.paste(slash, (0, 0), slash)
 
-    # Dot grid texture
-    from PIL import Image as PI
+    from PIL import Image as PI, ImageDraw as PID2
     ov = PI.new("RGBA", (CARD_W, CARD_H), (0, 0, 0, 0))
-    from PIL import ImageDraw as PID2
     od = PID2.Draw(ov)
     for gy in range(0, CARD_H, 54):
         for gx in range(0, CARD_W, 54):
@@ -165,11 +156,85 @@ def _render_fallback_bg(img, draw):
     img.paste(ov, (0, 0), ov)
 
 
-# ── Photo contain-fit (full image visible, letterboxed — no crop) ────────────
+# ── Smart cover-crop ──────────────────────────────────────────────────────────
 
-def _load_and_contain(path: Path, w: int, h: int):
-    """Scale image to fit entirely inside ``w×h``; center on ``FALLBACK_BG`` bars."""
+def _smart_crop_offset(im, target_w: int, target_h: int) -> tuple[int, int]:
+    """
+    Returns (ox, oy) crop offset biased toward the visual subject rather than
+    always dead-center.
+
+    Saliency = 60% edge magnitude + 40% colour saturation, computed on a small
+    thumbnail for speed. Centre-of-mass of saliency drives the crop window,
+    clamped to valid bounds.
+
+    Falls back gracefully to center crop if numpy is unavailable.
+    """
+    from PIL import ImageFilter
+
+    scale = max(target_w / im.width, target_h / im.height)
+    nw = int(im.width * scale)
+    nh = int(im.height * scale)
+    excess_x = nw - target_w
+    excess_y = nh - target_h
+
+    if excess_x == 0 and excess_y == 0:
+        return 0, 0
+
+    try:
+        import numpy as np
+
+        # Thumbnail for fast analysis (longest side ≤ 300px)
+        thumb_scale = min(1.0, 300 / max(nw, nh))
+        tw = max(1, int(nw * thumb_scale))
+        th = max(1, int(nh * thumb_scale))
+
+        # Resize to final scale first, then thumbnail
+        im_scaled = im.resize((nw, nh), Image.Resampling.LANCZOS)
+        thumb = im_scaled.resize((tw, th), Image.Resampling.LANCZOS)
+
+        # Edge magnitude
+        edges = thumb.convert("L").filter(ImageFilter.FIND_EDGES)
+        ea = np.array(edges, dtype=float)
+
+        # Saturation (approx from RGB — no HSV needed)
+        rgb = np.array(thumb.convert("RGB"), dtype=float)
+        cmax = rgb.max(axis=2)
+        cmin = rgb.min(axis=2)
+        sat = np.where(cmax > 0, (cmax - cmin) / (cmax + 1e-6), 0.0)
+
+        saliency = ea / (ea.max() + 1e-6) * 0.6 + sat * 0.4
+
+        # Centre-of-mass
+        xs = np.arange(tw, dtype=float)
+        ys = np.arange(th, dtype=float)
+        col_w = saliency.sum(axis=0) + 1e-6
+        row_w = saliency.sum(axis=1) + 1e-6
+        cx_thumb = float(np.dot(xs, col_w) / col_w.sum())
+        cy_thumb = float(np.dot(ys, row_w) / row_w.sum())
+
+        # Map back to scaled-image coordinates
+        cx_full = cx_thumb / thumb_scale
+        cy_full = cy_thumb / thumb_scale
+
+        # Position crop window centred on saliency, clamped to valid range
+        ox = int(cx_full - target_w / 2)
+        oy = int(cy_full - target_h / 2)
+        ox = max(0, min(ox, excess_x))
+        oy = max(0, min(oy, excess_y))
+        return ox, oy
+
+    except Exception:
+        # numpy unavailable or analysis failed → center crop
+        return excess_x // 2, excess_y // 2
+
+
+def _load_and_cover(path: Path, w: int, h: int):
+    """
+    Open image, scale to cover w×h with smart-crop offset toward the visual
+    subject. Handles RGBA (transparent bg composited on white).
+    """
     from PIL import Image
+
     im = Image.open(path)
     if im.mode == "RGBA":
         bg = Image.new("RGB", im.size, (255, 255, 255))
@@ -177,13 +242,14 @@ def _load_and_contain(path: Path, w: int, h: int):
         im = bg
     else:
         im = im.convert("RGB")
-    scale = min(w / im.width, h / im.height)
-    nw, nh = max(1, int(im.width * scale)), max(1, int(im.height * scale))
+
+    scale = max(w / im.width, h / im.height)
+    nw = int(im.width * scale)
+    nh = int(im.height * scale)
     im = im.resize((nw, nh), Image.Resampling.LANCZOS)
-    canvas = Image.new("RGB", (w, h), FALLBACK_BG)
-    ox, oy = (w - nw) // 2, (h - nh) // 2
-    canvas.paste(im, (ox, oy))
-    return canvas
+
+    ox, oy = _smart_crop_offset(im, w, h)
+    return im.crop((ox, oy, ox + w, oy + h))
 
 
 # ── Logo circle ───────────────────────────────────────────────────────────────
@@ -215,7 +281,6 @@ def _paste_logo_circle(img, shop, static_root: str, cx: int, cy: int, radius: in
         iw, ih = ibb[2] - ibb[0], ibb[3] - ibb[1]
         cd.text((radius - iw//2, radius - ih//2 - 4), initial, fill=WHITE, font=f)
 
-    # White ring
     ring = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     ImageDraw.Draw(ring).ellipse([0, 0, size, size], outline=(255, 255, 255, 70), width=3)
     circle_img.paste(ring, (0, 0), ring)
@@ -232,26 +297,23 @@ def _pill_badge(img, draw, text: str, x: int, y: int,
         font = _font(28, bold=True)
     tw = _tw(draw, text, font)
     th = _th(draw, text, font)
-    px, py = pad_x, pad_y
-    pw, ph = tw + px * 2, th + py * 2
+    pw, ph = tw + pad_x * 2, th + pad_y * 2
     pill = Image.new("RGBA", (pw, ph), (0, 0, 0, 0))
     pd = ImageDraw.Draw(pill)
     pd.rounded_rectangle([0, 0, pw, ph], radius=ph // 2, fill=bg_rgba,
                           outline=border_rgba, width=2 if border_rgba else 0)
-    pd.text((px, py), text, fill=text_color, font=font)
+    pd.text((pad_x, pad_y), text, fill=text_color, font=font)
     img.paste(pill, (x, y), pill)
     return pw, ph
 
 
 def _pill_badge_right(img, draw, text: str, right_x: int, y: int,
                       bg_rgba, text_color, border_rgba=None, font=None):
-    """Place pill so its *right* edge aligns with `right_x` (for stacking on photo)."""
     if font is None:
         font = _font(28, bold=True)
     tw = _tw(draw, text, font)
     th = _th(draw, text, font)
-    px, py = 28, 12
-    pw = tw + px * 2
+    pw = tw + 28 * 2
     x = right_x - pw
     return pw, _pill_badge(img, draw, text, x, y, bg_rgba, text_color, border_rgba, font)[1]
 
@@ -270,12 +332,12 @@ def generate_share_card_jpeg(
     img  = Image.new("RGB", (CARD_W, CARD_H), FALLBACK_BG)
     draw = ImageDraw.Draw(img)
 
-    # 1. Product photo — fit inside card (letterboxed; nothing cropped)
+    # 1. Full-bleed product photo (smart-cropped toward subject)
     has_photo = False
     ppath = _safe_static_file(static_root, product.image_path)
     if ppath:
         try:
-            img.paste(_load_and_contain(ppath, CARD_W, CARD_H), (0, 0))
+            img.paste(_load_and_cover(ppath, CARD_W, CARD_H), (0, 0))
             has_photo = True
         except (OSError, ValueError):
             pass
@@ -320,7 +382,7 @@ def generate_share_card_jpeg(
         shop_name, fill=(*OFF_WHITE, 230), font=f_shop,
     )
 
-    # 5. Badges (top-right, stacked rightward → leftward)
+    # 5. Badges (top-right)
     is_new   = getattr(selection, "is_new_arrival", False)
     is_promo = bool(getattr(selection, "is_promo", False))
     curr     = (shop.currency or "FCFA").strip()
@@ -333,10 +395,8 @@ def generate_share_card_jpeg(
     dpct  = float(shop.vitrine_discount_percent) if has_disc else 0.0
     after = sp * (1 - dpct / 100.0) if has_disc else sp
 
-    # Badges: same row over the photo (top-right), right-aligned stack: [Nouveauté][−X%]
     badge_right = CARD_W - MARGIN
-    badge_y = 60
-    badge_gap = 14
+    badge_y     = 60
 
     if has_disc:
         pw, _ = _pill_badge_right(
@@ -346,7 +406,7 @@ def generate_share_card_jpeg(
             border_rgba=(*GOLD_LIGHT, 180), font=f_badge,
         )
         draw = ImageDraw.Draw(img)
-        badge_right -= pw + badge_gap
+        badge_right -= pw + 14
 
     if is_new:
         _pill_badge_right(
@@ -357,7 +417,6 @@ def generate_share_card_jpeg(
         )
         draw = ImageDraw.Draw(img)
 
-    # Separator under header
     sep_y = logo_cy + LOGO_R + 24
     draw.line([(MARGIN, sep_y), (CARD_W - MARGIN, sep_y)], fill=(255, 255, 255, 28), width=1)
 
@@ -366,28 +425,23 @@ def generate_share_card_jpeg(
     footer_y  = CARD_H - FOOTER_H - 30
     phones    = [str(ph.phone) for ph in (shop.phones or [])][:2]
     fy = footer_y
-    phone_pill_gap = 8
     for ph in phones:
         label = re.sub(r"\s+", " ", ph)[:38]
         _, ph_h = _pill_badge(
             img, draw, label, MARGIN, fy,
-            bg_rgba=(*GOLD, 220),
-            text_color=(28, 18, 0),
-            border_rgba=(*GOLD_LIGHT, 200),
-            font=f_small,
-            pad_x=14,
-            pad_y=10,
+            bg_rgba=(*GOLD, 220), text_color=(28, 18, 0),
+            border_rgba=(*GOLD_LIGHT, 200), font=f_small,
+            pad_x=14, pad_y=10,
         )
         draw = ImageDraw.Draw(img)
-        fy += ph_h + phone_pill_gap
+        fy += ph_h + 8
 
     _center_text(draw, CARD_W // 2, footer_y + FOOTER_H - 14,
                  "Prix indicatifs — à confirmer en caisse", f_tiny, fill=(255, 255, 255, 55))
-
     draw.line([(MARGIN, footer_y - 22), (CARD_W - MARGIN, footer_y - 22)],
               fill=(255, 255, 255, 25), width=1)
 
-    # 7. Price block (anchored above footer; extra gap vs separator line)
+    # 7. Price block (anchored above footer)
     price_bot = footer_y - 58
 
     if has_disc:
@@ -400,7 +454,6 @@ def generate_share_card_jpeg(
              price_y + ph_h - _th(draw, curr, f_price_cur) - 8),
             curr, fill=(*GREEN, 150), font=f_price_cur,
         )
-        # Strikethrough old price
         old_str = f"{round(sp):,} {curr}".replace(",", "\u202f")
         old_y   = price_y - _th(draw, old_str, f_old_price) - 16
         draw.text((MARGIN, old_y), old_str, fill=MUTED, font=f_old_price)
@@ -422,11 +475,10 @@ def generate_share_card_jpeg(
         name_bot = price_y - 24
 
     if getattr(product, "stock", 1) <= 0:
-        draw.text((MARGIN, name_bot - 54), "Rupture de stock",
-                  fill=RED_SOFT, font=f_small)
+        draw.text((MARGIN, name_bot - 54), "Rupture de stock", fill=RED_SOFT, font=f_small)
         name_bot -= 60
 
-    # 8. Product name (bottom-anchored, auto-sizes)
+    # 8. Product name (bottom-anchored, auto-sizes by length)
     pname = (product.name or "Produit").strip()
     if   len(pname) <= 16: fn, max_c, lh = f_name_lg, 16, 104
     elif len(pname) <= 26: fn, max_c, lh = f_name_md, 22, 84
@@ -477,7 +529,7 @@ def cache_key(
         str(selling_price),
         str(product_updated or ""),
         str(image_path or ""),
-        "v10",
+        "v12",  # bumped — smart crop changes output
     ])
     return hashlib.sha256(raw.encode()).hexdigest()
 
