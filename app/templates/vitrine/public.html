@@ -639,6 +639,99 @@
         .content > *:nth-child(4) { animation-delay: 0.20s; }
         .content > *:nth-child(5) { animation-delay: 0.25s; }
         .content > *:nth-child(6) { animation-delay: 0.30s; }
+
+        /* ── DESKTOP (wide screens) ── */
+        @media (min-width: 900px) {
+            .page {
+                max-width: min(1120px, calc(100vw - 48px));
+                margin: 0 auto;
+                padding: 28px 0 max(2rem, env(safe-area-inset-bottom));
+            }
+
+            .hero {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                gap: 28px 36px;
+                flex-wrap: wrap;
+                padding: 28px 40px 22px;
+                text-align: left;
+                border-radius: var(--radius-md);
+                border: 0.5px solid var(--border);
+                box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+            }
+
+            .hero .logo-wrap {
+                width: 72px;
+                height: 72px;
+                margin: 0;
+            }
+
+            .hero .logo-initials {
+                font-size: 28px;
+            }
+
+            .hero-text {
+                flex: 1 1 280px;
+                min-width: 0;
+                max-width: 640px;
+            }
+
+            .hero-text .shop-name {
+                font-size: 28px;
+            }
+
+            .hero-text .shop-address {
+                font-size: 13px;
+                margin-top: 6px;
+            }
+
+            .hero-text .phone-list {
+                justify-content: flex-start;
+            }
+
+            .content {
+                padding: 16px 0 0;
+                gap: 14px;
+            }
+
+            .section-label {
+                font-size: 11px;
+                padding: 0 2px;
+            }
+
+            .body-card {
+                padding: 20px 24px;
+            }
+
+            .product-thumb,
+            .product-thumb-placeholder {
+                width: 64px;
+                height: 64px;
+            }
+
+            .product-thumb {
+                border-radius: 12px;
+            }
+
+            .product-thumb-placeholder {
+                border-radius: 12px;
+            }
+
+            .product-row {
+                padding: 14px 18px;
+            }
+
+            .product-name {
+                font-size: 15px;
+            }
+
+            .vitrine-footer {
+                padding: 28px 16px 12px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -653,17 +746,19 @@
             <span class="logo-initials">{{ shop.name[:1] }}</span>
             {% endif %}
         </div>
-        <h1 class="shop-name">{{ shop.name }}</h1>
-        {% if shop.address %}
-        <p class="shop-address">{{ shop.address }}</p>
-        {% endif %}
-        {% if shop.phones %}
-        <div class="phone-list">
-            {% for ph in shop.phones %}
-            <a href="tel:{{ ph.phone }}" class="phone-chip" referrerpolicy="no-referrer">{{ ph.phone }}</a>
-            {% endfor %}
+        <div class="hero-text">
+            <h1 class="shop-name">{{ shop.name }}</h1>
+            {% if shop.address %}
+            <p class="shop-address">{{ shop.address }}</p>
+            {% endif %}
+            {% if shop.phones %}
+            <div class="phone-list">
+                {% for ph in shop.phones %}
+                <a href="tel:{{ ph.phone }}" class="phone-chip" referrerpolicy="no-referrer">{{ ph.phone }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </header>
 
     <!-- CONTENT -->

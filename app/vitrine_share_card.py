@@ -1,7 +1,8 @@
 """Generate JPEG share cards for vitrine products (Pillow). Cached on disk 24h.
 
-Design: full-bleed product photo as background, gradient overlays top + bottom,
-shop identity on top, product name + price overlaid at bottom.
+Design: product photo scaled to **fit** inside the card (no side/top/bottom crop),
+letterboxed on a dark background; gradient overlays top + bottom, shop identity on top,
+product name + price overlaid at bottom.
 1080×1350px — Instagram Stories / WhatsApp portrait safe zone compliant.
 """
 from __future__ import annotations
@@ -164,16 +165,25 @@ def _render_fallback_bg(img, draw):
     img.paste(ov, (0, 0), ov)
 
 
-# ── Photo cover-crop ──────────────────────────────────────────────────────────
+# ── Photo contain-fit (full image visible, letterboxed — no crop) ────────────
 
-def _load_and_cover(path: Path, w: int, h: int):
+def _load_and_contain(path: Path, w: int, h: int):
+    """Scale image to fit entirely inside ``w×h``; center on ``FALLBACK_BG`` bars."""
     from PIL import Image
-    im = Image.open(path).convert("RGB")
-    scale = max(w / im.width, h / im.height)
-    nw, nh = int(im.width * scale), int(im.height * scale)
+    im = Image.open(path)
+    if im.mode == "RGBA":
+        bg = Image.new("RGB", im.size, (255, 255, 255))
+        bg.paste(im, mask=im.split()[3])
+        im = bg
+    else:
+        im = im.convert("RGB")
+    scale = min(w / im.width, h / im.height)
+    nw, nh = max(1, int(im.width * scale)), max(1, int(im.height * scale))
     im = im.resize((nw, nh), Image.Resampling.LANCZOS)
-    ox, oy = (nw - w) // 2, (nh - h) // 2
-    return im.crop((ox, oy, ox + w, oy + h))
+    canvas = Image.new("RGB", (w, h), FALLBACK_BG)
+    ox, oy = (w - nw) // 2, (h - nh) // 2
+    canvas.paste(im, (ox, oy))
+    return canvas
 
 
 # ── Logo circle ───────────────────────────────────────────────────────────────
@@ -260,12 +270,12 @@ def generate_share_card_jpeg(
     img  = Image.new("RGB", (CARD_W, CARD_H), FALLBACK_BG)
     draw = ImageDraw.Draw(img)
 
-    # 1. Full-bleed product photo (path must match url_for('static', filename=...))
+    # 1. Product photo — fit inside card (letterboxed; nothing cropped)
     has_photo = False
     ppath = _safe_static_file(static_root, product.image_path)
     if ppath:
         try:
-            img.paste(_load_and_cover(ppath, CARD_W, CARD_H), (0, 0))
+            img.paste(_load_and_contain(ppath, CARD_W, CARD_H), (0, 0))
             has_photo = True
         except (OSError, ValueError):
             pass
@@ -467,7 +477,7 @@ def cache_key(
         str(selling_price),
         str(product_updated or ""),
         str(image_path or ""),
-        "v9",
+        "v10",
     ])
     return hashlib.sha256(raw.encode()).hexdigest()
 

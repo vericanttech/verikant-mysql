@@ -1,15 +1,18 @@
 import os
 import uuid
+import tempfile
+from collections.abc import Iterator
 from typing import Optional
 
 from werkzeug.utils import secure_filename
 
-from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, current_app, make_response
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, current_app, make_response, Response
 from flask_login import login_required, current_user
 from app import db
 from app.models import Product, Category, StockMovement, UserShop
 from datetime import datetime
 from app.utils import admin_only_action
+from app.rembg_download import download_replicate_image_url
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -21,6 +24,9 @@ from io import BytesIO
 inventory = Blueprint('inventory', __name__)
 
 _PRODUCT_IMAGE_MAX_BYTES = 900 * 1024  # after client resize; still guard on server
+_REMBG_API_MAX_BYTES = 8 * 1024 * 1024  # input to Replicate before rembg
+# cjwbw/rembg — pin version for stable API (override via REPLICATE_REMBG_MODEL if needed)
+_DEFAULT_REMBG_MODEL = 'cjwbw/rembg:fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003'
 _ALLOWED_IMAGE_EXT = {'jpg', 'jpeg', 'png', 'webp'}
 
 
@@ -240,10 +246,126 @@ def product_list():
         }
 
     # Then modify your return statement to include shop_totals:
+    rembg_available = bool((os.environ.get('REPLICATE_API_TOKEN') or '').strip())
+
     return render_template('inventory/inventory.html',
                            products=products,
                            categories=categories,
-                           shop_totals=shop_totals)
+                           shop_totals=shop_totals,
+                           rembg_available=rembg_available)
+
+
+def _replicate_rembg_output_url(output) -> Optional[str]:
+    """Normalize replicate.run() return value to a single image URL string."""
+    if output is None:
+        return None
+    if isinstance(output, Iterator):
+        try:
+            output = next(output)
+        except StopIteration:
+            return None
+        return _replicate_rembg_output_url(output)
+    if isinstance(output, str):
+        return output if output.startswith('http') else None
+    if isinstance(output, (list, tuple)) and output:
+        return _replicate_rembg_output_url(output[0])
+    url_attr = getattr(output, 'url', None)
+    if callable(url_attr):
+        try:
+            u = url_attr()
+            if isinstance(u, str) and u.startswith('http'):
+                return u
+        except Exception:
+            pass
+    u = getattr(output, 'url', None)
+    if isinstance(u, str) and u.startswith('http'):
+        return u
+    return None
+
+
+@inventory.route('/inventory/api/remove-background', methods=['POST'])
+@login_required
+def remove_product_background():
+    """
+    Send an image to Replicate (rembg), return PNG bytes (transparent background).
+    Requires REPLICATE_API_TOKEN in the environment.
+    """
+    token = (os.environ.get('REPLICATE_API_TOKEN') or '').strip()
+    if not token:
+        return jsonify({'ok': False, 'error': 'REPLICATE_API_TOKEN non configuré.'}), 503
+
+    try:
+        import replicate
+    except ImportError:
+        current_app.logger.exception('replicate package not installed')
+        return jsonify({'ok': False, 'error': 'Module replicate non installé.'}), 503
+
+    f = request.files.get('image')
+    if not f or not f.filename:
+        return jsonify({'ok': False, 'error': 'Image manquante.'}), 400
+    if not _allowed_product_image(f.filename):
+        return jsonify({'ok': False, 'error': 'Type de fichier non accepté.'}), 400
+
+    f.seek(0, os.SEEK_END)
+    size = f.tell()
+    f.seek(0)
+    if size > _REMBG_API_MAX_BYTES:
+        return jsonify({'ok': False, 'error': 'Image trop volumineuse (max 8 Mo).'}), 400
+
+    model = (os.environ.get('REPLICATE_REMBG_MODEL') or _DEFAULT_REMBG_MODEL).strip() or _DEFAULT_REMBG_MODEL
+    tmp_path = None
+    try:
+        ext = secure_filename(f.filename).rsplit('.', 1)[-1].lower() if '.' in f.filename else 'jpg'
+        if ext not in _ALLOWED_IMAGE_EXT:
+            ext = 'jpg'
+        fd, tmp_path = tempfile.mkstemp(suffix=f'.{ext}')
+        os.close(fd)
+        f.save(tmp_path)
+
+        _prev_token = os.environ.get('REPLICATE_API_TOKEN')
+        os.environ['REPLICATE_API_TOKEN'] = token
+        try:
+            with open(tmp_path, 'rb') as img_fp:
+                output = replicate.run(model, input={'image': img_fp})
+        finally:
+            if _prev_token is None:
+                os.environ.pop('REPLICATE_API_TOKEN', None)
+            else:
+                os.environ['REPLICATE_API_TOKEN'] = _prev_token
+
+        out_url = _replicate_rembg_output_url(output)
+        if not out_url:
+            current_app.logger.error('rembg unexpected output: %r', output)
+            return jsonify({'ok': False, 'error': 'Réponse Replicate inattendue.'}), 502
+
+        try:
+            png_bytes = download_replicate_image_url(out_url, _REMBG_API_MAX_BYTES)
+        except ValueError as ve:
+            return jsonify({'ok': False, 'error': str(ve)}), 502
+
+        return Response(
+            png_bytes,
+            mimetype='image/png',
+            headers={'Cache-Control': 'no-store'},
+        )
+    except Exception as e:
+        current_app.logger.exception('remove_product_background failed: %s', e)
+        err = 'Échec du détourage. Réessayez ou vérifiez votre clé API.'
+        msg = str(e).lower()
+        if 'ssl' in msg or 'decryption' in msg or 'record_mac' in msg:
+            err = (
+                'Erreur réseau/SSL lors du téléchargement du résultat. '
+                'Réessayez dans quelques secondes, ou désactivez temporairement l’antivirus/VPN.'
+            )
+        elif 'import' in msg and 'replicate' in msg:
+            err = 'Module replicate manquant : dans le venv, exécutez : python -m pip install replicate'
+        return jsonify({'ok': False, 'error': err}), 502
+    finally:
+        if tmp_path and os.path.isfile(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
 
 
 @inventory.route('/inventory/<int:product_id>/movements')

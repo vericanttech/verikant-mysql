@@ -60,3 +60,6 @@ tests/
 # Logs
 logs/
 *.log
+
+# Local rembg API test output (scripts/test_rembg.py)
+rembg_test_output.png

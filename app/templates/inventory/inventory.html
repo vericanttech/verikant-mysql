@@ -245,6 +245,13 @@
                                 <p id="add_product_image_filename" class="text-xs text-gray-500 truncate" title=""></p>
                             </div>
                         </div>
+                        {% if rembg_available %}
+                        <button type="button" id="add_remove_bg_btn"
+                                class="mt-2 text-sm px-3 py-1.5 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Retirer le fond (IA)
+                        </button>
+                        <p class="text-xs text-gray-500 mt-1">Replicate rembg — le résultat est un PNG transparent.</p>
+                        {% endif %}
                     </div>
                     <div class="mb-6">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Produit</label>
@@ -330,6 +337,13 @@
                                 <p id="edit_product_image_filename" class="text-xs text-gray-500 truncate" title=""></p>
                             </div>
                         </div>
+                        {% if rembg_available %}
+                        <button type="button" id="edit_remove_bg_btn"
+                                class="mt-2 text-sm px-3 py-1.5 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Retirer le fond (IA)
+                        </button>
+                        <p class="text-xs text-gray-500 mt-1">Replicate rembg — le résultat est un PNG transparent.</p>
+                        {% endif %}
                         <label class="mt-3 flex items-center gap-2 text-sm text-gray-700">
                             <input type="checkbox" name="remove_product_image" id="remove_product_image" value="1" class="rounded border-gray-300">
                             Supprimer la photo actuelle
@@ -422,6 +436,7 @@
 <script src="{{ url_for('static', filename='js/product_image_resize.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
 <script>
+var REMBG_API_URL = {% if rembg_available %}{{ url_for('inventory.remove_product_background')|tojson }}{% else %}null{% endif %};
 
 // Numbers formatting variables
 
@@ -458,6 +473,97 @@ const addProductBuying = new Cleave('#add_product_buying', {
 let addProductPreviewObjectUrl = null;
 let editProductPreviewObjectUrl = null;
 let editProductServerImageUrl = '';
+
+async function runRembg(prefix) {
+    if (!REMBG_API_URL) return;
+    var fileInput = document.getElementById(prefix + '_product_image');
+    var preview = document.getElementById(prefix + '_product_image_preview');
+    var placeholder = document.getElementById(prefix + '_product_image_placeholder');
+    var filenameEl = document.getElementById(prefix + '_product_image_filename');
+    var btn = document.getElementById(prefix + '_remove_bg_btn');
+    var file = null;
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        file = fileInput.files[0];
+    } else if (prefix === 'edit' && preview && preview.src && !preview.classList.contains('hidden')) {
+        try {
+            var r = await fetch(preview.src, { credentials: 'same-origin' });
+            if (!r.ok) throw new Error('fetch');
+            var blob = await r.blob();
+            file = new File([blob], 'photo.jpg', { type: blob.type || 'image/jpeg' });
+        } catch (e) {
+            alert('Impossible de charger l’image actuelle. Choisissez un fichier sur l’ordinateur.');
+            return;
+        }
+    }
+    if (!file) {
+        alert('Choisissez une image, ou ouvrez un produit qui a déjà une photo.');
+        return;
+    }
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Patience…';
+    }
+    var fd = new FormData();
+    fd.append('image', file, file.name || 'image.jpg');
+    try {
+        var res = await fetch(REMBG_API_URL, { method: 'POST', body: fd, credentials: 'same-origin' });
+        var ct = (res.headers.get('content-type') || '').toLowerCase();
+        if (!res.ok) {
+            var msg = 'Échec du détourage.';
+            try {
+                var j = await res.json();
+                if (j.error) msg = j.error;
+            } catch (e2) {}
+            alert(msg);
+            return;
+        }
+        if (!ct.includes('image/png')) {
+            try {
+                var j2 = await res.json();
+                alert(j2.error || 'Réponse inattendue.');
+            } catch (e3) {
+                alert('Réponse inattendue du serveur.');
+            }
+            return;
+        }
+        var outBlob = await res.blob();
+        var outFile = new File([outBlob], 'product.png', { type: 'image/png' });
+        var dt = new DataTransfer();
+        dt.items.add(outFile);
+        fileInput.files = dt.files;
+        if (prefix === 'add') {
+            if (addProductPreviewObjectUrl) {
+                URL.revokeObjectURL(addProductPreviewObjectUrl);
+                addProductPreviewObjectUrl = null;
+            }
+            addProductPreviewObjectUrl = URL.createObjectURL(outFile);
+            preview.src = addProductPreviewObjectUrl;
+        } else {
+            if (editProductPreviewObjectUrl) {
+                URL.revokeObjectURL(editProductPreviewObjectUrl);
+                editProductPreviewObjectUrl = null;
+            }
+            editProductPreviewObjectUrl = URL.createObjectURL(outFile);
+            preview.src = editProductPreviewObjectUrl;
+            var removeCb = document.getElementById('remove_product_image');
+            if (removeCb) removeCb.checked = false;
+        }
+        preview.classList.remove('hidden');
+        if (placeholder) placeholder.classList.add('hidden');
+        if (filenameEl) {
+            filenameEl.textContent = 'product.png (fond retiré)';
+            filenameEl.setAttribute('title', 'product.png');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Erreur réseau.');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Retirer le fond (IA)';
+        }
+    }
+}
 
 const openModal = (modalId) => {
     const modal = document.getElementById(modalId);
@@ -630,7 +736,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const blob = await resizeImageToBlob(fileInput.files[0], 480, 0.82);
                     const dt = new DataTransfer();
-                    dt.items.add(new File([blob], 'product.jpg', { type: 'image/jpeg' }));
+                    const ext = blob.type === 'image/png' ? 'png' : 'jpg';
+                    const mime = blob.type === 'image/png' ? 'image/png' : 'image/jpeg';
+                    dt.items.add(new File([blob], 'product.' + ext, { type: mime }));
                     fileInput.files = dt.files;
                 } catch (err) {
                     console.error(err);
@@ -657,7 +765,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const blob = await resizeImageToBlob(fileInput.files[0], 480, 0.82);
                     const dt = new DataTransfer();
-                    dt.items.add(new File([blob], 'product.jpg', { type: 'image/jpeg' }));
+                    const ext = blob.type === 'image/png' ? 'png' : 'jpg';
+                    const mime = blob.type === 'image/png' ? 'image/png' : 'image/jpeg';
+                    dt.items.add(new File([blob], 'product.' + ext, { type: mime }));
                     fileInput.files = dt.files;
                 } catch (err) {
                     console.error(err);
@@ -667,6 +777,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             editProductForm.submit();
         });
+    }
+
+    var addRembgBtn = document.getElementById('add_remove_bg_btn');
+    if (addRembgBtn && REMBG_API_URL) {
+        addRembgBtn.addEventListener('click', function () { runRembg('add'); });
+    }
+    var editRembgBtn = document.getElementById('edit_remove_bg_btn');
+    if (editRembgBtn && REMBG_API_URL) {
+        editRembgBtn.addEventListener('click', function () { runRembg('edit'); });
     }
 });
 
