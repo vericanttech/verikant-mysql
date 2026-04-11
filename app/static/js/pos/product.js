@@ -99,16 +99,16 @@ function renderProducts(data) {
         productElement.setAttribute('data-stock', product.stock);
         
         const imgHtml = product.image_url
-            ? `<div class="mb-2"><img src="${product.image_url}" alt="" class="w-20 h-20 object-cover rounded border border-gray-100" loading="lazy" width="80" height="80"></div>`
+            ? `<div class="mb-1 sm:mb-2"><img src="${product.image_url}" alt="" class="w-12 h-12 sm:w-20 sm:h-20 object-cover rounded border border-gray-100" loading="lazy" width="80" height="80"></div>`
             : '';
         productElement.innerHTML = `
-            <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow h-full">
-                <div class="p-4 flex flex-col items-center">
+            <div class="bg-white rounded-lg border border-gray-100 md:border-0 shadow-sm md:shadow-sm hover:shadow-md transition-shadow h-full min-w-0">
+                <div class="p-2 sm:p-4 flex flex-col items-center text-center min-w-0">
                     ${imgHtml}
-                    <h5 class="text-lg font-medium text-gray-900 mb-2">${product.name}</h5>
-                    <p class="text-gray-600 mb-2">${product.currency || 'FCFA'} ${formatNumberFR(product.selling_price)}</p>
-                    <p class="text-gray-500 mb-3">Stock : ${product.stock}</p>
-                    <button class="add-to-cart px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors ${product.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}"
+                    <h5 class="text-xs sm:text-lg font-medium text-gray-900 mb-1 sm:mb-2 line-clamp-2 break-words w-full">${product.name}</h5>
+                    <p class="text-gray-600 mb-1 sm:mb-2 text-[11px] sm:text-base tabular-nums">${product.currency || 'FCFA'} ${formatNumberFR(product.selling_price)}</p>
+                    <p class="text-gray-500 mb-2 sm:mb-3 text-[11px] sm:text-sm">Stock : ${product.stock}</p>
+                    <button type="button" class="add-to-cart w-full px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors ${product.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}"
                             ${product.stock <= 0 ? 'disabled' : ''}>
                         Ajouter
                     </button>
@@ -130,7 +130,7 @@ function renderPagination(pagination) {
     
     const { current_page, total_pages } = pagination;
     
-    let paginationHTML = `<ul class="flex space-x-2">`;
+    let paginationHTML = `<ul class="flex flex-wrap justify-center gap-2">`;
     
     // Page numbers only (no Previous/Next)
     for (let i = 1; i <= total_pages; i++) {
@@ -173,7 +173,7 @@ function changePage(page) {
     loadProducts();
     updateURL();
     // Scroll back to top of products section
-    document.querySelector('.bg-white.rounded-lg.shadow-md').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('pos-products-panel')?.scrollIntoView({ behavior: 'smooth' });
 }
 
 // Update URL with current search parameters

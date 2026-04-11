@@ -1,27 +1,28 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="w-full p-4">
-    <div class="flex flex-col md:flex-row gap-6">
+<div class="w-full max-w-full mx-auto px-0 sm:px-4 py-3 sm:py-4 md:py-6">
+    <div class="flex flex-col md:flex-row gap-0 md:gap-6">
         <!-- Sélection des Produits -->
-        <div class="w-full md:w-2/3">
-            <div class="bg-white rounded-lg shadow-md">
+        <div class="w-full md:w-2/3 min-w-0">
+            <div id="pos-products-panel" class="bg-white md:rounded-lg md:shadow-md overflow-hidden">
                 <!-- Header with title and search -->
-                <div class="p-4 border-b border-gray-200">
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <h4 class="text-xl font-semibold text-gray-800">Produits</h4>
-                        <div class="w-full sm:w-64">
+                <div class="p-3 sm:p-4 border-b border-gray-200 bg-gray-50 md:bg-white">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center sm:gap-4">
+                        <h4 class="text-lg sm:text-xl font-semibold text-gray-800 shrink-0">Produits</h4>
+                        <div class="w-full sm:w-72 sm:max-w-md min-w-0">
                             <form id="product-search-form" class="flex gap-2">
                                 <input type="text"
                                        id="product-search"
                                        name="search"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                       class="min-w-0 flex-1 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                                        placeholder="Rechercher des produits...">
                                 {% if category_id %}
                                 <input type="hidden" name="category" value="{{ category_id }}">
                                 {% endif %}
                                 <button type="submit"
-                                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        class="shrink-0 px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                        aria-label="Rechercher">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                                     </svg>
@@ -32,8 +33,8 @@
                 </div>
 
                 <!-- Products grid section -->
-                <div class="p-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="products-grid">
+                <div class="p-3 sm:p-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4" id="products-grid">
                         <!-- Products will be populated dynamically -->
                         <div class="col-span-full flex justify-center py-12">
                             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -41,7 +42,7 @@
                     </div>
 
                     <!-- Pagination controls -->
-                    <nav class="mt-6 flex justify-center pagination-container">
+                    <nav class="mt-4 sm:mt-6 flex justify-center px-0 pagination-container">
                         <!-- Pagination will be populated dynamically -->
                     </nav>
                 </div>
@@ -49,22 +50,23 @@
         </div>
 
         <!-- Colonne du Panier -->
-        <div class="w-full md:w-1/3">
-            <div class="bg-white rounded-lg shadow-md sticky top-4">
-                <div class="bg-blue-500 text-white p-4 rounded-t-lg">
-                    <h4 class="font-semibold">Panier</h4>
+        <div class="w-full md:w-1/3 min-w-0">
+            <div class="bg-white md:rounded-lg md:shadow-md md:sticky md:top-4 border-t border-gray-200 md:border-0 mt-1 md:mt-0 overflow-hidden">
+                <div class="bg-blue-500 text-white p-3 sm:p-4 md:rounded-t-lg">
+                    <h4 class="font-semibold text-sm sm:text-base">Panier</h4>
                 </div>
-                <div class="p-4">
-                    <div id="cart-items" class="space-y-4">
+                <div class="p-3 sm:p-4">
+                    <div id="cart-items" class="flex flex-col gap-0 md:gap-3">
                         <!-- Les articles du panier seront ajoutés dynamiquement ici -->
                     </div>
-                    <hr class="my-4 border-gray-200">
-                    <div class="flex justify-between items-center mb-4">
-                        <h5 class="font-semibold text-gray-800">Total HT :</h5>
-                        <h5 class="font-semibold text-gray-800" id="cart-total">0,00 FCFA </h5>
+                    <hr class="my-3 sm:my-4 border-gray-200">
+                    <div class="flex justify-between items-start gap-3 mb-3 sm:mb-4 text-sm sm:text-base">
+                        <h5 class="font-semibold text-gray-800 shrink-0">Total HT</h5>
+                        <h5 class="font-semibold text-gray-800 tabular-nums text-right min-w-0 break-words" id="cart-total">0,00 FCFA </h5>
                     </div>
                     <button id="checkout-btn"
-                            class="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            type="button"
+                            class="w-full px-4 py-2.5 sm:py-2 text-sm sm:text-base bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled>
                         Procéder au Paiement
                     </button>
@@ -147,15 +149,15 @@
                 <div class="mb-6 border-b pb-6">
                     <h4 class="text-md font-medium text-gray-700 mb-4">Information Client</h4>
                     <div class="space-y-4">
-                        <div class="flex gap-4">
-                            <div class="flex-1">
+                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end">
+                            <div class="flex-1 min-w-0 w-full">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Rechercher Client</label>
                                 <input type="text" id="customer-search"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                        placeholder="Nom du client...">
                             </div>
-                            <button id="new-customer-btn"
-                                    class="mt-6 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                            <button type="button" id="new-customer-btn"
+                                    class="w-full sm:w-auto shrink-0 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
                                 Nouveau Client
                             </button>
                         </div>

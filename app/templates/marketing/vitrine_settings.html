@@ -2,25 +2,26 @@
 
 {% block content %}
 {# min-w-0 + max-w-full: évite le débordement horizontal sur mobile (colonne flex du layout base) #}
-<div class="w-full min-w-0 max-w-4xl mx-auto px-3 sm:px-4 pb-2 box-border">
-    <div class="bg-white rounded-lg shadow p-4 sm:p-6 space-y-6 min-w-0 max-w-full">
-        <div class="min-w-0">
-            <h1 class="text-xl font-semibold text-gray-900 break-words">Vitrine &amp; promos</h1>
+<div class="w-full min-w-0 max-w-full mx-auto px-0 sm:px-4 md:max-w-4xl pb-3 sm:pb-4 box-border">
+    <div class="bg-white md:rounded-lg md:shadow overflow-hidden min-w-0 max-w-full">
+        <div class="p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6 min-w-0 max-w-full">
+        <div class="min-w-0 px-3 sm:px-0">
+            <h1 class="text-lg sm:text-xl font-semibold text-gray-900 break-words">Vitrine &amp; promos</h1>
             <p class="text-sm text-gray-600 mt-1 break-words">La page <strong>/v/{{ shop.id }}</strong> est toujours accessible pour vos clients (QR sur facture) : logo, coordonnées, texte, offre globale optionnelle, et <strong>uniquement les produits que vous ajoutez ci-dessous</strong> — pas tout le stock.</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 rounded-lg p-4 border border-slate-100">
-            <div>
-                <p class="text-xs font-medium text-gray-500 uppercase">Visites (7 jours)</p>
-                <p class="text-2xl font-bold text-gray-900">{{ visits_7d }}</p>
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 py-3 border-b border-slate-200 -mx-3 px-3 md:mx-0 md:px-4 md:py-4 md:border md:rounded-lg md:border-slate-100 md:bg-slate-50">
+            <div class="min-w-0">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase leading-tight">Visites (7 j.)</p>
+                <p class="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">{{ visits_7d }}</p>
             </div>
-            <div>
-                <p class="text-xs font-medium text-gray-500 uppercase">Visiteurs uniques (7 j.)</p>
-                <p class="text-2xl font-bold text-gray-900">{{ unique_visitors_7d }}</p>
+            <div class="min-w-0">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase leading-tight">Visiteurs uniques (7 j.)</p>
+                <p class="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">{{ unique_visitors_7d }}</p>
             </div>
         </div>
 
-        <div class="rounded-lg border border-emerald-200 bg-emerald-50/80 p-3 sm:p-4 space-y-3 min-w-0 max-w-full">
+        <div class="-mx-3 px-3 sm:mx-0 sm:px-0 py-3 border-b border-emerald-200/80 md:border md:rounded-lg md:border-emerald-200 md:bg-emerald-50/80 md:p-4 space-y-3 min-w-0 max-w-full">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
                 <span class="inline-flex items-center gap-2 text-sm font-medium text-emerald-900 min-w-0 flex-1 break-words">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-emerald-800" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
@@ -42,16 +43,16 @@
                 </div>
             </div>
             {% if not has_fixed_public_host %}
-            <p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded p-2 break-words">Pour des QR stables en production, définissez <code class="bg-amber-100 px-1 rounded break-all">PUBLIC_BASE_URL</code> dans <code class="bg-amber-100 px-1 rounded">.env</code>.</p>
+            <p class="text-xs text-amber-800 bg-amber-50/90 md:bg-amber-50 border border-amber-200 md:rounded p-2 break-words">Pour des QR stables en production, définissez <code class="bg-amber-100 px-1 rounded break-all">PUBLIC_BASE_URL</code> dans <code class="bg-amber-100 px-1 rounded">.env</code>.</p>
             {% endif %}
         </div>
 
-        <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4 text-sm text-gray-700 min-w-0 break-words">
+        <div class="-mx-3 px-3 sm:mx-0 sm:px-0 py-3 border-b border-gray-200 md:border md:rounded-lg md:border-gray-200 md:bg-gray-50 md:p-4 text-sm text-gray-700 min-w-0 break-words">
             <p class="font-medium text-gray-900 mb-1">Nom &amp; logo</p>
             <p>Le nom affiché est celui du <a href="{{ url_for('profile.view_profile') }}" class="text-blue-600 hover:underline">profil entreprise</a> ; le logo aussi.</p>
         </div>
 
-        <form method="post" action="{{ url_for('vitrine.marketing_vitrine') }}" class="space-y-5 border-t border-gray-200 pt-6">
+        <form method="post" action="{{ url_for('vitrine.marketing_vitrine') }}" class="space-y-5 border-t border-gray-200 pt-4 md:pt-6 px-3 sm:px-0">
             <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Offre globale (optionnel)</h2>
             {# Texte d’accueil (vitrine_body) — désactivé pour l’instant ; réactiver le bloc + name="vitrine_body" plus tard
             <div>
@@ -111,26 +112,26 @@ Stocks mis à jour régulièrement ; en cas de rupture, nous vous proposons une 
             </div>
         </form>
 
-        <div class="border-t border-gray-200 pt-6 space-y-4 min-w-0 max-w-full">
+        <div class="border-t border-gray-200 pt-4 md:pt-6 space-y-4 min-w-0 max-w-full px-3 sm:px-0">
             <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide break-words">Produits affichés sur la vitrine</h2>
             <p class="text-sm text-gray-600 break-words">Cliquez une carte pour <strong>ajouter</strong> le produit à la vitrine ; cliquez à nouveau pour le <strong>retirer</strong>. Ci-dessous : <strong>Promo</strong> et <strong>Nouveauté</strong> contrôlent les badges sur la page publique (cartes séparées « Promos » et « Nouveautés »).</p>
 
             {% if catalog_products %}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 min-w-0 max-w-full">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 min-w-0 max-w-full -mx-3 px-3 sm:mx-0 sm:px-0">
                 {% for p in catalog_products %}
                 {% set is_on = p.id in selected_product_ids %}
                 <form method="post" action="{{ url_for('vitrine.vitrine_toggle_product') }}" class="block min-w-0 max-w-full">
                     <input type="hidden" name="product_id" value="{{ p.id }}">
                     <button type="submit"
-                            class="w-full min-w-0 max-w-full text-left rounded-xl border p-3 sm:p-4 transition shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
-                            {% if is_on %}border-blue-500 bg-blue-50 ring-2 ring-blue-400{% else %}border-gray-200 bg-white hover:border-gray-300{% endif %}">
-                        <span class="flex items-start justify-between gap-2 min-w-0 w-full">
-                            <span class="font-medium text-gray-900 text-sm leading-snug min-w-0 flex-1 break-words text-left">{{ p.name }}</span>
-                            {% if is_on %}
-                            <span class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">Vitrine</span>
-                            {% endif %}
+                            class="relative w-full min-w-0 max-w-full min-h-[4.5rem] sm:min-h-0 text-left rounded-lg md:rounded-xl border p-4 sm:p-4 md:p-5 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 shadow-none md:shadow-sm hover:md:shadow-md
+                            {% if is_on %}border-blue-500 bg-blue-50 md:ring-2 md:ring-blue-400{% else %}border-gray-200 bg-white hover:border-gray-300{% endif %}">
+                        {% if is_on %}
+                        <span class="absolute top-2 right-2 z-10 flex h-5 w-5 items-center justify-center text-[11px] sm:text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full border border-blue-200/80 shadow-sm" title="Sur la vitrine" aria-label="Produit sur la vitrine">V</span>
+                        {% endif %}
+                        <span class="flex items-start min-w-0 w-full {% if is_on %}pr-7 sm:pr-8{% endif %}">
+                            <span class="font-medium text-gray-900 text-sm sm:text-base leading-snug min-w-0 flex-1 break-words text-left">{{ p.name }}</span>
                         </span>
-                        <span class="mt-2 block text-xs text-gray-600 break-words">{{ p.selling_price|round(0)|int }} {{ shop.currency or 'FCFA' }} · stock {{ p.stock }}</span>
+                        <span class="mt-2 block text-sm text-gray-600 break-words tabular-nums">{{ p.selling_price|round(0)|int }} {{ shop.currency or 'FCFA' }} · stock {{ p.stock }}</span>
                     </button>
                 </form>
                 {% endfor %}
@@ -140,7 +141,7 @@ Stocks mis à jour régulièrement ; en cas de rupture, nous vous proposons une 
             {% endif %}
 
             {% if selections %}
-            <div class="overflow-x-auto border border-gray-200 rounded-lg max-w-full min-w-0">
+            <div class="hidden md:block overflow-x-auto border border-gray-200 rounded-lg max-w-full min-w-0">
                 <table class="min-w-full text-sm">
                     <thead class="bg-gray-50 text-left text-gray-600">
                         <tr>
@@ -201,9 +202,51 @@ Stocks mis à jour régulièrement ; en cas de rupture, nous vous proposons une 
                     </tbody>
                 </table>
             </div>
+            <div class="md:hidden -mx-3 border-t border-gray-200 divide-y divide-gray-200 bg-white">
+                {% for row in selections %}
+                {% set p = row.product %}
+                <div class="py-3 px-3 text-sm space-y-2 min-w-0">
+                    <p class="font-medium text-gray-900 break-words">{{ p.name if p else '—' }}</p>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 tabular-nums">
+                        <span>{% if p %}{{ p.selling_price|round(0)|int }}{% else %}—{% endif %} {{ shop.currency or 'FCFA' }}</span>
+                        <span>Stock : {{ p.stock if p else '—' }}</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 pt-1">
+                        <span class="text-xs text-gray-500 mr-1">Ordre</span>
+                        <form method="post" action="{{ url_for('vitrine.vitrine_move_product', row_id=row.id) }}" class="inline">
+                            <input type="hidden" name="direction" value="up">
+                            <button type="submit" class="text-gray-600 hover:text-blue-600 px-2 py-1 border border-gray-200 rounded" title="Monter">↑</button>
+                        </form>
+                        <form method="post" action="{{ url_for('vitrine.vitrine_move_product', row_id=row.id) }}" class="inline">
+                            <input type="hidden" name="direction" value="down">
+                            <button type="submit" class="text-gray-600 hover:text-blue-600 px-2 py-1 border border-gray-200 rounded" title="Descendre">↓</button>
+                        </form>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <form method="post" action="{{ url_for('vitrine.vitrine_toggle_promo', row_id=row.id) }}">
+                            <button type="submit" class="text-xs px-2 py-1.5 rounded {% if row.is_promo %}bg-amber-100 text-amber-900{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                {% if row.is_promo %}Promo &#10003;{% else %}Marquer promo{% endif %}
+                            </button>
+                        </form>
+                        <form method="post" action="{{ url_for('vitrine.vitrine_toggle_new_arrival', row_id=row.id) }}">
+                            <button type="submit" class="text-xs px-2 py-1.5 rounded {% if row.is_new_arrival %}bg-sky-100 text-sky-900{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                {% if row.is_new_arrival %}Nouveaut&#233; &#10003;{% else %}Nouveaut&#233;{% endif %}
+                            </button>
+                        </form>
+                        <a href="{{ url_for('vitrine.vitrine_share_card_jpeg', row_id=row.id) }}"
+                           target="_blank" rel="noopener noreferrer"
+                           class="inline-flex items-center text-xs px-2 py-1.5 rounded bg-emerald-50 text-emerald-900 border border-emerald-200 font-medium">Image</a>
+                        <form method="post" action="{{ url_for('vitrine.vitrine_remove_product', row_id=row.id) }}" class="inline" onsubmit="return confirm('Retirer ce produit de la vitrine ?');">
+                            <button type="submit" class="text-red-600 text-xs px-2 py-1.5 border border-red-200 rounded hover:bg-red-50">Retirer</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
             {% else %}
             <p class="text-sm text-gray-500 italic">Aucun produit sélectionné — la vitrine affiche seulement les infos du magasin (et l’offre globale si vous en définissez une).</p>
             {% endif %}
+        </div>
         </div>
     </div>
 </div>

@@ -1,40 +1,41 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4">
-    <div class="flex flex-col md:flex-row justify-between items-center mb-4 space-y-4 md:space-y-0">
-        <h2 class="text-2xl font-bold text-gray-900">Gestion des Dépenses</h2>
-        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+<div class="container mx-auto max-w-full px-0 sm:px-4">
+    <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 mb-4 px-3 sm:px-0">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Gestion des Dépenses</h2>
+        <div class="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full md:w-auto">
             <a href="#" onclick="exportExpensesPDF(event)"
-               class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-center">
+               class="col-span-2 sm:col-span-1 justify-center px-3 sm:px-4 py-2 text-sm sm:text-base bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-center flex items-center justify-center">
                 Exporter PDF
             </a>
-            <button class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" onclick="showModal('addExpenseModal')">
-                Ajouter une Dépense
+            <button type="button" class="col-span-2 sm:col-span-1 px-3 sm:px-4 py-2 text-sm sm:text-base bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" onclick="showModal('addExpenseModal')">
+                Ajouter une dépense
             </button>
         </div>
     </div>
 
-
-    <!-- Categories and Date Filter -->
-    <div class="bg-white rounded-lg shadow">
-        <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div class="md:col-span-8">
-                        <div class="flex flex-wrap gap-2">
-                            <button class="px-4 py-2 border border-blue-500 text-blue-500 rounded hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:bg-blue-600" onclick="filterCategory('all')">Tout</button>
-                            {% for category in categories %}
-                            <button class="px-4 py-2 border border-blue-500 text-blue-500 rounded hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" onclick="filterCategory('{{ category }}')">
-                                {{ category }}
-                            </button>
-                            {% endfor %}
-                        </div>
-                                        </div>
-                <div class="md:col-span-4">
-                    <div class="flex flex-col sm:flex-row gap-2">
-                        <input type="date" id="start_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" value="{{ request.args.get('start', '') }}" placeholder="Date de début">
-                        <input type="date" id="end_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" value="{{ request.args.get('end', '') }}" placeholder="Date de fin">
-                        <button class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" onclick="filterExpenses()">Filtrer</button>
+    <!-- Categories and Date Filter: flat on mobile -->
+    <div class="mb-4 pb-4 border-b border-gray-200 md:border-0 bg-gray-50 md:bg-transparent -mx-0 px-3 sm:px-0 sm:mx-0 md:rounded-lg md:shadow md:bg-white">
+        <div class="p-0 md:p-4">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4">
+                <div class="md:col-span-8 min-w-0">
+                    <p class="text-xs font-medium text-gray-600 mb-2 md:hidden">Catégories</p>
+                    <div class="flex flex-wrap gap-1.5 sm:gap-2">
+                        <button type="button" class="expense-category-filter px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm border border-blue-500 text-blue-500 rounded hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shrink-0" onclick="filterCategory('all')">Tout</button>
+                        {% for category in categories %}
+                        <button type="button" class="expense-category-filter px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm border border-blue-500 text-blue-500 rounded hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shrink-0 max-w-full truncate" title="{{ category }}" onclick="filterCategory('{{ category }}')">
+                            {{ category }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="md:col-span-4 min-w-0">
+                    <p class="text-xs font-medium text-gray-600 mb-2 md:hidden">Période</p>
+                    <div class="flex flex-col sm:flex-row gap-2 sm:items-end">
+                        <input type="date" id="start_date" class="block w-full min-w-0 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" value="{{ request.args.get('start', '') }}" placeholder="Date de début" aria-label="Date de début">
+                        <input type="date" id="end_date" class="block w-full min-w-0 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" value="{{ request.args.get('end', '') }}" placeholder="Date de fin" aria-label="Date de fin">
+                        <button type="button" class="w-full sm:w-auto px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shrink-0" onclick="filterExpenses()">Filtrer</button>
                     </div>
                 </div>
             </div>
@@ -42,8 +43,8 @@
     </div>
 
 <!-- Expenses Table -->
-<div class="bg-white rounded-lg shadow-md">
-    <div class="p-6">
+<div class="bg-white md:rounded-lg md:shadow-md overflow-hidden mx-0">
+    <div class="p-3 sm:p-4 md:p-6">
         <!-- Desktop View -->
         <div class="hidden sm:block overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -64,11 +65,11 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ expense.amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user_name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                <button class="px-2 py-1 text-sm bg-sky-500 text-white rounded hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+                                <button type="button" class="px-2 py-1 text-sm bg-sky-500 text-white rounded hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
                                         onclick='editExpense("{{ expense.id }}", "{{ category_name }}", {{ expense.amount }})'>
                                     Modifier
                                 </button>
-                                <button class="px-2 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                <button type="button" class="px-2 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                                         onclick="deleteExpense('{{ expense.id }}')">
                                     Supprimer
                                 </button>
@@ -85,36 +86,56 @@
             </table>
         </div>
 
-        <!-- Mobile View -->
-        <div class="sm:hidden space-y-4">
+        <!-- Mobile: full-width rows -->
+        <div class="sm:hidden -mx-3 border-t border-gray-200 divide-y divide-gray-200">
             {% for expense, category_name, user_name in expenses.items %}
-            <div class="bg-gray-100 p-4 rounded-lg shadow-md">
-                <p class="text-sm font-medium text-gray-900"><strong>Date:</strong> {{ expense.date|format_datetime }}</p>
-                <p class="text-sm font-medium text-gray-900"><strong>Catégorie:</strong> {{ category_name }}</p>
-                <p class="text-sm font-medium text-gray-900"><strong>Montant:</strong> {{ expense.amount | fr_thousands}} {{ shop_profile.currency|default('FCFA') }}</p>
-                <p class="text-sm font-medium text-gray-900"><strong>Caissier:</strong> {{ user_name }}</p>
-                <div class="mt-2 space-x-2">
-                    <button class="px-2 py-1 text-sm bg-sky-500 text-white rounded hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
-                            onclick='editExpense("{{ expense.id }}", "{{ category_name }}", {{ expense.amount }})'>
-                        Modifier
-                    </button>
-                    <button class="px-2 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                            onclick="deleteExpense('{{ expense.id }}')">
-                        Supprimer
-                    </button>
+            <div class="py-3 px-3 bg-white">
+                <div class="space-y-1.5 text-sm">
+                    <div class="flex gap-2 justify-between items-start">
+                        <span class="font-semibold text-gray-700 shrink-0">Date</span>
+                        <span class="min-w-0 text-right break-words text-gray-900">{{ expense.date|format_datetime }}</span>
+                    </div>
+                    <div class="flex gap-2 justify-between items-start">
+                        <span class="font-semibold text-gray-700 shrink-0">Catégorie</span>
+                        <span class="min-w-0 text-right break-words text-gray-900">{{ category_name }}</span>
+                    </div>
+                    <div class="flex gap-2 justify-between items-start">
+                        <span class="font-semibold text-gray-700 shrink-0">Montant</span>
+                        <span class="min-w-0 text-right tabular-nums text-gray-900">{{ expense.amount | fr_thousands}} {{ shop_profile.currency|default('FCFA') }}</span>
+                    </div>
+                    <div class="flex gap-2 justify-between items-start">
+                        <span class="font-semibold text-gray-700 shrink-0">Caissier</span>
+                        <span class="min-w-0 text-right break-words text-gray-900">{{ user_name }}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2 justify-end pt-2">
+                        <button type="button" class="px-3 py-1.5 text-sm bg-sky-500 text-white rounded hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+                                onclick='editExpense("{{ expense.id }}", "{{ category_name }}", {{ expense.amount }})'>
+                            Modifier
+                        </button>
+                        <button type="button" class="px-3 py-1.5 text-sm bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                onclick="deleteExpense('{{ expense.id }}')">
+                            Supprimer
+                        </button>
+                    </div>
                 </div>
             </div>
             {% endfor %}
+            <div class="py-3 px-3 bg-blue-50 border-t-2 border-blue-100">
+                <div class="flex gap-2 justify-between items-start font-bold text-sm">
+                    <span class="shrink-0">Total des dépenses</span>
+                    <span class="min-w-0 text-right tabular-nums">{{ total_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+
         <!-- Pagination -->
-        <nav class="flex items-center justify-center mt-4" aria-label="Navigation des pages">
-            <ul class="flex space-x-1">
+        <nav class="flex items-center justify-center mt-4 px-3 sm:px-0 pb-2" aria-label="Navigation des pages">
+            <ul class="flex flex-wrap justify-center gap-1 sm:gap-2">
                 {% if expenses.has_prev %}
                 <li>
                     <a href="{{ url_for('expenses.expense_list', page=expenses.prev_num, category=request.args.get('category'), start=request.args.get('start'), end=request.args.get('end')) }}"
-                       class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                       class="px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
                         Précédent
                     </a>
                 </li>
@@ -125,19 +146,19 @@
                         <li>
                             {% if page_num == expenses.page %}
                             <a href="{{ url_for('expenses.expense_list', page=page_num, category=request.args.get('category'), start=request.args.get('start'), end=request.args.get('end')) }}"
-                               class="px-3 py-2 text-sm font-medium text-white bg-blue-500 border border-blue-500 rounded-md">
+                               class="px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-white bg-blue-500 border border-blue-500 rounded-md">
                                 {{ page_num }}
                             </a>
                             {% else %}
                             <a href="{{ url_for('expenses.expense_list', page=page_num, category=request.args.get('category'), start=request.args.get('start'), end=request.args.get('end')) }}"
-                               class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                               class="px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
                                 {{ page_num }}
                             </a>
                             {% endif %}
                         </li>
                     {% else %}
                         <li>
-                            <span class="px-3 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-300 rounded-md">
+                            <span class="px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-400 bg-gray-100 border border-gray-300 rounded-md">
                                 ...
                             </span>
                         </li>
@@ -147,14 +168,14 @@
                 {% if expenses.has_next %}
                 <li>
                     <a href="{{ url_for('expenses.expense_list', page=expenses.next_num, category=request.args.get('category'), start=request.args.get('start'), end=request.args.get('end')) }}"
-                       class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                       class="px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
                         Suivant
                     </a>
                 </li>
                 {% endif %}
             </ul>
         </nav>
-    </div>
+</div>
 </div>
 <!-- Add Expense Modal -->
 <div id="addExpenseModal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
@@ -532,7 +553,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Category Buttons State
     const urlParams = new URLSearchParams(window.location.search);
     const currentCategory = urlParams.get('category') || 'all';
-    document.querySelectorAll('.flex.flex-wrap.gap-2 button').forEach(btn => {
+    document.querySelectorAll('.expense-category-filter').forEach(btn => {
         const btnCategory = btn.textContent.trim().toLowerCase() === 'tout' ? 'all' : btn.textContent.trim();
         if (btnCategory.toLowerCase() === currentCategory.toLowerCase()) {
             btn.classList.remove('text-blue-500');

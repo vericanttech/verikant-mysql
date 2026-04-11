@@ -35,38 +35,38 @@ function updateCartDisplay() {
         total += itemTotal;
 
         const itemElement = document.createElement('div');
-        itemElement.className = 'bg-white shadow-sm rounded-lg mb-3 overflow-hidden transition-all duration-300 hover:shadow-md';
+        itemElement.className = 'border-b border-gray-200 pb-3 last:border-b-0 md:border-0 md:pb-0 bg-white md:shadow-sm md:rounded-lg overflow-hidden transition-all duration-300 hover:md:shadow-md';
         itemElement.innerHTML = `
-            <div class="flex items-center p-4 border-b border-gray-100">
-                <div class="flex-grow">
-                    <div class="flex justify-between items-center">
-                        <h6 class="text-lg font-semibold text-gray-800">${item.name}</h6>
-                        <button class="remove-item text-red-500 hover:bg-red-100 p-2 rounded-full transition-colors" data-index="${index}">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+            <div class="flex items-start p-2 sm:p-4 md:border-b md:border-gray-100 gap-2">
+                <div class="flex-grow min-w-0">
+                    <div class="flex justify-between items-start gap-2">
+                        <h6 class="text-sm sm:text-lg font-semibold text-gray-800 break-words min-w-0">${item.name}</h6>
+                        <button type="button" class="remove-item shrink-0 text-red-500 hover:bg-red-100 p-1.5 sm:p-2 rounded-full transition-colors" data-index="${index}">
+                            <i data-lucide="trash-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="px-4 py-3 bg-gray-50">
-                <div class="flex items-center space-x-3">
-                    <div class="flex-grow">
-                        <label class="block text-xs text-gray-600 mb-1">Price</label>
+            <div class="px-2 sm:px-4 py-2 sm:py-3 bg-gray-50 md:bg-gray-50">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                    <div class="flex-grow min-w-0 w-full sm:w-auto">
+                        <label class="block text-xs text-gray-600 mb-1">Prix</label>
                         <div class="relative">
                             <input type="text"
-                                   class="price-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-200 transition-all"
+                                   class="price-input w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-200 transition-all"
                                    value="${formatNumberFR(item.price.toFixed(2))}"
                                    data-index="${index}"
                             />
-                            <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">${currency}</span>
+                            <span class="absolute inset-y-0 right-0 pr-2 sm:pr-3 flex items-center text-gray-500 text-xs sm:text-sm">${currency}</span>
                         </div>
                     </div>
 
-                    <div class="flex-grow">
-                        <label class="block text-xs text-gray-600 mb-1">Quantity</label>
+                    <div class="flex-grow min-w-0 w-full sm:w-auto">
+                        <label class="block text-xs text-gray-600 mb-1">Quantité</label>
                         <div class="relative">
                             <textarea
-                                class="quantity-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-200 resize-none transition-all"
+                                class="quantity-input w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-200 resize-none transition-all"
                                 rows="1"
                                 data-index="${index}"
                             >${item.quantity}</textarea>
@@ -74,10 +74,10 @@ function updateCartDisplay() {
                     </div>
                 </div>
 
-                <div class="mt-3 text-right">
-                    <span class="text-sm font-medium text-gray-700">
-                        Subtotal:
-                        <span class="text-blue-600 font-bold">${formatNumberFR(itemTotal.toFixed(2))} ${currency}</span>
+                <div class="mt-2 sm:mt-3 text-right">
+                    <span class="text-xs sm:text-sm font-medium text-gray-700">
+                        Sous-total :
+                        <span class="text-blue-600 font-bold tabular-nums">${formatNumberFR(itemTotal.toFixed(2))} ${currency}</span>
                     </span>
                 </div>
             </div>

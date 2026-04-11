@@ -610,13 +610,19 @@ def bill_list():
 @bills.route('/bills/<int:bill_id>')
 @login_required
 def bill_detail(bill_id):
-    bill = get_shop_filtered_query(SalesBill).filter_by(id=bill_id).first_or_404()
+    bill = get_shop_filtered_query(SalesBill).options(
+        joinedload(SalesBill.payments).joinedload(PaymentTransaction.user),
+    ).filter_by(id=bill_id).first_or_404()
     clients = get_shop_filtered_query(Client).order_by(Client.name).all()
     products = get_shop_filtered_query(Product).all()
+    payments_sorted = sorted(
+        bill.payments,
+        key=lambda p: ((p.created_at or ''), p.id or 0),
+    )
     return render_template('bills/detail.html',
                            bill=bill,
                            details=bill.sales_details,
-                           payments=bill.payments,
+                           payments=payments_sorted,
                            all_products=products,
                            clients=clients)
 

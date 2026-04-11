@@ -1,49 +1,43 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mx-auto px-4 sm:px-8">
+<div class="container mx-auto max-w-full px-0 sm:px-4 md:px-8">
     <!-- Header -->
-    <!-- Replace the header section in your HTML (around line 4-10) with this: -->
-    <div class="flex flex-col md:flex-row justify-between items-center mb-6 px-4 sm:px-8 space-y-4 md:space-y-0">
-        <h2 class="text-2xl font-bold">Gestion des Stocks</h2>
-        <div class="flex flex-col sm:flex-row gap-2">
-            <!-- PDF Export Button -->
+    <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 mb-4 md:mb-6 px-3 sm:px-0">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Gestion des Stocks</h2>
+        <div class="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full md:w-auto">
             <a href="#" onclick="exportAndSharePDF(event)"
-               class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               class="col-span-2 sm:col-span-1 justify-center bg-green-500 hover:bg-green-600 text-white px-3 sm:px-4 py-2 rounded text-sm sm:text-base flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Exporter PDF
+                <span class="truncate">Exporter PDF</span>
             </a>
-            <!-- Existing New Product Button -->
-            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onclick="openModal('addProductModal')">
-                Nouveau Produit
+            <button type="button" class="col-span-2 sm:col-span-1 bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded text-sm sm:text-base" onclick="openModal('addProductModal')">
+                Nouveau produit
             </button>
         </div>
     </div>
 
-
-    <!-- Search and Filter Section -->
-    <div class="mb-6 px-4 sm:px-8">
-        <form method="GET" class="grid gap-4 sm:flex sm:flex-wrap sm:items-end">
-            <div class="w-full sm:w-2/3">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Rechercher un produit</label>
+    <!-- Search and Filter: flat strip on mobile -->
+    <div class="mb-4 md:mb-6 pb-4 md:pb-0 border-b border-gray-200 md:border-0 bg-gray-50 md:bg-transparent -mx-0 px-3 sm:px-0 sm:mx-0 md:shadow md:rounded-lg md:bg-white md:p-4">
+        <form method="GET" class="grid gap-3 sm:gap-4 sm:flex sm:flex-wrap sm:items-end">
+            <div class="w-full sm:w-2/3 min-w-0">
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Rechercher un produit</label>
                 <input type="text" name="search" value="{{ request.args.get('search', '') }}"
-                       class="w-full px-4 py-2 text-gray-700 bg-white border rounded-lg focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"
+                       class="w-full px-3 sm:px-4 py-2 text-sm sm:text-base text-gray-700 bg-white border border-gray-300 rounded-lg focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"
                        placeholder="Nom du produit...">
             </div>
-            <div class="w-full sm:w-auto">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Stock bas</label>
-                <select name="stock_filter" class="w-full sm:w-auto rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <div class="w-full sm:w-auto min-w-0">
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Stock bas</label>
+                <select name="stock_filter" class="w-full sm:w-auto min-w-[10rem] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
                     <option value="">Tous les produits</option>
                     <option value="low" {% if request.args.get('stock_filter') == 'low' %}selected{% endif %}>Stock bas (&lt;10)</option>
                 </select>
             </div>
-            <div class="w-full sm:w-auto flex gap-2">
-                <button type="submit" class="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                    Filtrer
-                </button>
+            <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
+                <button type="submit" class="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm">Filtrer</button>
                 {% if request.args.get('search') or request.args.get('stock_filter') %}
-                <a href="{{ url_for('inventory.product_list') }}" class="w-full sm:w-auto text-blue-500 hover:text-blue-600 text-center">
+                <a href="{{ url_for('inventory.product_list') }}" class="w-full sm:w-auto text-center text-blue-600 hover:text-blue-800 text-sm py-2 sm:py-0 sm:inline-flex sm:items-center">
                     Réinitialiser
                 </a>
                 {% endif %}
@@ -54,7 +48,7 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="mb-4 p-4 rounded {% if category == 'success' %}bg-green-100 text-green-700{% elif category == 'error' %}bg-red-100 text-red-700{% elif category == 'warning' %}bg-amber-50 text-amber-900{% else %}bg-blue-100 text-blue-700{% endif %}">
+                <div class="mb-4 mx-3 sm:mx-0 p-3 sm:p-4 rounded {% if category == 'success' %}bg-green-100 text-green-700{% elif category == 'error' %}bg-red-100 text-red-700{% elif category == 'warning' %}bg-amber-50 text-amber-900{% else %}bg-blue-100 text-blue-700{% endif %}">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -62,7 +56,8 @@
     {% endwith %}
 
     <!-- Products Section -->
-    <div class="bg-white rounded-lg shadow p-4">
+    <div class="bg-white md:rounded-lg md:shadow overflow-hidden">
+        <div class="p-3 sm:p-4 md:p-6">
         <!-- Desktop Table View -->
         <div class="hidden sm:block overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -91,9 +86,9 @@
                         <td class="px-6 py-4 whitespace-nowrap">{{ product.buying_price | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap {% if product.stock < 10 %}text-red-600 font-medium{% endif %}">{{ product.stock }}</td>
                         <td class="px-6 py-4 whitespace-nowrap space-x-2">
-                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }}, {{ (url_for("static", filename=product.image_path) if product.image_path else "")|tojson }})'>Modifier</button>
+                            <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }}, {{ (url_for("static", filename=product.image_path) if product.image_path else "")|tojson }})'>Modifier</button>
 
-                            <button class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm" onclick='deleteProduct({{ product.id }}, {{ product.name|tojson }})'>Supprimer</button>
+                            <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm" onclick='deleteProduct({{ product.id }}, {{ product.name|tojson }})'>Supprimer</button>
 
 
                         </td>
@@ -104,43 +99,52 @@
         </div>
 
 
-        <!-- Mobile View: Card Layout -->
-        <div class="block sm:hidden">
+        <!-- Mobile: full-width rows -->
+        <div class="sm:hidden -mx-3 border-t border-gray-200 divide-y divide-gray-200">
             {% for product in products.items %}
-            <div class="border p-4 rounded-lg shadow mb-4 {% if product.stock < 10 %}bg-red-50{% endif %}">
-                {% if product.image_path %}
-                <div class="mb-2">
-                    <img src="{{ url_for('static', filename=product.image_path) }}" alt="" class="h-20 w-20 rounded object-cover border border-gray-200" loading="lazy" width="80" height="80">
-                </div>
-                {% endif %}
-                <h3 class="text-lg font-bold">{{ product.name }}</h3>
-                <p class="text-gray-700">Prix de Vente: <span class="font-medium">{{ product.selling_price | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</span></p>
-                <p class="text-gray-700">Prix d'Achat: <span class="font-medium">{{ product.buying_price | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</span></p>
-                <p class="text-gray-700 {% if product.stock < 10 %}text-red-600 font-medium{% endif %}">Stock: {{ product.stock }}</p>
-                <div class="flex gap-2 mt-2">
-                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }}, {{ (url_for("static", filename=product.image_path) if product.image_path else "")|tojson }})'>Modifier</button>
-
-                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm" onclick='deleteProduct({{ product.id }}, {{ product.name|tojson }})'>Supprimer</button>
-
-
+            <div class="py-3 px-3 {% if product.stock < 10 %}bg-red-50/90{% else %}bg-white{% endif %}">
+                <div class="flex gap-3 items-start">
+                    {% if product.image_path %}
+                    <img src="{{ url_for('static', filename=product.image_path) }}" alt="" class="h-14 w-14 shrink-0 rounded object-cover border border-gray-200" loading="lazy" width="56" height="56">
+                    {% else %}
+                    <span class="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded bg-gray-100 text-gray-400 text-xs">—</span>
+                    {% endif %}
+                    <div class="min-w-0 flex-1 space-y-1.5 text-sm">
+                        <p class="font-semibold text-gray-900 break-words">{{ product.name }}</p>
+                        <div class="flex gap-2 justify-between">
+                            <span class="text-gray-600 shrink-0">Prix vente</span>
+                            <span class="tabular-nums text-right min-w-0">{{ product.selling_price | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                        <div class="flex gap-2 justify-between">
+                            <span class="text-gray-600 shrink-0">Prix achat</span>
+                            <span class="tabular-nums text-right min-w-0">{{ product.buying_price | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        </div>
+                        <div class="flex gap-2 justify-between">
+                            <span class="text-gray-600 shrink-0">Stock</span>
+                            <span class="tabular-nums text-right font-medium {% if product.stock < 10 %}text-red-600{% endif %}">{{ product.stock }}</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2 justify-end pt-2">
+                            <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }}, {{ (url_for("static", filename=product.image_path) if product.image_path else "")|tojson }})'>Modifier</button>
+                            <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-sm" onclick='deleteProduct({{ product.id }}, {{ product.name|tojson }})'>Supprimer</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             {% endfor %}
         </div>
-        </div>
 
             <!-- Pagination -->
-            <nav aria-label="Page navigation" class="mt-6">
-                <ul class="flex justify-center space-x-2">
+            <nav aria-label="Page navigation" class="mt-4 sm:mt-6 pt-4 border-t border-gray-100 sm:border-0 sm:pt-0">
+                <ul class="flex flex-wrap justify-center gap-2">
                     {% for page_num in products.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
                         {% if page_num %}
                             {% if page_num == products.page %}
                             <li>
-                                <span class="px-3 py-2 bg-blue-500 text-white rounded-md">{{ page_num }}</span>
+                                <span class="px-3 py-2 bg-blue-500 text-white rounded-md text-sm">{{ page_num }}</span>
                             </li>
                             {% else %}
                             <li>
-                                <a class="px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                                <a class="px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
                                    href="{{ url_for('inventory.product_list', page=page_num, search=request.args.get('search', ''), stock_filter=request.args.get('stock_filter', '')) }}">
                                     {{ page_num }}
                                 </a>
@@ -148,7 +152,7 @@
                             {% endif %}
                         {% else %}
                             <li>
-                                <span class="px-3 py-2 text-gray-500">...</span>
+                                <span class="px-3 py-2 text-gray-500 text-sm">...</span>
                             </li>
                         {% endif %}
                     {% endfor %}
@@ -159,51 +163,43 @@
 
     <!-- Shop Totals Section (Admin Only) -->
 {% if shop_totals %}
-<div class="mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow p-6">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+<div class="mt-4 mx-0 sm:mx-0 bg-gradient-to-r from-blue-50 to-indigo-50 md:rounded-lg md:shadow p-4 sm:p-6">
+    <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10" />
         </svg>
         Résumé de la Boutique
     </h3>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <!-- Total Products -->
-        <div class="bg-white rounded-lg p-4 shadow-sm">
-            <div class="text-sm text-gray-600">Total Produits</div>
-            <div class="text-2xl font-bold text-gray-800">{{ shop_totals.total_products_count }}</div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+        <div class="bg-white md:rounded-lg p-3 sm:p-4 md:shadow-sm border border-gray-100 md:border-0">
+            <div class="text-xs sm:text-sm text-gray-600">Total produits</div>
+            <div class="text-xl sm:text-2xl font-bold text-gray-800 tabular-nums">{{ shop_totals.total_products_count }}</div>
         </div>
-
-        <!-- Low Stock Alert -->
-        <div class="bg-white rounded-lg p-4 shadow-sm">
-            <div class="text-sm text-gray-600">Stock Bas</div>
-            <div class="text-2xl font-bold {% if shop_totals.low_stock_count > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+        <div class="bg-white md:rounded-lg p-3 sm:p-4 md:shadow-sm border border-gray-100 md:border-0">
+            <div class="text-xs sm:text-sm text-gray-600">Stock bas</div>
+            <div class="text-xl sm:text-2xl font-bold tabular-nums {% if shop_totals.low_stock_count > 0 %}text-red-600{% else %}text-green-600{% endif %}">
                 {{ shop_totals.low_stock_count }}
             </div>
         </div>
-
-        <!-- Total Buying Value -->
-        <div class="bg-white rounded-lg p-4 shadow-sm">
-            <div class="text-sm text-gray-600">Valeur d'Achat</div>
-            <div class="text-lg font-bold text-blue-600">
+        <div class="bg-white md:rounded-lg p-3 sm:p-4 md:shadow-sm border border-gray-100 md:border-0 col-span-2 md:col-span-1">
+            <div class="text-xs sm:text-sm text-gray-600">Valeur d'achat</div>
+            <div class="text-base sm:text-lg font-bold text-blue-600 tabular-nums break-words">
                 {{ shop_totals.total_buying_value | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}
             </div>
         </div>
-
-        <!-- Total Selling Value -->
-        <div class="bg-white rounded-lg p-4 shadow-sm">
-            <div class="text-sm text-gray-600">Valeur de Vente</div>
-            <div class="text-lg font-bold text-green-600">
+        <div class="bg-white md:rounded-lg p-3 sm:p-4 md:shadow-sm border border-gray-100 md:border-0 col-span-2 md:col-span-1">
+            <div class="text-xs sm:text-sm text-gray-600">Valeur de vente</div>
+            <div class="text-base sm:text-lg font-bold text-green-600 tabular-nums break-words">
                 {{ shop_totals.total_selling_value | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}
             </div>
         </div>
     </div>
 
-    <!-- Profit Section -->
-    <div class="mt-4 bg-white rounded-lg p-4 shadow-sm">
-        <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Marge Bénéficiaire Potentielle:</span>
-            <span class="text-xl font-bold {% if shop_totals.total_profit >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+    <div class="mt-3 sm:mt-4 bg-white md:rounded-lg p-3 sm:p-4 md:shadow-sm border border-gray-100 md:border-0">
+        <div class="flex gap-2 justify-between items-start text-sm sm:text-base">
+            <span class="text-gray-600 shrink-0 min-w-0">Marge potentielle</span>
+            <span class="font-bold tabular-nums text-right min-w-0 break-words {% if shop_totals.total_profit >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
                 {{ shop_totals.total_profit | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}
             </span>
         </div>

@@ -1,54 +1,56 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="bg-white rounded-lg shadow-lg border border-gray-100">
+<div class="container mx-auto max-w-full px-0 sm:px-4 py-4 sm:py-8">
+    <div class="bg-white md:rounded-lg md:shadow-lg md:border md:border-gray-100 overflow-hidden">
         <!-- Header with Actions -->
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                <div class="flex items-center gap-4">
+        <div class="p-3 sm:p-4 md:p-6 border-b border-gray-200">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-4">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 min-w-0">
                     <!-- Return Button -->
                     <a href="{{ url_for('bills.bill_list') }}" 
-                       class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors inline-flex items-center shadow-sm">
+                       class="w-full sm:w-auto justify-center px-3 py-2 sm:px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors inline-flex items-center shadow-sm text-sm sm:text-base shrink-0">
                         <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
                         Retour
                     </a>
-                    <h2 class="text-2xl font-bold text-gray-800">Facture #{{ bill.bill_number }}</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 truncate">Facture #{{ bill.bill_number }}</h2>
                 </div>
-                <div class="flex flex-wrap gap-2">
+                <div class="grid grid-cols-2 md:flex md:flex-wrap md:justify-end gap-2 w-full md:w-auto">
                     <!-- Print Buttons -->
-                    <button onclick="printBill('thermal')"
-                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center shadow-sm">
-                        <i data-lucide="printer" class="w-4 h-4 mr-2"></i>
-                        Imprimer Ticket
+                    <button type="button" onclick="printBill('thermal')"
+                            class="px-3 py-2 sm:px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center justify-center shadow-sm text-sm">
+                        <i data-lucide="printer" class="w-4 h-4 sm:mr-2 shrink-0"></i>
+                        <span class="hidden sm:inline">Imprimer Ticket</span>
+                        <span class="sm:hidden">Ticket</span>
                     </button>
-                    <button onclick="printBill('standard')"
-                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center shadow-sm">
-                        <i data-lucide="file-text" class="w-4 h-4 mr-2"></i>
-                        Imprimer Format A4
+                    <button type="button" onclick="printBill('standard')"
+                            class="px-3 py-2 sm:px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center justify-center shadow-sm text-sm">
+                        <i data-lucide="file-text" class="w-4 h-4 sm:mr-2 shrink-0"></i>
+                        <span class="hidden sm:inline">Imprimer A4</span>
+                        <span class="sm:hidden">A4</span>
                     </button>
                     <!-- Payment Button -->
-                    <button onclick="openModal('updatePaymentModal')"
-                            class="px-4 py-2 text-white rounded-lg shadow-sm transition-colors inline-flex items-center
+                    <button type="button" onclick="openModal('updatePaymentModal')"
+                            class="col-span-2 md:col-span-1 px-3 py-2 sm:px-4 text-white rounded-lg shadow-sm transition-colors inline-flex items-center justify-center text-sm
                                    {% if bill.status == 'paid' %}
                                        bg-gray-400 cursor-not-allowed
                                    {% else %}
                                        bg-blue-600 hover:bg-blue-700
                                    {% endif %}"
                             {% if bill.status == 'paid' %} disabled {% endif %}>
-                        <i data-lucide="credit-card" class="w-4 h-4 mr-2"></i>
-                        Ajouter Paiement
+                        <i data-lucide="credit-card" class="w-4 h-4 mr-2 shrink-0"></i>
+                        Paiement
                     </button>
                     <!-- Delete Button -->
-                    <button onclick="openModal('deleteBillModal')"
-                            class="px-4 py-2 text-white rounded-lg transition-colors inline-flex items-center shadow-sm
+                    <button type="button" onclick="openModal('deleteBillModal')"
+                            class="col-span-2 md:col-span-1 px-3 py-2 sm:px-4 text-white rounded-lg transition-colors inline-flex items-center justify-center shadow-sm text-sm
                                    {% if current_user.role == 'admin' %}
                                        bg-red-600 hover:bg-red-700
                                    {% else %}
                                        bg-gray-400 cursor-not-allowed
                                    {% endif %}"
                             {% if current_user.role != 'admin' %}disabled{% endif %}>
-                        <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
+                        <i data-lucide="trash-2" class="w-4 h-4 mr-2 shrink-0"></i>
                         Supprimer
                     </button>
                 </div>
@@ -56,27 +58,27 @@
         </div>
 
         <!-- Bill Information -->
-        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="p-3 sm:p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
             <!-- Left Column -->
-            <div class="space-y-6">
-                <!-- Client Information -->
-                <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-lg font-semibold text-gray-800">
-                            <i data-lucide="user" class="w-5 h-5 inline mr-2 text-blue-600"></i>
+            <div class="space-y-0 md:space-y-6">
+                <!-- Client Information: flat strip on mobile, card from md -->
+                <div class="pb-4 mb-4 md:mb-0 border-b border-gray-200 md:border md:border-gray-200 bg-gray-50 md:bg-white -mx-3 px-3 sm:mx-0 sm:px-0 sm:bg-transparent md:p-5 md:rounded-lg md:shadow-sm">
+                    <div class="flex justify-between items-start gap-2 mb-3">
+                        <h3 class="text-base md:text-lg font-semibold text-gray-800 min-w-0">
+                            <i data-lucide="user" class="w-5 h-5 inline mr-2 text-blue-600 shrink-0"></i>
                             Information Client
                         </h3>
-                        <button onclick="openModal('editClientModal')"
-                                class="text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center
+                        <button type="button" onclick="openModal('editClientModal')"
+                                class="text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center shrink-0 text-sm
                                        {% if bill.status == 'paid' %}opacity-50 cursor-not-allowed{% endif %}"
                                 {% if bill.status == 'paid' %}disabled{% endif %}>
                             <i data-lucide="edit" class="w-4 h-4 mr-1"></i>
                             Modifier
                         </button>
                     </div>
-                    <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="p-0 md:bg-gray-50 md:p-4 md:rounded-lg">
                         {% if bill.client %}
-                            <p class="text-gray-800 font-medium text-lg">{{ bill.client.name }}</p>
+                            <p class="text-gray-800 font-medium text-base md:text-lg break-words">{{ bill.client.name }}</p>
                             {% if bill.client.phone %}
                                 <p class="text-gray-700 mt-2">
                                     <i data-lucide="phone" class="w-4 h-4 inline mr-2 text-gray-500"></i>
@@ -84,8 +86,8 @@
                                 </p>
                             {% endif %}
                             {% if bill.client.address %}
-                                <p class="text-gray-700 mt-2">
-                                    <i data-lucide="map-pin" class="w-4 h-4 inline mr-2 text-gray-500"></i>
+                                <p class="text-gray-700 mt-2 break-words">
+                                    <i data-lucide="map-pin" class="w-4 h-4 inline mr-2 text-gray-500 shrink-0"></i>
                                     {{ bill.client.address }}
                                 </p>
                             {% endif %}
@@ -107,19 +109,19 @@
                 </div>
 
                 <!-- Bill Details -->
-                <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-3">
+                <div class="pb-4 md:pb-0 border-b border-gray-200 md:border md:border-gray-200 bg-gray-50 md:bg-white -mx-3 px-3 sm:mx-0 sm:px-0 sm:bg-transparent md:p-5 md:rounded-lg md:shadow-sm">
+                    <h3 class="text-base md:text-lg font-semibold text-gray-800 mb-3">
                         <i data-lucide="clipboard-list" class="w-5 h-5 inline mr-2 text-blue-600"></i>
                         Détails de la Facture
                     </h3>
-                    <div class="bg-gray-50 p-4 rounded-lg space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-medium">Date:</span>
-                            <span class="text-gray-800">{{ bill.date|format_datetime }}</span>
+                    <div class="space-y-2 md:space-y-3 p-0 md:bg-gray-50 md:p-4 md:rounded-lg text-sm md:text-base">
+                        <div class="flex gap-2 items-start justify-between">
+                            <span class="text-gray-700 font-medium shrink-0">Date</span>
+                            <span class="text-gray-800 min-w-0 text-right break-words">{{ bill.date|format_datetime }}</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-medium">Status:</span>
-                            <span class="px-3 py-1 rounded-full text-sm font-medium
+                        <div class="flex gap-2 items-start justify-between">
+                            <span class="text-gray-700 font-medium shrink-0">Statut</span>
+                            <span class="px-3 py-1 rounded-full text-xs sm:text-sm font-medium shrink-0 text-right
                                 {% if bill.status == 'paid' %}bg-green-100 text-green-800
                                 {% elif bill.status == 'partially_paid' %}bg-yellow-100 text-yellow-800
                                 {% else %}bg-red-100 text-red-800{% endif %}">
@@ -132,55 +134,128 @@
                         {% set show_discount = bill.discount_amount and bill.discount_amount > 0 %}
                         {% set show_vat = (bill.vat_amount is not none and bill.vat_amount > 0) or (bill.vat_rate is not none and bill.vat_rate > 0) %}
                         {% if show_discount %}
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-medium">Sous-total HT:</span>
-                            <span class="text-gray-800">{{ bill.gross_amount_ht | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        <div class="flex gap-2 items-start justify-between">
+                            <span class="text-gray-700 font-medium shrink-0 min-w-0">Sous-total HT</span>
+                            <span class="text-gray-800 min-w-0 text-right tabular-nums">{{ bill.gross_amount_ht | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-medium">Remise{% if bill.discount_rate %} ({{ (bill.discount_rate * 100)|round(2) }}%){% endif %}:</span>
-                            <span class="text-gray-800">-{{ bill.discount_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        <div class="flex gap-2 items-start justify-between">
+                            <span class="text-gray-700 font-medium shrink-0 min-w-0">Remise{% if bill.discount_rate %} ({{ (bill.discount_rate * 100)|round(2) }}%){% endif %}</span>
+                            <span class="text-gray-800 min-w-0 text-right tabular-nums">-{{ bill.discount_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
                         </div>
                         {% endif %}
                         {% if show_vat %}
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-medium">Total HT:</span>
-                            <span class="text-gray-800">{{ bill.amount_ht | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        <div class="flex gap-2 items-start justify-between">
+                            <span class="text-gray-700 font-medium shrink-0">Total HT</span>
+                            <span class="text-gray-800 min-w-0 text-right tabular-nums">{{ bill.amount_ht | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-medium">TVA{% if bill.vat_rate %} ({{ (bill.vat_rate * 100)|round(2) }}%){% endif %}:</span>
-                            <span class="text-gray-800">{{ bill.vat_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        <div class="flex gap-2 items-start justify-between">
+                            <span class="text-gray-700 font-medium shrink-0 min-w-0">TVA{% if bill.vat_rate %} ({{ (bill.vat_rate * 100)|round(2) }}%){% endif %}</span>
+                            <span class="text-gray-800 min-w-0 text-right tabular-nums">{{ bill.vat_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
                         </div>
                         {% elif show_discount %}
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-medium">HT après remise:</span>
-                            <span class="text-gray-800">{{ bill.amount_ht | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        <div class="flex gap-2 items-start justify-between">
+                            <span class="text-gray-700 font-medium shrink-0">HT après remise</span>
+                            <span class="text-gray-800 min-w-0 text-right tabular-nums">{{ bill.amount_ht | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
                         </div>
                         {% endif %}
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-medium">{% if show_vat %}Total TTC{% else %}Montant Total{% endif %}:</span>
-                            <span class="text-gray-800 font-semibold">{{ bill.total_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        <div class="flex gap-2 items-start justify-between">
+                            <span class="text-gray-700 font-medium shrink-0 min-w-0">{% if show_vat %}Total TTC{% else %}Montant total{% endif %}</span>
+                            <span class="text-gray-800 font-semibold min-w-0 text-right tabular-nums">{{ bill.total_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-medium">Montant Payé:</span>
-                            <span class="text-green-600 font-semibold">{{ bill.paid_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        <div class="flex gap-2 items-start justify-between">
+                            <span class="text-gray-700 font-medium shrink-0">Montant payé</span>
+                            <span class="text-green-600 font-semibold min-w-0 text-right tabular-nums">{{ bill.paid_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-medium">Reste à Payer:</span>
-                            <span class="text-red-600 font-semibold">{{ bill.remaining_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                        <div class="flex gap-2 items-start justify-between">
+                            <span class="text-gray-700 font-medium shrink-0">Reste à payer</span>
+                            <span class="text-red-600 font-semibold min-w-0 text-right tabular-nums">{{ bill.remaining_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
                         </div>
                     </div>
+                </div>
+
+                <!-- Paiements enregistrés -->
+                <div class="mt-4 md:mt-0 pt-4 border-t border-gray-200 md:border-0 md:pt-0 pb-4 md:pb-0 border-b border-gray-200 md:border md:border-gray-200 bg-gray-50 md:bg-white -mx-3 px-3 sm:mx-0 sm:px-0 sm:bg-transparent md:p-5 md:rounded-lg md:shadow-sm">
+                    <h3 class="text-base md:text-lg font-semibold text-gray-800 mb-3">
+                        <i data-lucide="wallet" class="w-5 h-5 inline mr-2 text-blue-600"></i>
+                        Historique des paiements
+                    </h3>
+                    {% if payments %}
+                    <div class="hidden md:block overflow-x-auto md:bg-gray-50 md:rounded-lg md:p-0 border border-gray-200 md:border-0">
+                        <table class="min-w-full text-sm">
+                            <thead>
+                                <tr class="text-left text-xs font-medium text-gray-500 uppercase border-b border-gray-200 bg-gray-100">
+                                    <th class="px-3 py-2">Date</th>
+                                    <th class="px-3 py-2">Montant</th>
+                                    <th class="px-3 py-2">Mode</th>
+                                    <th class="px-3 py-2">Caissier</th>
+                                    <th class="px-3 py-2">Note</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                {% for payment in payments %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-3 py-2 whitespace-nowrap text-gray-900">{{ payment.date|format_datetime }}</td>
+                                    <td class="px-3 py-2 tabular-nums text-gray-900 font-medium">{{ payment.amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
+                                    <td class="px-3 py-2 text-gray-700">
+                                        {% if payment.payment_method == 'cash' %}Espèces
+                                        {% elif payment.payment_method == 'card' %}Carte
+                                        {% elif payment.payment_method == 'transfer' %}Virement
+                                        {% elif payment.payment_method == 'check' %}Chèque
+                                        {% else %}{{ payment.payment_method }}{% endif %}
+                                    </td>
+                                    <td class="px-3 py-2 text-gray-700">{{ payment.user.name if payment.user else '—' }}</td>
+                                    <td class="px-3 py-2 text-gray-600 max-w-xs truncate" title="{{ payment.notes or '' }}">{{ payment.notes or '—' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="md:hidden -mx-3 sm:mx-0 border-t border-gray-200 divide-y divide-gray-200 bg-white">
+                        {% for payment in payments %}
+                        <div class="py-3 px-3 sm:px-4 text-sm space-y-1.5">
+                            <div class="flex gap-2 justify-between items-start">
+                                <span class="font-semibold text-gray-700 shrink-0">Date</span>
+                                <span class="min-w-0 text-right text-gray-900">{{ payment.date|format_datetime }}</span>
+                            </div>
+                            <div class="flex gap-2 justify-between items-start">
+                                <span class="font-semibold text-gray-700 shrink-0">Montant</span>
+                                <span class="min-w-0 text-right tabular-nums font-medium text-gray-900">{{ payment.amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</span>
+                            </div>
+                            <div class="flex gap-2 justify-between items-start">
+                                <span class="font-semibold text-gray-700 shrink-0">Mode</span>
+                                <span class="min-w-0 text-right text-gray-700">
+                                    {% if payment.payment_method == 'cash' %}Espèces
+                                    {% elif payment.payment_method == 'card' %}Carte
+                                    {% elif payment.payment_method == 'transfer' %}Virement
+                                    {% elif payment.payment_method == 'check' %}Chèque
+                                    {% else %}{{ payment.payment_method }}{% endif %}
+                                </span>
+                            </div>
+                            <div class="flex gap-2 justify-between items-start">
+                                <span class="font-semibold text-gray-700 shrink-0">Caissier</span>
+                                <span class="min-w-0 text-right break-words text-gray-700">{{ payment.user.name if payment.user else '—' }}</span>
+                            </div>
+                            {% if payment.notes %}
+                            <div class="text-gray-600 text-xs break-words pt-0.5">{{ payment.notes }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-500 italic">Aucun paiement enregistré pour cette facture.</p>
+                    {% endif %}
                 </div>
             </div>
 
             <!-- Right Column - Items List -->
-            <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800">
+            <div class="md:bg-white md:p-5 md:rounded-lg md:border md:border-gray-200 md:shadow-sm -mx-3 px-3 sm:mx-0 sm:px-0 sm:bg-transparent border-t border-gray-200 md:border-t-0 pt-4 md:pt-0">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3 md:mb-4">
+                    <h3 class="text-base md:text-lg font-semibold text-gray-800 min-w-0">
                         <i data-lucide="shopping-cart" class="w-5 h-5 inline mr-2 text-blue-600"></i>
                         Articles
                     </h3>
-                    <button onclick="openModal('addProductModal')"
-                            class="px-3 py-2 text-white rounded-lg transition-colors inline-flex items-center shadow-sm
+                    <button type="button" onclick="openModal('addProductModal')"
+                            class="w-full sm:w-auto justify-center px-3 py-2 text-white rounded-lg transition-colors inline-flex items-center shadow-sm text-sm
                                    {% if bill.status == 'paid' %}
                                        bg-gray-400 cursor-not-allowed
                                    {% else %}
@@ -188,10 +263,60 @@
                                    {% endif %}"
                             {% if bill.status == 'paid' %}disabled{% endif %}>
                         <i data-lucide="plus" class="w-4 h-4 mr-1"></i>
-                        Ajouter un Article
+                        Ajouter un article
                     </button>
                 </div>
-                <div class="overflow-x-auto bg-gray-50 rounded-lg">
+
+                <!-- Mobile: full-width line items -->
+                <div class="md:hidden divide-y divide-gray-200 border-t border-gray-200 -mx-3 sm:mx-0 bg-white">
+                    {% for detail in details %}
+                    <div class="py-3 px-3 sm:px-4">
+                        <p class="font-medium text-gray-900 break-words text-sm">{{ detail.product.name }}</p>
+                        <div class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm text-gray-700">
+                            <span class="text-gray-600">Quantité</span>
+                            <span class="text-right tabular-nums text-gray-900">{{ detail.quantity }}</span>
+                            <span class="text-gray-600">Prix</span>
+                            <div class="text-right min-w-0">
+                                <form method="POST" action="{{ url_for('bill_editor.update_product_price') }}" class="flex items-center justify-end gap-2 flex-wrap">
+                                    <input type="hidden" name="detail_id" value="{{ detail.id }}">
+                                    <input type="number" step="0.01" name="new_price" value="{{ detail.selling_price }}"
+                                           class="min-w-0 w-full max-w-[10rem] px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none tabular-nums {% if bill.status == 'paid' %}opacity-50 cursor-not-allowed{% endif %}"
+                                           {% if bill.status == 'paid' %}disabled{% endif %}>
+                                    <button type="submit"
+                                            class="text-blue-600 hover:text-blue-800 transition-colors shrink-0
+                                                   {% if bill.status == 'paid' %}opacity-50 cursor-not-allowed{% endif %}"
+                                            {% if bill.status == 'paid' %}disabled{% endif %}
+                                            title="Enregistrer">
+                                        <i data-lucide="save" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                            </div>
+                            <span class="text-gray-600">Total</span>
+                            <span class="text-right font-medium tabular-nums text-gray-900">{{ detail.total_amount }}</span>
+                        </div>
+                        <div class="mt-2 flex justify-end">
+                            <form method="POST" action="{{ url_for('bill_editor.delete_product_from_bill') }}">
+                                <input type="hidden" name="detail_id" value="{{ detail.id }}">
+                                <button type="submit"
+                                        class="text-red-600 hover:text-red-800 transition-colors inline-flex items-center text-sm {% if bill.status == 'paid' %}opacity-50 cursor-not-allowed{% endif %}"
+                                        {% if bill.status == 'paid' %}disabled{% endif %}
+                                        title="Supprimer">
+                                    <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i>
+                                    Supprimer
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if not details %}
+                    <div class="py-6 px-3 text-center text-gray-500 italic text-sm">
+                        Aucun article ajouté
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Desktop: table -->
+                <div class="hidden md:block overflow-x-auto bg-gray-50 rounded-lg">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-100">
                             <tr>
@@ -261,14 +386,23 @@
         <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
             <form action="{{ url_for('bills.bill_list') }}" method="POST">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Ajouter un Paiement</h3>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Ajouter un paiement</h3>
                     <input type="hidden" name="make_payment" value="1">
                     <input type="hidden" name="bill_id" value="{{ bill.id }}">
 
+                    {% if bill.client %}
+                    <p class="mb-2 text-sm text-gray-700">Client : <span class="font-medium text-gray-900">{{ bill.client.name }}</span></p>
+                    {% endif %}
+                    <p class="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-100 text-sm text-gray-800">
+                        <span class="font-medium text-gray-700">Montant restant à payer :</span>
+                        <span class="ml-1 font-semibold tabular-nums text-amber-900">{{ bill.remaining_amount | fr_thousands }}</span>
+                        <span class="ml-1 font-semibold text-amber-900">{{ shop_profile.currency|default('FCFA') }}</span>
+                    </p>
+
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Montant du Paiement</label>
-                            <input type="text" name="payment_amount" id = 'payment_amount' step="0.01" max="{{ bill.remaining_amount }}"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Montant du paiement</label>
+                            <input type="text" name="payment_amount" id="payment_amount" inputmode="decimal" autocomplete="off"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                    required>
                         </div>
