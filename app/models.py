@@ -50,6 +50,8 @@ class Shop(ShopModel, TimestampWithUpdateMixin):
     vitrine_body = db.Column(db.Text)
     vitrine_discount_percent = db.Column(db.REAL, nullable=True)
     vitrine_promo_end = db.Column(db.String(32), nullable=True)
+    # When False, dashboards and sales/bill lists show only bills with TVA appliquée (vat_applied).
+    show_all_sales = db.Column(db.Boolean, nullable=False, server_default='1')
     phones = db.relationship('ShopPhone', backref='shop', lazy=True, cascade='all, delete-orphan')
 
     __table_args__ = (
@@ -169,6 +171,7 @@ class SalesBill(ShopModel, TimestampMixin):
     discount_amount = db.Column(db.REAL, nullable=False, server_default='0')
     vat_rate = db.Column(db.REAL, nullable=True)
     vat_amount = db.Column(db.REAL, nullable=False, server_default='0')
+    vat_applied = db.Column(db.Boolean, nullable=False, server_default='0')
     paid_amount = db.Column(db.REAL, nullable=False, server_default='0')
     remaining_amount = db.Column(db.REAL, nullable=False, server_default='0')
     date = db.Column(db.String(32), nullable=False)

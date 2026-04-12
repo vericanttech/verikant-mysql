@@ -1,6 +1,6 @@
 import os
 
-from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for,  make_response
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, make_response
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -24,6 +24,7 @@ from datetime import date
 
 from app.vitrine_helpers import build_vitrine_shop_url, qr_png_data_url
 from app.invoice_pdf import build_invoice_pdf_buffer
+from app.sales_visibility import sales_bill_vat_only_clause, abort_if_bill_hidden_in_vat_mode
 
 
 bills = Blueprint('bills', __name__)
@@ -110,6 +111,7 @@ def export_bill_invoice_pdf(bill_id):
         .filter_by(id=bill_id)
         .first_or_404()
     )
+    abort_if_bill_hidden_in_vat_mode(bill)
     shop_profile = get_shop_profile()
     vitrine_public_url = None
     if shop_profile and getattr(shop_profile, "is_active", True):
@@ -185,6 +187,7 @@ def create_customer():
 @login_required
 def print_bill(bill_id, print_format='standard'):
     bill = get_shop_filtered_query(SalesBill).filter_by(id=bill_id).first_or_404()
+    abort_if_bill_hidden_in_vat_mode(bill)
     shop_profile = get_shop_profile()
 
     if print_format == 'bluetooth':
@@ -360,6 +363,8 @@ def process_sale():
         # Adjust paid amount to not exceed total amount
         actual_paid_amount = min(initial_payment, total_amount)
 
+        vat_applied = data.get('apply_vat') in (True, 'true', '1', 1)
+
         bill = SalesBill(
             shop_id=shop_id,
             bill_number=int(data.get('bill_number')),
@@ -369,6 +374,7 @@ def process_sale():
             discount_amount=discount_amount,
             vat_rate=vat_rate,
             vat_amount=vat_amount,
+            vat_applied=vat_applied,
             total_amount=total_amount,
             paid_amount=actual_paid_amount,
             remaining_amount=remaining_amount,
@@ -459,6 +465,7 @@ def bill_list():
                 discount_amount=0,
                 vat_rate=None,
                 vat_amount=0,
+                vat_applied=False,
                 total_amount=total_amount,
                 paid_amount=initial_payment,
                 remaining_amount=total_amount - initial_payment,
@@ -486,6 +493,7 @@ def bill_list():
         elif 'make_payment' in request.form:
             print("function was called!")
             bill = get_shop_filtered_query(SalesBill).filter_by(id=request.form.get('bill_id')).first_or_404()
+            abort_if_bill_hidden_in_vat_mode(bill)
             payment_amount = float(request.form.get('payment_amount'))
 
             if payment_amount > bill.remaining_amount:
@@ -511,6 +519,7 @@ def bill_list():
 
         elif 'delete_bill' in request.form:
             bill = get_shop_filtered_query(SalesBill).filter_by(id=request.form.get('bill_id')).first_or_404()
+            abort_if_bill_hidden_in_vat_mode(bill)
             try:
                 sale_details = SalesDetail.query.filter_by(bill_id=bill.id).all()
 
@@ -549,6 +558,9 @@ def bill_list():
     per_page = 30
     # Modified query filtering:
     query = get_shop_filtered_query(SalesBill)
+    _vat_list_clause = sales_bill_vat_only_clause()
+    if _vat_list_clause is not None:
+        query = query.filter(_vat_list_clause)
 
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
@@ -613,6 +625,7 @@ def bill_detail(bill_id):
     bill = get_shop_filtered_query(SalesBill).options(
         joinedload(SalesBill.payments).joinedload(PaymentTransaction.user),
     ).filter_by(id=bill_id).first_or_404()
+    abort_if_bill_hidden_in_vat_mode(bill)
     clients = get_shop_filtered_query(Client).order_by(Client.name).all()
     products = get_shop_filtered_query(Product).all()
     payments_sorted = sorted(
@@ -637,6 +650,9 @@ def sale_list():
     query = SalesDetail.query.join(SalesBill).filter(
         SalesBill.shop_id == current_user.current_shop_id
     )
+    _vat_list_clause = sales_bill_vat_only_clause()
+    if _vat_list_clause is not None:
+        query = query.filter(_vat_list_clause)
 
     if start_date and end_date:
         try:
@@ -770,6 +786,9 @@ def export_sales_pdf():
     query = SalesDetail.query.join(SalesBill).filter(
         SalesBill.shop_id == current_user.current_shop_id
     )
+    _vat_list_clause = sales_bill_vat_only_clause()
+    if _vat_list_clause is not None:
+        query = query.filter(_vat_list_clause)
 
     if start_date and end_date:
         try:
@@ -999,6 +1018,8 @@ def send_single_bill_reminder_route(bill_id):
     """
     Send a reminder for a single bill to its client
     """
+    bill = get_shop_filtered_query(SalesBill).filter_by(id=bill_id).first_or_404()
+    abort_if_bill_hidden_in_vat_mode(bill)
     shop = get_shop_profile()
     if not shop:
         flash('Shop not found', 'error')

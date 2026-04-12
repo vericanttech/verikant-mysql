@@ -4,6 +4,7 @@ from app import db
 from app.models import SalesBill, SalesDetail, Client, Product
 from functools import wraps
 from app.utils import admin_required, recalculate_sales_bill_totals
+from app.sales_visibility import abort_if_bill_hidden_in_vat_mode
 
 bill_editor = Blueprint('bill_editor', __name__)
 
@@ -14,6 +15,7 @@ def get_shop_filtered_query(model):
 @login_required
 def change_bill_client():
     bill = get_shop_filtered_query(SalesBill).filter_by(id=request.form['bill_id']).first_or_404()
+    abort_if_bill_hidden_in_vat_mode(bill)
     new_client_id = request.form['client_id']
     client = get_shop_filtered_query(Client).filter_by(id=new_client_id).first()
     if client:
@@ -29,6 +31,7 @@ def change_bill_client():
 @admin_required
 def add_product_to_bill():
     bill = get_shop_filtered_query(SalesBill).filter_by(id=request.form['bill_id']).first_or_404()
+    abort_if_bill_hidden_in_vat_mode(bill)
     product_id = int(request.form['product_id'])
     quantity = float(request.form['quantity'])
     price = float(request.form['price'])
@@ -64,6 +67,7 @@ def add_product_to_bill():
 def delete_product_from_bill():
     detail = SalesDetail.query.get(request.form['detail_id'])
     bill = SalesBill.query.get(detail.bill_id)
+    abort_if_bill_hidden_in_vat_mode(bill)
     db.session.delete(detail)
     db.session.flush()
     recalculate_sales_bill_totals(bill)
@@ -79,6 +83,7 @@ def update_product_price():
     detail.selling_price = new_price
     detail.total_amount = detail.quantity * new_price
     bill = SalesBill.query.get(detail.bill_id)
+    abort_if_bill_hidden_in_vat_mode(bill)
     recalculate_sales_bill_totals(bill)
     db.session.commit()
     return redirect(url_for('bills.bill_detail', bill_id=bill.id))

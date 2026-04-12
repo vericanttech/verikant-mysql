@@ -8,6 +8,7 @@ from app.models import (
     SalesBill, Category, Product, Expense,
     Check, Loan, BoutiqueTransaction, SalesDetail, Client
 )
+from app.sales_visibility import sales_bill_vat_only_clause
 
 dashboard = Blueprint('dashboard', __name__)
 
@@ -50,8 +51,10 @@ def index():
     # Get current shop_id
     shop_id = current_user.current_shop_id
 
+    vat_clause = sales_bill_vat_only_clause()
+
     # Sales Statistics Query with date filter
-    sales_stats = (
+    sales_stats_q = (
         db.session.query(
             func.sum(SalesDetail.total_amount).label('total_sales'),
             func.sum(
@@ -64,8 +67,10 @@ def index():
             SalesBill.date.between(start_datetime, end_datetime),
             SalesBill.shop_id == shop_id
         )
-        .first()
     )
+    if vat_clause is not None:
+        sales_stats_q = sales_stats_q.filter(vat_clause)
+    sales_stats = sales_stats_q.first()
 
     total_sales = sales_stats.total_sales or 0
     total_profit = sales_stats.total_profit or 0
@@ -81,14 +86,18 @@ def index():
     )
 
     # Recent Sales Query with date filter
-    recent_sales = (
+    recent_q = (
         db.session.query(SalesBill, Client)
         .outerjoin(Client, SalesBill.client_id == Client.id)
         .filter(
             SalesBill.date.between(start_datetime, end_datetime),
             SalesBill.shop_id == shop_id
         )
-        .order_by(SalesBill.date.desc())
+    )
+    if vat_clause is not None:
+        recent_q = recent_q.filter(vat_clause)
+    recent_sales = (
+        recent_q.order_by(SalesBill.date.desc())
         .limit(5)
         .all()
     )

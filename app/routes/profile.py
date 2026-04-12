@@ -114,12 +114,20 @@ def update_profile():
         print(f"Updating field: {field} with value: {value}")
 
         # Check if field exists in model
-        valid_fields = ['name', 'business_type', 'address', 'email', 'email_password', 'tax_id', 'currency']
+        valid_fields = [
+            'name', 'business_type', 'address', 'email', 'email_password',
+            'tax_id', 'currency', 'show_all_sales',
+        ]
         if field not in valid_fields:
             return jsonify({'error': f'Invalid field: {field}'}), 400
 
         # Update the field
-        setattr(shop, field, value)
+        if field == 'show_all_sales':
+            coerced = str(value).lower() in ('true', '1', 'on', 'yes')
+            setattr(shop, field, coerced)
+            value = coerced
+        else:
+            setattr(shop, field, value)
         db.session.commit()
 
         return jsonify({'success': True, 'value': value})

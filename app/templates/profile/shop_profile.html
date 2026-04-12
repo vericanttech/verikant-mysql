@@ -131,6 +131,22 @@
                 </div>
             </div>
 
+            <!-- Affichage des ventes (contrôle / TVA) -->
+            <div class="rounded-lg border border-gray-200 bg-amber-50/80 p-4">
+                <label class="flex items-start gap-3 cursor-pointer" for="show-all-sales-toggle">
+                    <input type="checkbox"
+                           id="show-all-sales-toggle"
+                           class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                           {% if current_shop.show_all_sales %}checked{% endif %}>
+                    <span>
+                        <span class="block text-sm font-medium text-gray-900">Afficher toutes les ventes</span>
+                        <span class="block text-xs text-gray-600 mt-1">
+                            Désactivé : seules les factures avec TVA appliquée sont visibles (tableau de bord, historique des ventes, factures, fiche client, export PDF).
+                        </span>
+                    </span>
+                </label>
+            </div>
+
             <!-- Phone Numbers Section -->
             <div>
                 <div class="flex justify-between items-center mb-2">
@@ -165,9 +181,34 @@ document.addEventListener('DOMContentLoaded', function() {
     const phoneList = document.getElementById('phoneList');
     let editMode = false;
 
-    // Initialize Lucide icons
+       // Initialize Lucide icons
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
+    }
+
+    const showAllSalesToggle = document.getElementById('show-all-sales-toggle');
+    if (showAllSalesToggle) {
+        showAllSalesToggle.addEventListener('change', function() {
+            const val = this.checked ? 'true' : 'false';
+            fetch('/shop-profile/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'field=' + encodeURIComponent('show_all_sales') + '&value=' + encodeURIComponent(val)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Succès', 'Préférence d\'affichage mise à jour', 'success');
+                } else {
+                    showNotification('Erreur', data.error || 'Échec de la mise à jour', 'error');
+                    showAllSalesToggle.checked = !showAllSalesToggle.checked;
+                }
+            })
+            .catch(() => {
+                showNotification('Erreur', 'Échec de la mise à jour', 'error');
+                showAllSalesToggle.checked = !showAllSalesToggle.checked;
+            });
+        });
     }
 
     // Toggle edit mode

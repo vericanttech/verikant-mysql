@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app.utils import admin_only_action
 from app import db
 from app.models import Client, SalesBill
+from app.sales_visibility import sales_bill_vat_only_clause
 from sqlalchemy import desc
 
 clients = Blueprint('clients', __name__)
@@ -79,17 +80,23 @@ def client_detail(client_id):
     page = request.args.get('page', 1, type=int)
     per_page = 10
 
-    bills = SalesBill.query.filter_by(client_id=client_id, shop_id=shop_id) \
-        .order_by(desc(SalesBill.date)) \
-        .paginate(page=page, per_page=per_page, error_out=False)
+    bills_q = SalesBill.query.filter_by(client_id=client_id, shop_id=shop_id)
+    _vat_clause = sales_bill_vat_only_clause()
+    if _vat_clause is not None:
+        bills_q = bills_q.filter(_vat_clause)
+    bills = bills_q.order_by(desc(SalesBill.date)).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
 
     # Calculate client statistics
-    stats = SalesBill.query.filter_by(client_id=client_id, shop_id=shop_id) \
-        .with_entities(
-            db.func.sum(SalesBill.total_amount).label('total_purchases'),
-            db.func.sum(SalesBill.paid_amount).label('total_paid'),
-            db.func.count(SalesBill.id).label('total_bills')
-        ).first()
+    stats_q = SalesBill.query.filter_by(client_id=client_id, shop_id=shop_id)
+    if _vat_clause is not None:
+        stats_q = stats_q.filter(_vat_clause)
+    stats = stats_q.with_entities(
+        db.func.sum(SalesBill.total_amount).label('total_purchases'),
+        db.func.sum(SalesBill.paid_amount).label('total_paid'),
+        db.func.count(SalesBill.id).label('total_bills')
+    ).first()
 
     return render_template('clients/detail.html',
                            client=client,
