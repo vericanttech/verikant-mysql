@@ -1,252 +1,258 @@
 {% extends "base.html" %}
 
 {% block content %}
-{# min-w-0 + max-w-full: évite le débordement horizontal sur mobile (colonne flex du layout base) #}
 <div class="w-full min-w-0 max-w-full mx-auto px-0 sm:px-4 md:max-w-4xl pb-3 sm:pb-4 box-border">
     <div class="bg-white md:rounded-lg md:shadow overflow-hidden min-w-0 max-w-full">
-        <div class="p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6 min-w-0 max-w-full">
-        <div class="min-w-0 px-3 sm:px-0">
-            <h1 class="text-lg sm:text-xl font-semibold text-gray-900 break-words">Vitrine &amp; promos</h1>
-            <p class="text-sm text-gray-600 mt-1 break-words">La page <strong>/v/{{ shop.id }}</strong> est toujours accessible pour vos clients (QR sur facture) : logo, coordonnées, texte, offre globale optionnelle, et <strong>uniquement les produits que vous ajoutez ci-dessous</strong> — pas tout le stock.</p>
-        </div>
+        <div class="p-3 sm:p-4 md:p-6 space-y-4 md:space-y-5 min-w-0 max-w-full">
 
-        <div class="grid grid-cols-2 gap-3 sm:gap-4 py-3 border-b border-slate-200 -mx-3 px-3 md:mx-0 md:px-4 md:py-4 md:border md:rounded-lg md:border-slate-100 md:bg-slate-50">
-            <div class="min-w-0">
-                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase leading-tight">Visites (7 j.)</p>
-                <p class="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">{{ visits_7d }}</p>
-            </div>
-            <div class="min-w-0">
-                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase leading-tight">Visiteurs uniques (7 j.)</p>
-                <p class="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">{{ unique_visitors_7d }}</p>
-            </div>
-        </div>
-
-        <div class="-mx-3 px-3 sm:mx-0 sm:px-0 py-3 border-b border-emerald-200/80 md:border md:rounded-lg md:border-emerald-200 md:bg-emerald-50/80 md:p-4 space-y-3 min-w-0 max-w-full">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
-                <span class="inline-flex items-center gap-2 text-sm font-medium text-emerald-900 min-w-0 flex-1 break-words">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-emerald-800" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                    Mon site web
-                </span>
-                <div class="flex flex-wrap items-center gap-2 shrink-0">
-                    <a href="{{ public_url }}" target="_blank" rel="noopener noreferrer"
-                       id="vitrine-open-link-btn"
-                       class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-lg border-2 border-emerald-700 bg-emerald-100 text-emerald-950 shadow-sm hover:bg-emerald-200 hover:text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-900" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
-                        Ouvrir la vitrine
-                    </a>
-                    <button type="button" id="vitrine-copy-link-btn" data-url="{{ public_url|e }}"
-                            aria-label="Copier le lien public"
-                            class="inline-flex items-center gap-1.5 shrink-0 px-3 py-2 text-sm font-semibold rounded-lg border-2 border-emerald-700 bg-white text-emerald-900 shadow-sm hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                        Copier
-                    </button>
-                </div>
-            </div>
-            {% if not has_fixed_public_host %}
-            <p class="text-xs text-amber-800 bg-amber-50/90 md:bg-amber-50 border border-amber-200 md:rounded p-2 break-words">Pour des QR stables en production, définissez <code class="bg-amber-100 px-1 rounded break-all">PUBLIC_BASE_URL</code> dans <code class="bg-amber-100 px-1 rounded">.env</code>.</p>
-            {% endif %}
-        </div>
-
-        <div class="-mx-3 px-3 sm:mx-0 sm:px-0 py-3 border-b border-gray-200 md:border md:rounded-lg md:border-gray-200 md:bg-gray-50 md:p-4 text-sm text-gray-700 min-w-0 break-words">
-            <p class="font-medium text-gray-900 mb-1">Nom &amp; logo</p>
-            <p>Le nom affiché est celui du <a href="{{ url_for('profile.view_profile') }}" class="text-blue-600 hover:underline">profil entreprise</a> ; le logo aussi.</p>
-        </div>
-
-        <form method="post" action="{{ url_for('vitrine.marketing_vitrine') }}" class="space-y-5 border-t border-gray-200 pt-4 md:pt-6 px-3 sm:px-0">
-            <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Offre globale (optionnel)</h2>
-            {# Texte d’accueil (vitrine_body) — désactivé pour l’instant ; réactiver le bloc + name="vitrine_body" plus tard
-            <div>
-                <label for="vitrine_body" class="block text-sm font-medium text-gray-700 mb-1">Texte d’accueil</label>
-                <p class="text-xs text-gray-500 mb-2">Horaires, consignes, slogan. Si vide et sans produits ni promo, la page montre surtout le nom, le logo et les téléphones.</p>
-                <textarea id="vitrine_body" name="vitrine_body" rows="3"
-                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          placeholder="">{{ shop.vitrine_body or '' }}</textarea>
-                <details class="mt-2 text-xs text-gray-600 max-w-full">
-                    <summary class="cursor-pointer text-blue-700 hover:underline font-medium select-none">Exemples de texte (à copier-coller si vous voulez)</summary>
-                    <div class="mt-2 space-y-3 border border-gray-100 rounded-lg bg-gray-50/80 p-3 text-gray-800">
-                        <div>
-                            <p class="font-semibold text-gray-700 mb-0.5">1 — Horaires &amp; contact</p>
-                            <pre class="whitespace-pre-wrap font-sans text-[11px] leading-snug bg-white border border-gray-200 rounded p-2 overflow-x-auto">Ouvert du lundi au samedi, 8h–19h.
-Fermé le dimanche.
-Commandes et infos : utilisez les numéros ci-dessous.</pre>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-700 mb-0.5">2 — Accueil &amp; confiance</p>
-                            <pre class="whitespace-pre-wrap font-sans text-[11px] leading-snug bg-white border border-gray-200 rounded p-2 overflow-x-auto">Bienvenue sur notre vitrine en ligne.
-Prix affichés à titre indicatif — le montant exact est confirmé en caisse.
-Merci de votre confiance !</pre>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-700 mb-0.5">3 — Livraison / retrait</p>
-                            <pre class="whitespace-pre-wrap font-sans text-[11px] leading-snug bg-white border border-gray-200 rounded p-2 overflow-x-auto">Retrait sur place ou livraison selon disponibilité — renseignez-vous en magasin.
-Stocks mis à jour régulièrement ; en cas de rupture, nous vous proposons une alternative.</pre>
-                        </div>
-                    </div>
-                </details>
-            </div>
-            #}
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label for="vitrine_discount_percent" class="block text-sm font-medium text-gray-700 mb-1">Remise annoncée globale (%)</label>
-                    <p class="text-xs text-gray-500 mb-2">Bandeau « offre » sur la vitrine ; le caissier applique la remise au PDV.</p>
-                    <input type="number" id="vitrine_discount_percent" name="vitrine_discount_percent"
-                           value="{{ shop.vitrine_discount_percent if shop.vitrine_discount_percent is not none else '' }}"
-                           min="0" max="100" step="0.01"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                           placeholder="0 = masquer">
-                </div>
-                <div>
-                    <label for="vitrine_promo_end" class="block text-sm font-medium text-gray-700 mb-1">Fin de promo (optionnel)</label>
-                    <input type="date" id="vitrine_promo_end" name="vitrine_promo_end"
-                           value="{{ shop.vitrine_promo_end or '' }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                </div>
+            {# ── 1. PAGE TITLE ── #}
+            <div class="min-w-0 px-3 sm:px-0">
+                <h1 class="text-lg sm:text-xl font-semibold text-gray-900 break-words">Vitrine &amp; promos</h1>
             </div>
 
-            <div class="flex flex-col sm:flex-row flex-wrap gap-3 min-w-0">
-                <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shrink-0">
-                    Enregistrer l’offre
-                </button>
-                <a href="{{ url_for('bills.pos') }}" class="w-full sm:w-auto text-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 shrink-0">Retour PDV</a>
-            </div>
-        </form>
-
-        <div class="border-t border-gray-200 pt-4 md:pt-6 space-y-4 min-w-0 max-w-full px-3 sm:px-0">
-            <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide break-words">Produits affichés sur la vitrine</h2>
-            <p class="text-sm text-gray-600 break-words">Cliquez une carte pour <strong>ajouter</strong> le produit à la vitrine ; cliquez à nouveau pour le <strong>retirer</strong>. Ci-dessous : <strong>Promo</strong> et <strong>Nouveauté</strong> contrôlent les badges sur la page publique (cartes séparées « Promos » et « Nouveautés »).</p>
-
-            {% if catalog_products %}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 min-w-0 max-w-full -mx-3 px-3 sm:mx-0 sm:px-0">
-                {% for p in catalog_products %}
-                {% set is_on = p.id in selected_product_ids %}
-                <form method="post" action="{{ url_for('vitrine.vitrine_toggle_product') }}" class="block min-w-0 max-w-full">
-                    <input type="hidden" name="product_id" value="{{ p.id }}">
-                    <button type="submit"
-                            class="relative w-full min-w-0 max-w-full min-h-[4.5rem] sm:min-h-0 text-left rounded-lg md:rounded-xl border p-4 sm:p-4 md:p-5 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 shadow-none md:shadow-sm hover:md:shadow-md
-                            {% if is_on %}border-blue-500 bg-blue-50 md:ring-2 md:ring-blue-400{% else %}border-gray-200 bg-white hover:border-gray-300{% endif %}">
-                        {% if is_on %}
-                        <span class="absolute top-2 right-2 z-10 flex h-5 w-5 items-center justify-center text-[11px] sm:text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full border border-blue-200/80 shadow-sm" title="Sur la vitrine" aria-label="Produit sur la vitrine">V</span>
-                        {% endif %}
-                        <span class="flex items-start min-w-0 w-full {% if is_on %}pr-7 sm:pr-8{% endif %}">
-                            <span class="font-medium text-gray-900 text-sm sm:text-base leading-snug min-w-0 flex-1 break-words text-left">{{ p.name }}</span>
+            {# ── 2. URL STRIP — compact, always visible ── #}
+            <div class="-mx-3 px-3 sm:mx-0 sm:px-0 py-2.5 border-b border-emerald-400 md:border md:rounded-lg md:border-emerald-600 md:bg-emerald-300 md:px-4">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
+                    <span class="text-xs font-mono text-emerald-900 truncate flex-1 min-w-0" title="{{ public_url }}">{{ public_url }}</span>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <a href="{{ public_url }}" target="_blank" rel="noopener noreferrer"
+                           class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-emerald-700 bg-emerald-100 text-emerald-950 hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                            Ouvrir
+                        </a>
+                        <button type="button" id="vitrine-copy-link-btn" data-url="{{ public_url|e }}"
+                                class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-emerald-700 bg-white text-emerald-900 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                            <span id="vitrine-copy-label">Copier</span>
+                        </button>
+                        {# Stats inline badge (desktop) #}
+                        <span class="hidden sm:inline-flex items-center gap-1 text-xs text-emerald-900 bg-emerald-200 rounded-full px-2.5 py-1 tabular-nums" title="Visites / visiteurs uniques (7 j.)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            {{ visits_7d }} / {{ unique_visitors_7d }}
                         </span>
-                        <span class="mt-2 block text-sm text-gray-600 break-words tabular-nums">{{ p.selling_price|round(0)|int }} {{ shop.currency or 'FCFA' }} · stock {{ p.stock }}</span>
-                    </button>
-                </form>
-                {% endfor %}
-            </div>
-            {% else %}
-            <p class="text-sm text-gray-500">Aucun produit dans le catalogue — créez des articles pour les proposer sur la vitrine.</p>
-            {% endif %}
-
-            {% if selections %}
-            <div class="hidden md:block overflow-x-auto border border-gray-200 rounded-lg max-w-full min-w-0">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50 text-left text-gray-600">
-                        <tr>
-                            <th class="px-3 py-2">Produit</th>
-                            <th class="px-3 py-2">Prix</th>
-                            <th class="px-3 py-2">Stock</th>
-                            <th class="px-3 py-2">Ordre</th>
-                            <th class="px-3 py-2">Promo</th>
-                            <th class="px-3 py-2">Nouveauté</th>
-                            <th class="px-3 py-2">Partage</th>
-                            <th class="px-3 py-2"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in selections %}
-                        {% set p = row.product %}
-                        <tr class="border-t border-gray-100">
-                            <td class="px-3 py-2 font-medium text-gray-900 break-words">{{ p.name if p else '—' }}</td>
-                            <td class="px-3 py-2">{% if p %}{{ p.selling_price|round(0)|int }}{% else %}—{% endif %} {{ shop.currency or 'FCFA' }}</td>
-                            <td class="px-3 py-2">{{ p.stock if p else '—' }}</td>
-                            <td class="px-3 py-2 whitespace-nowrap">
-                                <form method="post" action="{{ url_for('vitrine.vitrine_move_product', row_id=row.id) }}" class="inline">
-                                    <input type="hidden" name="direction" value="up">
-                                    <button type="submit" class="text-gray-600 hover:text-blue-600 px-1" title="Monter">↑</button>
-                                </form>
-                                <form method="post" action="{{ url_for('vitrine.vitrine_move_product', row_id=row.id) }}" class="inline">
-                                    <input type="hidden" name="direction" value="down">
-                                    <button type="submit" class="text-gray-600 hover:text-blue-600 px-1" title="Descendre">↓</button>
-                                </form>
-                            </td>
-                            <td class="px-3 py-2">
-                                <form method="post" action="{{ url_for('vitrine.vitrine_toggle_promo', row_id=row.id) }}">
-                                    <button type="submit" class="text-xs px-2 py-1 rounded {% if row.is_promo %}bg-amber-100 text-amber-900{% else %}bg-gray-100 text-gray-600{% endif %}">
-                                        {% if row.is_promo %}Promo ✓{% else %}Marquer promo{% endif %}
-                                    </button>
-                                </form>
-                            </td>
-                            <td class="px-3 py-2">
-                                <form method="post" action="{{ url_for('vitrine.vitrine_toggle_new_arrival', row_id=row.id) }}">
-                                    <button type="submit" class="text-xs px-2 py-1 rounded {% if row.is_new_arrival %}bg-sky-100 text-sky-900{% else %}bg-gray-100 text-gray-600{% endif %}">
-                                        {% if row.is_new_arrival %}Nouveauté ✓{% else %}Nouveauté{% endif %}
-                                    </button>
-                                </form>
-                            </td>
-                            <td class="px-3 py-2 whitespace-nowrap">
-                                <a href="{{ url_for('vitrine.vitrine_share_card_jpeg', row_id=row.id) }}"
-                                   target="_blank" rel="noopener noreferrer"
-                                   class="inline-flex items-center text-xs px-2 py-1 rounded bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100 font-medium"
-                                   title="Ouvrir une image JPEG à partager (WhatsApp)">Image</a>
-                            </td>
-                            <td class="px-3 py-2">
-                                <form method="post" action="{{ url_for('vitrine.vitrine_remove_product', row_id=row.id) }}" onsubmit="return confirm('Retirer ce produit de la vitrine ?');">
-                                    <button type="submit" class="text-red-600 hover:underline text-xs">Retirer</button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="md:hidden -mx-3 border-t border-gray-200 divide-y divide-gray-200 bg-white">
-                {% for row in selections %}
-                {% set p = row.product %}
-                <div class="py-3 px-3 text-sm space-y-2 min-w-0">
-                    <p class="font-medium text-gray-900 break-words">{{ p.name if p else '—' }}</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 tabular-nums">
-                        <span>{% if p %}{{ p.selling_price|round(0)|int }}{% else %}—{% endif %} {{ shop.currency or 'FCFA' }}</span>
-                        <span>Stock : {{ p.stock if p else '—' }}</span>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2 pt-1">
-                        <span class="text-xs text-gray-500 mr-1">Ordre</span>
-                        <form method="post" action="{{ url_for('vitrine.vitrine_move_product', row_id=row.id) }}" class="inline">
-                            <input type="hidden" name="direction" value="up">
-                            <button type="submit" class="text-gray-600 hover:text-blue-600 px-2 py-1 border border-gray-200 rounded" title="Monter">↑</button>
-                        </form>
-                        <form method="post" action="{{ url_for('vitrine.vitrine_move_product', row_id=row.id) }}" class="inline">
-                            <input type="hidden" name="direction" value="down">
-                            <button type="submit" class="text-gray-600 hover:text-blue-600 px-2 py-1 border border-gray-200 rounded" title="Descendre">↓</button>
-                        </form>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <form method="post" action="{{ url_for('vitrine.vitrine_toggle_promo', row_id=row.id) }}">
-                            <button type="submit" class="text-xs px-2 py-1.5 rounded {% if row.is_promo %}bg-amber-100 text-amber-900{% else %}bg-gray-100 text-gray-600{% endif %}">
-                                {% if row.is_promo %}Promo &#10003;{% else %}Marquer promo{% endif %}
-                            </button>
-                        </form>
-                        <form method="post" action="{{ url_for('vitrine.vitrine_toggle_new_arrival', row_id=row.id) }}">
-                            <button type="submit" class="text-xs px-2 py-1.5 rounded {% if row.is_new_arrival %}bg-sky-100 text-sky-900{% else %}bg-gray-100 text-gray-600{% endif %}">
-                                {% if row.is_new_arrival %}Nouveaut&#233; &#10003;{% else %}Nouveaut&#233;{% endif %}
-                            </button>
-                        </form>
-                        <a href="{{ url_for('vitrine.vitrine_share_card_jpeg', row_id=row.id) }}"
-                           target="_blank" rel="noopener noreferrer"
-                           class="inline-flex items-center text-xs px-2 py-1.5 rounded bg-emerald-50 text-emerald-900 border border-emerald-200 font-medium">Image</a>
-                        <form method="post" action="{{ url_for('vitrine.vitrine_remove_product', row_id=row.id) }}" class="inline" onsubmit="return confirm('Retirer ce produit de la vitrine ?');">
-                            <button type="submit" class="text-red-600 text-xs px-2 py-1.5 border border-red-200 rounded hover:bg-red-50">Retirer</button>
-                        </form>
                     </div>
                 </div>
-                {% endfor %}
+                {% if not has_fixed_public_host %}
+                <p class="mt-2 text-xs text-amber-800 bg-amber-50/90 border border-amber-200 rounded p-2 break-words">Pour des QR stables, définissez <code class="bg-amber-100 px-1 rounded break-all">PUBLIC_BASE_URL</code> dans <code class="bg-amber-100 px-1 rounded">.env</code>.</p>
+                {% endif %}
             </div>
-            {% else %}
-            <p class="text-sm text-gray-500 italic">Aucun produit sélectionné — la vitrine affiche seulement les infos du magasin (et l’offre globale si vous en définissez une).</p>
-            {% endif %}
-        </div>
+
+            {# ── 3. PRODUITS — section principale, toujours dépliée ── #}
+            <div class="min-w-0 max-w-full px-3 sm:px-0 space-y-3">
+                <div class="flex items-center justify-between gap-2 min-w-0">
+                    <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Produits sur la vitrine</h2>
+                    <span class="text-xs text-gray-400 hidden sm:inline">
+                        <strong class="text-gray-700">{{ selections|length if selections else 0 }}</strong> produit{% if selections and selections|length != 1 %}s{% endif %}
+                    </span>
+                </div>
+
+                <p class="text-sm text-violet-950 break-words rounded-lg border-2 border-violet-600 bg-violet-400 px-3 py-2.5">
+                    <strong>Recherche</strong> : ajoutez un produit du catalogue par nom. La liste ci-dessous reprend les produits sur la vitrine (ordre, <strong>Promo</strong>, <strong>Nouveauté</strong>, retirer).
+                </p>
+
+                {% if has_catalog_products %}
+                {# Search input #}
+                <div id="vitrine-search-root" class="space-y-2 min-w-0 max-w-full"
+                     data-search-url="{{ url_for('vitrine.vitrine_products_search') }}"
+                     data-add-url="{{ url_for('vitrine.vitrine_add_product') }}"
+                     data-currency="{{ shop.currency or 'FCFA' }}">
+                    <label for="vitrine-product-search" class="block text-xs font-medium text-gray-600">Ajouter (min. 2 caractères)</label>
+                    <div class="relative min-w-0">
+                        <input type="search" id="vitrine-product-search" name="vitrine_product_search" autocomplete="off"
+                               placeholder="Ex. riz, câble, savon…"
+                               class="w-full min-w-0 px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                        <p id="vitrine-search-hint" class="hidden text-xs text-gray-500 mt-1" aria-live="polite"></p>
+                    </div>
+                    <div id="vitrine-search-results" class="hidden rounded-lg border-2 border-gray-200 bg-white max-h-72 overflow-y-auto divide-y divide-gray-100" role="region" aria-label="Résultats de recherche"></div>
+                </div>
+
+                {% else %}
+                <p class="text-sm text-gray-500">Aucun produit dans le catalogue — créez des articles pour les proposer sur la vitrine.</p>
+                {% endif %}
+
+                {# Selections table (desktop) / cards (mobile) #}
+                {% if selections %}
+                <div class="hidden md:block overflow-x-auto border border-gray-200 rounded-lg max-w-full min-w-0 mt-2">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-gray-50 text-left text-gray-600">
+                            <tr>
+                                <th class="px-3 py-2">Produit</th>
+                                <th class="px-3 py-2">Prix</th>
+                                <th class="px-3 py-2">Stock</th>
+                                <th class="px-3 py-2">Ordre</th>
+                                <th class="px-3 py-2">Promo</th>
+                                <th class="px-3 py-2">Nouveauté</th>
+                                <th class="px-3 py-2">Partage</th>
+                                <th class="px-3 py-2"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in selections %}
+                            {% set p = row.product %}
+                            <tr class="border-t border-gray-100">
+                                <td class="px-3 py-2 font-medium text-gray-900 break-words">{{ p.name if p else '—' }}</td>
+                                <td class="px-3 py-2">{% if p %}{{ p.selling_price|round(0)|int }}{% else %}—{% endif %} {{ shop.currency or 'FCFA' }}</td>
+                                <td class="px-3 py-2">{{ p.stock if p else '—' }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap">
+                                    <form method="post" action="{{ url_for('vitrine.vitrine_move_product', row_id=row.id) }}" class="inline">
+                                        <input type="hidden" name="direction" value="up">
+                                        <button type="submit" class="text-gray-600 hover:text-blue-600 px-1" title="Monter">↑</button>
+                                    </form>
+                                    <form method="post" action="{{ url_for('vitrine.vitrine_move_product', row_id=row.id) }}" class="inline">
+                                        <input type="hidden" name="direction" value="down">
+                                        <button type="submit" class="text-gray-600 hover:text-blue-600 px-1" title="Descendre">↓</button>
+                                    </form>
+                                </td>
+                                <td class="px-3 py-2">
+                                    <form method="post" action="{{ url_for('vitrine.vitrine_toggle_promo', row_id=row.id) }}">
+                                        <button type="submit" class="text-xs px-2 py-1 rounded {% if row.is_promo %}bg-amber-100 text-amber-900{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                            {% if row.is_promo %}Promo ✓{% else %}Marquer promo{% endif %}
+                                        </button>
+                                    </form>
+                                </td>
+                                <td class="px-3 py-2">
+                                    <form method="post" action="{{ url_for('vitrine.vitrine_toggle_new_arrival', row_id=row.id) }}">
+                                        <button type="submit" class="text-xs px-2 py-1 rounded {% if row.is_new_arrival %}bg-sky-100 text-sky-900{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                            {% if row.is_new_arrival %}Nouveauté ✓{% else %}Nouveauté{% endif %}
+                                        </button>
+                                    </form>
+                                </td>
+                                <td class="px-3 py-2 whitespace-nowrap">
+                                    <a href="{{ url_for('vitrine.vitrine_share_card_jpeg', row_id=row.id) }}"
+                                       target="_blank" rel="noopener noreferrer"
+                                       class="inline-flex items-center text-xs px-2 py-1 rounded bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100 font-medium">Image</a>
+                                </td>
+                                <td class="px-3 py-2">
+                                    <form method="post" action="{{ url_for('vitrine.vitrine_remove_product', row_id=row.id) }}" onsubmit="return confirm('Retirer ce produit de la vitrine ?');">
+                                        <button type="submit" class="text-red-600 hover:underline text-xs">Retirer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {# Mobile cards for selections #}
+                <div class="md:hidden -mx-3 border-t border-gray-200 divide-y divide-gray-200 bg-white">
+                    {% for row in selections %}
+                    {% set p = row.product %}
+                    <div class="py-3 px-3 text-sm space-y-2 min-w-0">
+                        <p class="font-medium text-gray-900 break-words">{{ p.name if p else '—' }}</p>
+                        <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 tabular-nums">
+                            <span>{% if p %}{{ p.selling_price|round(0)|int }}{% else %}—{% endif %} {{ shop.currency or 'FCFA' }}</span>
+                            <span>Stock : {{ p.stock if p else '—' }}</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 pt-1">
+                            <span class="text-xs text-gray-500 mr-1">Ordre</span>
+                            <form method="post" action="{{ url_for('vitrine.vitrine_move_product', row_id=row.id) }}" class="inline">
+                                <input type="hidden" name="direction" value="up">
+                                <button type="submit" class="text-gray-600 hover:text-blue-600 px-2 py-1 border border-gray-200 rounded">↑</button>
+                            </form>
+                            <form method="post" action="{{ url_for('vitrine.vitrine_move_product', row_id=row.id) }}" class="inline">
+                                <input type="hidden" name="direction" value="down">
+                                <button type="submit" class="text-gray-600 hover:text-blue-600 px-2 py-1 border border-gray-200 rounded">↓</button>
+                            </form>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <form method="post" action="{{ url_for('vitrine.vitrine_toggle_promo', row_id=row.id) }}">
+                                <button type="submit" class="text-xs px-2 py-1.5 rounded {% if row.is_promo %}bg-amber-100 text-amber-900{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                    {% if row.is_promo %}Promo &#10003;{% else %}Marquer promo{% endif %}
+                                </button>
+                            </form>
+                            <form method="post" action="{{ url_for('vitrine.vitrine_toggle_new_arrival', row_id=row.id) }}">
+                                <button type="submit" class="text-xs px-2 py-1.5 rounded {% if row.is_new_arrival %}bg-sky-100 text-sky-900{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                    {% if row.is_new_arrival %}Nouveaut&#233; &#10003;{% else %}Nouveaut&#233;{% endif %}
+                                </button>
+                            </form>
+                            <a href="{{ url_for('vitrine.vitrine_share_card_jpeg', row_id=row.id) }}"
+                               target="_blank" rel="noopener noreferrer"
+                               class="inline-flex items-center text-xs px-2 py-1.5 rounded bg-emerald-50 text-emerald-900 border border-emerald-200 font-medium">Image</a>
+                            <form method="post" action="{{ url_for('vitrine.vitrine_remove_product', row_id=row.id) }}" class="inline" onsubmit="return confirm('Retirer ce produit de la vitrine ?');">
+                                <button type="submit" class="text-red-600 text-xs px-2 py-1.5 border border-red-200 rounded hover:bg-red-50">Retirer</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500 italic">Aucun produit sélectionné — la vitrine affiche seulement les infos du magasin.</p>
+                {% endif %}
+            </div>
+
+            {# ── 4. OFFRE GLOBALE — accordion, collapsed by default ── #}
+            <details class="-mx-3 sm:mx-0 border-t border-gray-200 group">
+                <summary class="flex items-center justify-between gap-2 px-3 sm:px-0 py-3 cursor-pointer list-none select-none text-sm font-semibold text-gray-700 hover:text-gray-900">
+                    <span class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        Offre globale &amp; promo
+                        {% if shop.vitrine_discount_percent %}
+                        <span class="text-xs font-normal text-amber-800 bg-amber-100 border border-amber-200 rounded-full px-2 py-0.5">{{ shop.vitrine_discount_percent }}% actif</span>
+                        {% endif %}
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 transition-transform group-open:rotate-180" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                </summary>
+
+                <form method="post" action="{{ url_for('vitrine.marketing_vitrine') }}" class="space-y-4 pt-3 pb-4 px-3 sm:px-0 border-b border-gray-100">
+                    <p class="text-xs text-gray-500">Bandeau affiché sur la vitrine publique — le caissier applique la remise au PDV.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="vitrine_discount_percent" class="block text-sm font-medium text-gray-700 mb-1">Remise annoncée globale (%)</label>
+                            <input type="number" id="vitrine_discount_percent" name="vitrine_discount_percent"
+                                   value="{{ shop.vitrine_discount_percent if shop.vitrine_discount_percent is not none else '' }}"
+                                   min="0" max="100" step="0.01"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   placeholder="0 = masquer">
+                        </div>
+                        <div>
+                            <label for="vitrine_promo_end" class="block text-sm font-medium text-gray-700 mb-1">Fin de promo (optionnel)</label>
+                            <input type="date" id="vitrine_promo_end" name="vitrine_promo_end"
+                                   value="{{ shop.vitrine_promo_end or '' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row flex-wrap gap-3 min-w-0">
+                        <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shrink-0">
+                            Enregistrer l'offre
+                        </button>
+                        <a href="{{ url_for('bills.pos') }}" class="w-full sm:w-auto text-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 shrink-0">Retour PDV</a>
+                    </div>
+                </form>
+            </details>
+
+            {# ── 5. STATS — accordion, collapsed by default ── #}
+            <details class="-mx-3 sm:mx-0 group">
+                <summary class="flex items-center justify-between gap-2 px-3 sm:px-0 py-3 cursor-pointer list-none select-none text-sm font-semibold text-gray-700 hover:text-gray-900">
+                    <span class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-500" aria-hidden="true"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+                        Statistiques des 7 derniers jours
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 transition-transform group-open:rotate-180" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                </summary>
+
+                <div class="grid grid-cols-2 gap-3 sm:gap-4 pt-2 pb-4 px-3 sm:px-0">
+                    <div class="bg-slate-100 rounded-lg px-4 py-3 min-w-0">
+                        <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase leading-tight">Visites (7 j.)</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">{{ visits_7d }}</p>
+                    </div>
+                    <div class="bg-slate-100 rounded-lg px-4 py-3 min-w-0">
+                        <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase leading-tight">Visiteurs uniques (7 j.)</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">{{ unique_visitors_7d }}</p>
+                    </div>
+                </div>
+            </details>
+
+            {# ── 6. NOM & LOGO — info only, always collapsed ── #}
+            <details class="-mx-3 sm:mx-0 border-t border-gray-100 group">
+                <summary class="flex items-center justify-between gap-2 px-3 sm:px-0 py-3 cursor-pointer list-none select-none text-sm text-gray-500 hover:text-gray-700">
+                    <span>Nom &amp; logo de la vitrine</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 transition-transform group-open:rotate-180" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                </summary>
+                <p class="text-sm text-sky-950 rounded-lg border-2 border-sky-600 bg-sky-400 px-3 py-2.5 mx-3 sm:mx-0 mb-3 break-words">
+                    Le nom affiché est celui du <a href="{{ url_for('profile.view_profile') }}" class="text-blue-950 font-medium hover:underline">profil entreprise</a> ; le logo aussi.
+                </p>
+            </details>
+
         </div>
     </div>
 </div>
@@ -256,22 +262,20 @@ Stocks mis à jour régulièrement ; en cas de rupture, nous vous proposons une 
 <script>
 (function () {
     var btn = document.getElementById('vitrine-copy-link-btn');
-    if (!btn) return;
-    var label = btn.textContent.trim();
+    var labelEl = document.getElementById('vitrine-copy-label');
+    if (!btn || !labelEl) return;
     btn.addEventListener('click', function () {
         var url = btn.getAttribute('data-url') || '';
         function done() {
-            btn.textContent = 'Copié !';
+            labelEl.textContent = 'Copié !';
             btn.disabled = true;
             setTimeout(function () {
-                btn.textContent = label;
+                labelEl.textContent = 'Copier';
                 btn.disabled = false;
             }, 2000);
         }
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(done).catch(function () {
-                fallbackCopy(url, done);
-            });
+            navigator.clipboard.writeText(url).then(done).catch(function () { fallbackCopy(url, done); });
         } else {
             fallbackCopy(url, done);
         }
@@ -284,12 +288,83 @@ Stocks mis à jour régulièrement ; en cas de rupture, nous vous proposons une 
         ta.style.left = '-9999px';
         document.body.appendChild(ta);
         ta.select();
-        try {
-            document.execCommand('copy');
-            cb();
-        } catch (e) {}
+        try { document.execCommand('copy'); cb(); } catch (e) {}
         document.body.removeChild(ta);
     }
+})();
+
+(function () {
+    var root = document.getElementById('vitrine-search-root');
+    if (!root) return;
+    var input = document.getElementById('vitrine-product-search');
+    var results = document.getElementById('vitrine-search-results');
+    var hint = document.getElementById('vitrine-search-hint');
+    var searchUrl = root.getAttribute('data-search-url') || '';
+    var addUrl = root.getAttribute('data-add-url') || '';
+    var currency = root.getAttribute('data-currency') || 'FCFA';
+    var timer = null;
+
+    function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+    }
+
+    function render(products) {
+        results.innerHTML = '';
+        if (!products.length) {
+            results.innerHTML = '<p class="px-3 py-2 text-sm text-gray-600">Aucun résultat (ou déjà sur la vitrine).</p>';
+            results.classList.remove('hidden');
+            return;
+        }
+        results.innerHTML = products.map(function (pr) {
+            var id = parseInt(pr.id, 10);
+            if (isNaN(id)) return '';
+            return (
+                '<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2 text-sm min-w-0">' +
+                '<div class="min-w-0 flex-1 break-words"><span class="font-medium text-gray-900">' + esc(pr.name) + '</span>' +
+                '<span class="block text-gray-600 tabular-nums">' + esc(String(pr.price)) + ' ' + esc(currency) + ' · stock ' + esc(String(pr.stock)) + '</span></div>' +
+                '<form method="post" action="' + esc(addUrl) + '" class="shrink-0">' +
+                '<input type="hidden" name="product_id" value="' + id + '"/>' +
+                '<button type="submit" class="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">Ajouter</button></form></div>'
+            );
+        }).join('');
+        results.classList.remove('hidden');
+    }
+
+    function fetchResults(q) {
+        if (q.length < 2) {
+            results.classList.add('hidden');
+            results.innerHTML = '';
+            hint.classList.add('hidden');
+            return;
+        }
+        hint.classList.remove('hidden');
+        hint.textContent = 'Recherche…';
+        fetch(searchUrl + '?q=' + encodeURIComponent(q), { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+            .then(function (r) {
+                if (!r.ok) throw new Error('bad status');
+                return r.json();
+            })
+            .then(function (data) {
+                hint.classList.add('hidden');
+                render(data.products || []);
+            })
+            .catch(function () {
+                hint.classList.remove('hidden');
+                hint.textContent = 'Impossible de charger les résultats.';
+            });
+    }
+
+    input.addEventListener('input', function () {
+        var q = (input.value || '').trim();
+        clearTimeout(timer);
+        timer = setTimeout(function () { fetchResults(q); }, 300);
+    });
+    input.addEventListener('focus', function () {
+        var q = (input.value || '').trim();
+        if (q.length >= 2) fetchResults(q);
+    });
 })();
 </script>
 {% endblock %}

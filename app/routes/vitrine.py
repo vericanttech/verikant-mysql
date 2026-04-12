@@ -17,6 +17,7 @@ from flask import (
     abort,
     Response,
     current_app,
+    jsonify,
 )
 from flask_login import login_required, current_user
 from sqlalchemy import func
@@ -74,6 +75,12 @@ def _vitrine_selection_rows(shop_id):
         .order_by(VitrineProductSelection.sort_order, VitrineProductSelection.id)
         .all()
     )
+
+
+def _like_pattern(q: str) -> str:
+    """Build a SQL LIKE pattern; escape % and _ in user input."""
+    esc = q.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+    return f'%{esc}%'
 
 
 @vitrine_bp.route('/v/<int:shop_id>')
@@ -204,13 +211,10 @@ def marketing_vitrine():
     has_fixed_public_host = bool((vitrine_public_base_url() or '').strip())
 
     selections = _vitrine_selection_rows(shop.id)
-    selected_product_ids = {r.product_id for r in selections}
 
-    catalog_products = (
-        Product.query.filter_by(shop_id=shop.id)
-        .order_by(Product.name)
-        .limit(500)
-        .all()
+    has_catalog_products = (
+        db.session.query(Product.id).filter_by(shop_id=shop.id).limit(1).first()
+        is not None
     )
 
     return render_template(
@@ -221,8 +225,51 @@ def marketing_vitrine():
         public_url=public_url,
         has_fixed_public_host=has_fixed_public_host,
         selections=selections,
-        catalog_products=catalog_products,
-        selected_product_ids=selected_product_ids,
+        has_catalog_products=has_catalog_products,
+    )
+
+
+@vitrine_bp.route('/marketing/vitrine/products/search')
+@login_required
+@admin_required
+def vitrine_products_search():
+    """JSON: catalogue products matching name, not yet on vitrine (for add-from-search)."""
+    shop = _current_shop_admin()
+    if not shop:
+        return jsonify({'error': 'forbidden'}), 403
+
+    q = (request.args.get('q') or '').strip()
+    if len(q) < 2:
+        return jsonify({'products': []})
+
+    selected_ids = {
+        pid
+        for (pid,) in db.session.query(VitrineProductSelection.product_id)
+        .filter(VitrineProductSelection.shop_id == shop.id)
+        .all()
+    }
+
+    pattern = _like_pattern(q)
+    query = Product.query.filter(
+        Product.shop_id == shop.id,
+        Product.name.like(pattern, escape='\\'),
+    )
+    if selected_ids:
+        query = query.filter(~Product.id.in_(selected_ids))
+    products = query.order_by(Product.name).limit(30).all()
+
+    return jsonify(
+        {
+            'products': [
+                {
+                    'id': p.id,
+                    'name': p.name,
+                    'price': int(round(p.selling_price or 0)),
+                    'stock': int(p.stock or 0),
+                }
+                for p in products
+            ]
+        }
     )
 
 
