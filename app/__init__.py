@@ -92,7 +92,7 @@ def create_app():
     app.config['SHOW_ROLLOUT_BANNER'] = _env_bool('SHOW_ROLLOUT_BANNER', False)
     _rollout_txt = (os.environ.get('ROLLOUT_BANNER_TEXT') or '').strip()
     app.config['ROLLOUT_BANNER_TEXT'] = _rollout_txt or (
-        'Nouvelle version déployée. En cas de problème, contactez-nous au 76 572 58 06.'
+        'Nouvelle version déployée. En cas de problème, contactez-nous au 76 931 34 37.'
     )
 
     # Behind HTTPS reverse proxy (Google Cloud Run, etc.)

@@ -211,10 +211,10 @@
 
 
 <!-- Add Product Modal -->
-<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="addProductModal" tabindex="-1">
-    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
-        <div class="bg-white rounded-lg shadow-xl">
-            <div class="flex items-center justify-between p-4 border-b">
+<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-end sm:items-center justify-center" id="addProductModal" tabindex="-1" style="z-index:1050;">
+    <div class="w-full max-w-md mx-auto flex flex-col" style="max-height: calc(100dvh - 4rem - env(safe-area-inset-bottom, 56px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
+        <div class="bg-white rounded-t-2xl sm:rounded-lg shadow-xl flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
                 <h5 class="text-lg font-semibold">Ajouter un Nouveau Produit</h5>
                 <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
                     <span class="sr-only">Fermer</span>
@@ -223,8 +223,8 @@
                     </svg>
                 </button>
             </div>
-            <form method="POST" enctype="multipart/form-data">
-                <div class="p-4">
+            <form method="POST" enctype="multipart/form-data" class="flex flex-col min-h-0 flex-1">
+                <div class="p-4 overflow-y-auto flex-1">
                     <input type="hidden" name="add_product" value="1">
                     <div class="mb-6">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Photo (optionnel)</label>
@@ -293,7 +293,7 @@
                                value="0">
                     </div>
                 </div>
-                <div class="flex items-center justify-end p-4 border-t gap-2">
+                <div class="flex items-center justify-end p-4 border-t gap-2 flex-shrink-0 bg-white">
                     <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
                     <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">Ajouter</button>
                 </div>
@@ -303,10 +303,10 @@
 </div>
 
 <!-- Edit Product Modal -->
-<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="editProductModal" tabindex="-1">
-    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
-        <div class="bg-white rounded-lg shadow-xl">
-            <div class="flex items-center justify-between p-4 border-b">
+<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-end sm:items-center justify-center" id="editProductModal" tabindex="-1" style="z-index:1050;">
+    <div class="w-full max-w-md mx-auto flex flex-col" style="max-height: calc(100dvh - 4rem - env(safe-area-inset-bottom, 56px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
+        <div class="bg-white rounded-t-2xl sm:rounded-lg shadow-xl flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
                 <h5 class="text-lg font-semibold">Modifier le Produit</h5>
                 <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
                     <span class="sr-only">Fermer</span>
@@ -315,8 +315,8 @@
                     </svg>
                 </button>
             </div>
-            <form method="POST" enctype="multipart/form-data">
-                <div class="p-4">
+            <form method="POST" enctype="multipart/form-data" class="flex flex-col min-h-0 flex-1">
+                <div class="p-4 overflow-y-auto flex-1">
                     <input type="hidden" name="edit_product" value="1">
                     <input type="hidden" name="product_id" id="edit_product_id">
                     <div class="mb-6">
@@ -392,7 +392,7 @@
                                placeholder="Ex: 10">
                     </div>
                 </div>
-                <div class="flex items-center justify-end p-4 border-t gap-2">
+                <div class="flex items-center justify-end p-4 border-t gap-2 flex-shrink-0 bg-white">
                     <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
                     <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">Enregistrer</button>
                 </div>
@@ -402,10 +402,10 @@
 </div>
 
 <!-- Delete Product Modal -->
-<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="deleteProductModal" tabindex="-1">
-    <div class="relative top-20 mx-auto p-5 w-full max-w-md">
-        <div class="bg-white rounded-lg shadow-xl">
-            <div class="flex items-center justify-between p-4 border-b">
+<div class="modal fade fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-end sm:items-center justify-center" id="deleteProductModal" tabindex="-1" style="z-index:1050;">
+    <div class="w-full max-w-md mx-auto flex flex-col" style="max-height: calc(100dvh - 4rem - env(safe-area-inset-bottom, 56px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
+        <div class="bg-white rounded-t-2xl sm:rounded-lg shadow-xl flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
                 <h5 class="text-lg font-semibold">Supprimer le Produit</h5>
                 <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
                     <span class="sr-only">Fermer</span>
@@ -414,13 +414,13 @@
                     </svg>
                 </button>
             </div>
-            <form method="POST">
-                <div class="p-4">
+            <form method="POST" class="flex flex-col min-h-0 flex-1">
+                <div class="p-4 overflow-y-auto flex-1">
                     <input type="hidden" name="delete_product" value="1">
                     <input type="hidden" name="product_id" id="delete_product_id">
                     <p class="text-gray-700">Êtes-vous sûr de vouloir supprimer <span id="delete_product_name" class="font-medium"></span> ?</p>
                 </div>
-                <div class="flex items-center justify-end p-4 border-t gap-2">
+                <div class="flex items-center justify-end p-4 border-t gap-2 flex-shrink-0 bg-white">
                     <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
                     <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md">Supprimer</button>
                 </div>
