@@ -280,6 +280,8 @@
                                 <form method="POST" action="{{ url_for('bill_editor.update_product_price') }}" class="flex items-center justify-end gap-2 flex-wrap">
                                     <input type="hidden" name="detail_id" value="{{ detail.id }}">
                                     <input type="number" step="0.01" name="new_price" value="{{ detail.selling_price }}"
+                                           min="{{ detail.buying_price }}"
+                                           title="Prix d'achat : {{ detail.buying_price }}"
                                            class="min-w-0 w-full max-w-[10rem] px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none tabular-nums {% if bill.status == 'paid' %}opacity-50 cursor-not-allowed{% endif %}"
                                            {% if bill.status == 'paid' %}disabled{% endif %}>
                                     <button type="submit"
@@ -336,6 +338,8 @@
                                 <form method="POST" action="{{ url_for('bill_editor.update_product_price') }}" class="flex items-center gap-2">
                                     <input type="hidden" name="detail_id" value="{{ detail.id }}">
                                     <input type="number" step="0.01" name="new_price" value="{{ detail.selling_price }}"
+                                           min="{{ detail.buying_price }}"
+                                           title="Prix d'achat : {{ detail.buying_price }}"
                                            class="w-24 px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none
                                                   {% if bill.status == 'paid' %}opacity-50 cursor-not-allowed{% endif %}"
                                            {% if bill.status == 'paid' %}disabled{% endif %}>
@@ -501,7 +505,7 @@
             <select name="product_id" id="product_select" required class="w-full border rounded-lg px-3 py-2">
               <option value="">-- Sélectionnez un produit --</option>
               {% for product in all_products %}
-                <option value="{{ product.id }}" data-price="{{ product.selling_price }}">{{ product.name }}</option>
+                <option value="{{ product.id }}" data-price="{{ product.selling_price }}" data-buying="{{ product.buying_price }}">{{ product.name }}</option>
               {% endfor %}
             </select>
           </div>
@@ -511,7 +515,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium">Prix</label>
-            <input type="number" name="price" id="price_input" step="0.01" class="w-full border rounded-lg px-3 py-2" required>
+            <input type="number" name="price" id="price_input" step="0.01" class="w-full border rounded-lg px-3 py-2" required min="0">
           </div>
         </div>
         <div class="mt-4 flex justify-end gap-2">
@@ -593,11 +597,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const selectedOption = this.options[this.selectedIndex];
             if (selectedOption.value) {
                 const price = selectedOption.dataset.price;
+                const buying = selectedOption.dataset.buying;
                 priceInput.value = price;
+                if (buying !== undefined && buying !== '') {
+                    priceInput.min = buying;
+                    priceInput.title = 'Prix d\'achat : ' + buying;
+                } else {
+                    priceInput.removeAttribute('min');
+                    priceInput.removeAttribute('title');
+                }
                 // Set quantity to 1 by default when changing products
                 quantityInput.value = 1;
             } else {
                 priceInput.value = '';
+                priceInput.removeAttribute('min');
+                priceInput.removeAttribute('title');
             }
         });
     }

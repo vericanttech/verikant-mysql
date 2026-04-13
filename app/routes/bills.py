@@ -25,6 +25,7 @@ from datetime import date
 from app.vitrine_helpers import build_vitrine_shop_url, qr_png_data_url
 from app.invoice_pdf import build_invoice_pdf_buffer
 from app.sales_visibility import sales_bill_vat_only_clause, abort_if_bill_hidden_in_vat_mode
+from app.pricing_validation import validate_unit_selling_not_below_buying
 
 
 bills = Blueprint('bills', __name__)
@@ -274,6 +275,7 @@ def api_products():
             'id': product.id,
             'name': product.name,
             'selling_price': product.selling_price,
+            'buying_price': product.buying_price,
             'stock': product.stock,
             'currency': currency,
             'image_url': url_for('static', filename=product.image_path) if product.image_path else None,
@@ -409,6 +411,12 @@ def process_sale():
             quantity = float(item['quantity'])  # Allow decimal quantities
             if product.stock < quantity:
                 raise ValueError(f"Insufficient stock for {product.name}")
+
+            validate_unit_selling_not_below_buying(
+                float(item['price']),
+                product.buying_price,
+                product.name,
+            )
 
             detail = SalesDetail(
                 bill_id=bill.id,

@@ -96,6 +96,7 @@ function renderProducts(data) {
         productElement.setAttribute('data-id', product.id);
         productElement.setAttribute('data-name', product.name);
         productElement.setAttribute('data-price', product.selling_price);
+        productElement.setAttribute('data-buying-price', product.buying_price != null ? product.buying_price : '');
         productElement.setAttribute('data-stock', product.stock);
         
         const imgHtml = product.image_url

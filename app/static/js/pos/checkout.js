@@ -158,6 +158,16 @@ function initCheckoutEventListeners() {
                 return;
             }
 
+            if (typeof validateCartUnitPrice === 'function' && window.cart && window.cart.length) {
+                for (const item of window.cart) {
+                    const v = validateCartUnitPrice(item, item.price);
+                    if (!v.ok) {
+                        showNotification(v.message, 'error');
+                        return;
+                    }
+                }
+            }
+
             const applyVat = !!window.__checkoutApplyVat;
             const vatRatePct = window.__checkoutVatRatePercent;
             const applyDiscount = !!window.__checkoutApplyDiscount;

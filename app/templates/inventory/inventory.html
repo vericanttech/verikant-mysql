@@ -274,6 +274,7 @@
                                id="add_product_buying"
                                placeholder="Ex: 4000"
                                required>
+                        <p id="add_product_price_warning" class="hidden mt-2 text-sm text-red-600" role="alert"></p>
                     </div>
                     <div class="mb-6">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Stock Initial</label>
@@ -371,6 +372,7 @@
                                id="edit_buying_price"
                                placeholder="Ex: 4000"
                                required>
+                        <p id="edit_product_price_warning" class="hidden mt-2 text-sm text-red-600" role="alert"></p>
                     </div>
                     <div class="mb-6">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Stock</label>
@@ -464,6 +466,56 @@ const addProductBuying = new Cleave('#add_product_buying', {
     delimiter: ' ',
     numeralThousandsGroupStyle: 'thousand'
 });
+
+const PRICE_WARNING_MSG = "Le prix de vente ne peut pas être inférieur au prix d'achat.";
+
+function parsePriceRaw(raw) {
+    if (raw == null || raw === '') return NaN;
+    const s = String(raw).replace(/\s/g, '').replace(',', '.');
+    return parseFloat(s);
+}
+
+/** Updates selling input border + warning text. Returns true if invalid (selling < buying). */
+function updateInventoryPriceUI(prefix) {
+    var sellId = prefix === 'add' ? 'add_product_selling' : 'edit_selling_price';
+    var warnId = prefix === 'add' ? 'add_product_price_warning' : 'edit_product_price_warning';
+    var cleaveSell = prefix === 'add' ? addProductSelling : cleaveSelling;
+    var cleaveBuy = prefix === 'add' ? addProductBuying : cleaveBuying;
+    var sellEl = document.getElementById(sellId);
+    var warnEl = document.getElementById(warnId);
+    var sp = parsePriceRaw(cleaveSell.getRawValue());
+    var bp = parsePriceRaw(cleaveBuy.getRawValue());
+    var invalid = !isNaN(sp) && !isNaN(bp) && sp < bp;
+    if (sellEl) {
+        sellEl.classList.toggle('border-red-500', invalid);
+        sellEl.classList.toggle('border-gray-300', !invalid);
+    }
+    if (warnEl) {
+        if (invalid) {
+            warnEl.textContent = PRICE_WARNING_MSG;
+            warnEl.classList.remove('hidden');
+        } else {
+            warnEl.textContent = '';
+            warnEl.classList.add('hidden');
+        }
+    }
+    return invalid;
+}
+
+function resetInventoryPriceUI(prefix) {
+    var sellId = prefix === 'add' ? 'add_product_selling' : 'edit_selling_price';
+    var warnId = prefix === 'add' ? 'add_product_price_warning' : 'edit_product_price_warning';
+    var sellEl = document.getElementById(sellId);
+    var warnEl = document.getElementById(warnId);
+    if (sellEl) {
+        sellEl.classList.remove('border-red-500');
+        sellEl.classList.add('border-gray-300');
+    }
+    if (warnEl) {
+        warnEl.textContent = '';
+        warnEl.classList.add('hidden');
+    }
+}
 
 // Product image preview (object URLs revoked when replaced or modal resets)
 let addProductPreviewObjectUrl = null;
@@ -576,6 +628,7 @@ const openModal = (modalId) => {
         if (ap) { ap.classList.add('hidden'); ap.removeAttribute('src'); }
         if (aph) aph.classList.remove('hidden');
         if (afn) { afn.textContent = ''; afn.removeAttribute('title'); }
+        resetInventoryPriceUI('add');
     }
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -725,6 +778,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addProductForm) {
         addProductForm.addEventListener('submit', async function (e) {
             e.preventDefault();
+            if (updateInventoryPriceUI('add')) {
+                return;
+            }
             document.getElementById('add_product_selling').value = addProductSelling.getRawValue();
             document.getElementById('add_product_buying').value = addProductBuying.getRawValue();
             const fileInput = document.getElementById('add_product_image');
@@ -751,6 +807,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (editProductForm) {
         editProductForm.addEventListener('submit', async function (e) {
             e.preventDefault();
+            if (updateInventoryPriceUI('edit')) {
+                return;
+            }
             document.getElementById('edit_selling_price').value = cleaveSelling.getRawValue();
             document.getElementById('edit_buying_price').value = cleaveBuying.getRawValue();
             const removeCb = document.getElementById('remove_product_image');
@@ -783,6 +842,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (editRembgBtn && REMBG_API_URL) {
         editRembgBtn.addEventListener('click', function () { runRembg('edit'); });
     }
+
+    ['add_product_selling', 'add_product_buying', 'edit_selling_price', 'edit_buying_price'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', function () {
+            updateInventoryPriceUI(id.indexOf('add_') === 0 ? 'add' : 'edit');
+        });
+    });
 });
 
 
@@ -863,6 +930,7 @@ function editProduct(id, name, selling_price, buying_price, stock, min_stock, im
     }
 
     openModal('editProductModal');
+    updateInventoryPriceUI('edit');
 }
 
 function deleteProduct(id, name) {

@@ -19,6 +19,26 @@ function formatNumberFR(value) {
     }).format(value);
 }
 
+/** Minimum unit price (buying) when known; legacy carts may omit it (server still validates). */
+function cartItemMinUnitPrice(item) {
+    if (item.buyingPrice == null || item.buyingPrice === '') return null;
+    const n = parseFloat(item.buyingPrice);
+    return isNaN(n) ? null : n;
+}
+
+function validateCartUnitPrice(item, unitPrice) {
+    const minP = cartItemMinUnitPrice(item);
+    if (minP == null) return { ok: true };
+    if (unitPrice < minP) {
+        return {
+            ok: false,
+            message:
+                `Le prix unitaire doit être supérieur ou égal au prix d'achat (minimum ${formatNumberFR(minP)}).`,
+        };
+    }
+    return { ok: true };
+}
+
 // Update cart display function
 function updateCartDisplay() {
     const cartItems = document.getElementById('cart-items');
@@ -112,6 +132,8 @@ function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
         const productId = productCard.getAttribute('data-id');
         const productName = productCard.getAttribute('data-name');
         const price = parseFloat(productCard.getAttribute('data-price'));
+        const buyingRaw = productCard.getAttribute('data-buying-price');
+        const buyingPrice = buyingRaw !== null && buyingRaw !== '' ? parseFloat(buyingRaw) : NaN;
         const stock = parseInt(productCard.getAttribute('data-stock'));
 
         const existingItem = window.cart.find(item => item.productId === productId);
@@ -128,6 +150,7 @@ function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
                 name: productName,
                 originalPrice: price,
                 price: price,
+                buyingPrice: !isNaN(buyingPrice) ? buyingPrice : null,
                 quantity: 1,
                 maxStock: stock
             });
@@ -161,6 +184,11 @@ function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
             const parsedPrice = parseFloat(newPrice);
 
             if (!isNaN(parsedPrice) && parsedPrice >= 0) {
+                const v = validateCartUnitPrice(item, parsedPrice);
+                if (!v.ok) {
+                    showNotification(v.message, 'error');
+                    return;
+                }
                 item.price = parsedPrice;
                 updateCartDisplay();
                 showNotification('Prix modifié avec succès', 'success');
@@ -182,6 +210,12 @@ function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
             const item = window.cart[index];
 
             if (!isNaN(newPrice) && newPrice >= 0) {
+                const v = validateCartUnitPrice(item, newPrice);
+                if (!v.ok) {
+                    e.target.value = formatNumberFR(item.price.toFixed(2));
+                    showNotification(v.message, 'error');
+                    return;
+                }
                 item.price = newPrice;
                 updateCartDisplay();
                 showNotification('Prix modifié avec succès', 'success');

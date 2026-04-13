@@ -86,12 +86,20 @@ def product_list():
     if request.method == 'POST':
         if 'add_product' in request.form:
             try:
+                sp = float(request.form.get('selling_price'))
+                bp = float(request.form.get('buying_price'))
+                if sp < bp:
+                    flash(
+                        "Attention : Le prix de vente ne peut pas être inférieur au prix d'achat.",
+                        'error',
+                    )
+                    return redirect(url_for('inventory.product_list'))
                 # Start a transaction
                 product = Product(
                     shop_id=shop_id,
                     name=request.form.get('name'),
-                    selling_price=float(request.form.get('selling_price')),
-                    buying_price=float(request.form.get('buying_price')),
+                    selling_price=sp,
+                    buying_price=bp,
                     stock=int(request.form.get('stock')),
                     min_stock=int(request.form.get('min_stock', 0)),
                     category_id=request.form.get('category_id')
@@ -137,9 +145,18 @@ def product_list():
                 old_stock = product.stock
                 new_stock = int(request.form.get('stock'))
 
+                sp = float(request.form.get('selling_price'))
+                bp = float(request.form.get('buying_price'))
+                if sp < bp:
+                    flash(
+                        "Attention : Le prix de vente ne peut pas être inférieur au prix d'achat.",
+                        'error',
+                    )
+                    return redirect(url_for('inventory.product_list'))
+
                 product.name = request.form.get('name')
-                product.selling_price = float(request.form.get('selling_price'))
-                product.buying_price = float(request.form.get('buying_price'))
+                product.selling_price = sp
+                product.buying_price = bp
                 product.stock = new_stock
                 product.min_stock = int(request.form.get('min_stock', 0))
                 product.category_id = request.form.get('category_id')
