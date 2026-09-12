@@ -212,6 +212,12 @@ def create_app():
                 ).first()
 
                 if not user_shop:
+                    app.logger.warning(
+                        'auth_event=shop_access_denied user_id=%s shop_id=%s endpoint=%s',
+                        current_user.id,
+                        current_user.current_shop_id,
+                        request.endpoint,
+                    )
                     logout_user()
                     flash(
                         'Votre compte a été désactivé ou vous n\'avez plus accès au magasin. Veuillez contacter l\'administrateur.',

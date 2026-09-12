@@ -1,7 +1,10 @@
 # app/auth.py
 import smtplib
 from email.mime.text import MIMEText
+import hashlib
+import hmac
 import os
+import secrets
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, send_from_directory
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -11,6 +14,25 @@ from . import db
 from datetime import datetime
 
 auth = Blueprint('auth', __name__)
+
+
+def _username_fingerprint(username):
+    """Return a stable diagnostic identifier without logging the username."""
+    secret = str(current_app.config.get('SECRET_KEY') or '').encode('utf-8')
+    normalized = (username or '').strip().casefold().encode('utf-8')
+    return hmac.new(secret, normalized, hashlib.sha256).hexdigest()[:16]
+
+
+def _auth_log(event, **fields):
+    details = ' '.join(f'{key}={value}' for key, value in sorted(fields.items()))
+    current_app.logger.warning('auth_event=%s %s', event, details)
+
+
+def _username_candidates(username):
+    """Find all legacy accounts whose names differ only by letter case."""
+    return User.query.filter(
+        db.func.lower(User.name) == username.lower()
+    ).order_by(User.id.asc()).all()
 
 
 # Define the admin_required decorator first
@@ -29,24 +51,70 @@ def admin_required(f):
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        username = (request.form.get('username') or '').strip()
+        password = request.form.get('password') or ''
+        request_id = secrets.token_hex(4)
+        fingerprint = _username_fingerprint(username)
+        candidates = _username_candidates(username) if username else []
+        password_matches = []
+        for candidate in candidates:
+            try:
+                if candidate.password_hash and check_password_hash(
+                    candidate.password_hash, password
+                ):
+                    password_matches.append(candidate)
+            except (TypeError, ValueError):
+                _auth_log(
+                    'invalid_password_hash',
+                    request_id=request_id,
+                    user_id=candidate.id,
+                )
 
-        user = User.query.filter_by(name=username).first()
+        user = None
+        if len(password_matches) == 1:
+            user = password_matches[0]
+        elif len(password_matches) > 1:
+            exact_matches = [u for u in password_matches if u.name == username]
+            if len(exact_matches) == 1:
+                user = exact_matches[0]
+            else:
+                _auth_log(
+                    'ambiguous_credentials',
+                    request_id=request_id,
+                    username_fp=fingerprint,
+                    candidate_count=len(password_matches),
+                )
 
-        if user and check_password_hash(user.password_hash, password):
+        if user:
             if user.is_active:
                 login_user(user)
-                # Redirect based on user type
+                _auth_log(
+                    'login_success',
+                    request_id=request_id,
+                    user_id=user.id,
+                    shop_id=user.current_shop_id,
+                    role=user.role,
+                )
                 if getattr(user, 'superadmin', False):
                     return redirect(url_for('admin_dashboard.manage_shops'))
                 elif user.role == 'admin':
                     return redirect(url_for('dashboard.index'))
                 else:
                     return redirect(url_for('bills.pos'))
-            else:
-                flash('Ce compte a été désactivé. Veuillez contacter l\'administrateur.', 'error')
+            _auth_log(
+                'inactive_user',
+                request_id=request_id,
+                user_id=user.id,
+                shop_id=user.current_shop_id,
+            )
+            flash('Ce compte a été désactivé. Veuillez contacter l\'administrateur.', 'error')
         else:
+            _auth_log(
+                'user_not_found' if not candidates else 'password_mismatch',
+                request_id=request_id,
+                username_fp=fingerprint,
+                candidate_count=len(candidates),
+            )
             flash('Veuillez vérifier vos identifiants et réessayer.')
 
     return render_template('./auth/login.html', year=datetime.now().year)
@@ -105,11 +173,11 @@ def create_user():
     ).order_by(User.created_at.desc()).all()
 
     if request.method == 'POST':
-        username = request.form.get('username')
+        username = (request.form.get('username') or '').strip()
         password = request.form.get('password')
         role = request.form.get('role')
 
-        if User.query.filter_by(name=username).first():
+        if _username_candidates(username):
             flash('Un utilisateur avec ce nom existe déjà.', 'error')
             return redirect(url_for('auth.create_user'))
 
@@ -149,13 +217,14 @@ def create_user():
 @admin_required
 def edit_user():
     user_id = request.form.get('user_id')
-    username = request.form.get('username')
+    username = (request.form.get('username') or '').strip()
     role = request.form.get('role')
 
     user = User.query.get_or_404(user_id)
 
     # Check if username is being changed and if it's already taken
-    if user.name != username and User.query.filter_by(name=username).first():
+    conflicts = [candidate for candidate in _username_candidates(username) if candidate.id != user.id]
+    if user.name != username and conflicts:
         flash('Ce nom d\'utilisateur est déjà pris.', 'error')
         return redirect(url_for('auth.create_user'))
 
@@ -274,9 +343,13 @@ def send_email():
     if not name or not email or not message:
         return jsonify({"error": "Tous les champs sont requis"}), 400
 
-    sender_email = "zilbalde123@gmail.com"  # Replace with your email
-    sender_password = "lzhj owxw mtsl lfpg"  # Use an app password if using Gmail
-    recipient_email = "vericant2023@gmail.com"
+    sender_email = (os.environ.get('SMTP_SENDER_EMAIL') or '').strip()
+    sender_password = os.environ.get('SMTP_APP_PASSWORD') or ''
+    recipient_email = (os.environ.get('CONTACT_RECIPIENT_EMAIL') or '').strip()
+
+    if not sender_email or not sender_password or not recipient_email:
+        current_app.logger.error('contact_email_event=configuration_missing')
+        return jsonify({"error": "Service de messagerie temporairement indisponible"}), 503
 
     subject = f"Nouveau message de {name}"
     body = f"Nom: {name}\nEmail: {email}\n\nMessage:\n{message}"
@@ -293,5 +366,6 @@ def send_email():
             server.sendmail(sender_email, recipient_email, msg.as_string())
 
         return jsonify({"success": "Message envoyé avec succès"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        current_app.logger.exception('contact_email_event=send_failed')
+        return jsonify({"error": "Impossible d'envoyer le message pour le moment"}), 500

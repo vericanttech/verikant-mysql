@@ -33,6 +33,8 @@ TABLES = [
     "user_shops",
     "categories",
     "products",
+    "vitrine_visits",
+    "vitrine_product_selections",
     "clients",
     "sales_bills",
     "sales_details",
@@ -98,10 +100,9 @@ def main() -> None:
         print("-" * 56)
         for t in TABLES:
             sc = _sqlite_count(sq, t)
-            if sc is None:
-                print(f"{t:<28} {'(missing)':>10} {'-':>10} {'n/a':>5}")
-                continue
             mc = db.session.execute(text(f"SELECT COUNT(*) FROM `{t}`")).scalar()
+            if sc is None:
+                sc = 0
             total_sqlite += sc
             total_mysql += int(mc)
             ok = sc == mc
@@ -110,15 +111,41 @@ def main() -> None:
             if not ok:
                 mismatches.append((t, sc, mc))
 
+        sqlite_users = {
+            int(row[0]): tuple(row[1:])
+            for row in sq.execute(
+                "SELECT id, name, password_hash, is_active, current_shop_id "
+                "FROM users ORDER BY id"
+            ).fetchall()
+        }
+        mysql_users = {
+            int(row[0]): (row[1], row[2], int(row[3]), row[4])
+            for row in db.session.execute(text(
+                "SELECT id, name, password_hash, is_active, current_shop_id "
+                "FROM users ORDER BY id"
+            )).fetchall()
+        }
+        credential_mismatch_ids = sorted(
+            user_id for user_id in set(sqlite_users) | set(mysql_users)
+            if sqlite_users.get(user_id) != mysql_users.get(user_id)
+        )
+
     print("-" * 56)
     print(f"{'TOTAL':<28} {total_sqlite:>10} {total_mysql:>10} {'yes' if not mismatches else 'NO':>5}")
 
-    if mismatches:
+    if credential_mismatch_ids:
+        print(
+            "\nCredential/account mismatch for user ID(s): "
+            + ", ".join(str(user_id) for user_id in credential_mismatch_ids)
+        )
+        print("No usernames or password hashes are printed by this verifier.")
+
+    if mismatches or credential_mismatch_ids:
         print("\nMismatch detail:")
         for t, sc, mc in mismatches:
             print(f"  {t}: sqlite={sc} mysql={mc} (diff {mc - sc:+d})")
         raise SystemExit(1)
-    print("\nAll compared tables match.")
+    print("\nAll tables and user credential/account fields match exactly.")
 
 
 if __name__ == "__main__":

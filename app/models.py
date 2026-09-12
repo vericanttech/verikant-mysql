@@ -114,7 +114,10 @@ class Category(ShopModel, TimestampMixin):
 
     __table_args__ = (
         db.Index('idx_category_shop', 'shop_id'),
-        db.Index('idx_category_shop_name', 'shop_id', 'name', unique=True),
+        # Legacy SQLite contains meaningful names that differ only by trailing
+        # spaces. MySQL VARCHAR uniqueness treats those as equal, so keep this
+        # as a lookup index rather than silently renaming or dropping rows.
+        db.Index('idx_category_shop_name', 'shop_id', 'name'),
         db.Index('idx_category_type', 'type'),
     )
 

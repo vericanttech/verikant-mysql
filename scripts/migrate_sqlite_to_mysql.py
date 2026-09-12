@@ -23,8 +23,8 @@ MySQL ``unique_checks=0`` is set for the load phase only (safe here because SQLi
 data already satisfied uniqueness).
 
 MySQL vs SQLite (handled here or in schema — run ``flask db upgrade`` before import):
-  * users.name UNIQUE is case-insensitive on MySQL; duplicate spellings are disambiguated.
-  * categories (shop_id, name) same for case-insensitive uniqueness.
+  * users.name and categories.name use a case-sensitive MySQL collation so SQLite
+    values are preserved exactly. Run ``flask db upgrade`` before importing.
   * sales_bills.bill_number must be BIGINT on MySQL (large composite numbers); see migration
     b2c8e9f1a3d4.
   * Other INTEGER columns are IDs, quantities, or stock — within signed 32-bit range in practice.
@@ -36,7 +36,6 @@ from __future__ import annotations
 import argparse
 import sqlite3
 import sys
-from collections import defaultdict
 from pathlib import Path
 
 from sqlalchemy import BigInteger, Boolean, Float, Integer, Numeric, insert, text
@@ -76,6 +75,8 @@ from app.models import (
     SupplierBill,
     User,
     UserShop,
+    VitrineProductSelection,
+    VitrineVisit,
 )
 
 # Parents before children (same schema as Flask-SQLAlchemy models).
@@ -86,6 +87,8 @@ TABLE_ORDER = [
     UserShop,
     Category,
     Product,
+    VitrineVisit,
+    VitrineProductSelection,
     Client,
     SalesBill,
     SalesDetail,
@@ -156,79 +159,6 @@ def _destination_is_mysql(uri: str) -> bool:
     return uri.startswith("mysql")
 
 
-def _norm_key(s: str) -> str:
-    """Match MySQL unique checks on typical utf8mb4_unicode_ci (case-insensitive)."""
-    return s.casefold().strip()
-
-
-def _user_names_for_mysql(conn: sqlite3.Connection) -> dict[int, str]:
-    """
-    MySQL has UNIQUE(users.name). SQLite may contain duplicate names, including
-    same word with different casing (e.g. Amadou vs amadou) — MySQL still rejects
-    both. Map each user id to a distinct name (lowest id keeps original string).
-    """
-    cur = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-        ("users",),
-    )
-    if not cur.fetchone():
-        return {}
-    rows = conn.execute("SELECT id, name FROM users ORDER BY id").fetchall()
-    by_norm: dict[str, list[tuple[int, str]]] = defaultdict(list)
-    for r in rows:
-        uid = int(r["id"])
-        raw = str(r["name"])
-        by_norm[_norm_key(raw)].append((uid, raw))
-    out: dict[int, str] = {}
-    for _norm, items in by_norm.items():
-        items.sort(key=lambda t: t[0])
-        if len(items) == 1:
-            out[items[0][0]] = items[0][1]
-            continue
-        for i, (uid, raw) in enumerate(items):
-            if i == 0:
-                out[uid] = raw
-            else:
-                suffix = f" [{uid}]"
-                base = raw[: max(0, 255 - len(suffix))]
-                out[uid] = base + suffix
-    return out
-
-
-def _category_names_for_mysql(conn: sqlite3.Connection) -> dict[int, str]:
-    """UNIQUE(shop_id, name) on categories — disambiguate duplicate pairs in SQLite."""
-    cur = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-        ("categories",),
-    )
-    if not cur.fetchone():
-        return {}
-    rows = conn.execute(
-        "SELECT id, shop_id, name FROM categories ORDER BY id"
-    ).fetchall()
-    # Unique is (shop_id, name) with case-insensitive name in MySQL
-    by_key: dict[tuple[int, str], list[tuple[int, str]]] = defaultdict(list)
-    for r in rows:
-        cid = int(r["id"])
-        sid = int(r["shop_id"])
-        nm = str(r["name"])
-        by_key[(sid, _norm_key(nm))].append((cid, nm))
-    out: dict[int, str] = {}
-    for _key, items in by_key.items():
-        items.sort(key=lambda t: t[0])
-        if len(items) == 1:
-            out[items[0][0]] = items[0][1]
-            continue
-        for i, (cid, raw) in enumerate(items):
-            if i == 0:
-                out[cid] = raw
-            else:
-                suffix = f" [{cid}]"
-                base = raw[: max(0, 255 - len(suffix))]
-                out[cid] = base + suffix
-    return out
-
-
 def _assert_mysql_empty(session) -> None:
     n = session.execute(text("SELECT COUNT(*) FROM shops")).scalar()
     if n:
@@ -290,9 +220,6 @@ def migrate(
 
     conn = sqlite3.connect(str(sqlite_path))
     conn.row_factory = sqlite3.Row
-    user_names = _user_names_for_mysql(conn)
-    category_names = _category_names_for_mysql(conn)
-
     with app.app_context():
         if truncate and not dry_run:
             _truncate_mysql(db.session)
@@ -327,14 +254,6 @@ def migrate(
                     insert_dict = _build_insert_dict(model, d)
                     if not insert_dict:
                         continue
-                    if model is User and "id" in insert_dict:
-                        uid = int(insert_dict["id"])
-                        if uid in user_names:
-                            insert_dict["name"] = user_names[uid]
-                    if model is Category and "id" in insert_dict:
-                        cid = int(insert_dict["id"])
-                        if cid in category_names:
-                            insert_dict["name"] = category_names[cid]
                     if dry_run:
                         inserted += 1
                         continue
