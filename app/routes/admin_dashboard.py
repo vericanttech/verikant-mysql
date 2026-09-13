@@ -4,6 +4,7 @@ from app.models import Shop, User, UserShop
 from app.extensions import db
 from werkzeug.security import generate_password_hash
 from functools import wraps
+from app.currencies import COUNTRIES, country_options, currency_for_country, currency_label
 
 admin_dashboard = Blueprint('admin_dashboard', __name__)
 
@@ -25,7 +26,19 @@ def manage_shops():
         if form_type == 'create_shop':
             name = request.form['name']
             business_type = request.form.get('business_type')
-            shop = Shop(name=name, business_type=business_type, is_active=True)
+            country_code = (request.form.get('country_code') or 'SN').strip().upper()
+            if country_code not in COUNTRIES:
+                flash('Unsupported country or currency.', 'error')
+                return redirect(url_for('admin_dashboard.manage_shops'))
+            currency_code = currency_for_country(country_code)
+            shop = Shop(
+                name=name,
+                business_type=business_type,
+                country_code=country_code,
+                currency_code=currency_code,
+                currency=currency_label(currency_code),
+                is_active=True,
+            )
             db.session.add(shop)
             db.session.commit()
             flash('Shop created!', 'success')
@@ -73,4 +86,7 @@ def manage_shops():
     # GET: Show dashboard
     shops = Shop.query.order_by(Shop.id.desc()).all()
     users = User.query.order_by(User.id.desc()).all()
-    return render_template('admin/manage_shops.html', shops=shops, users=users) 
+    return render_template(
+        'admin/manage_shops.html', shops=shops, users=users,
+        currency_options=country_options('en'),
+    )

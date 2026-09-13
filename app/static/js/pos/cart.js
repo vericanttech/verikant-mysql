@@ -13,10 +13,7 @@ function initFormatting() {
 }
 
 function formatNumberFR(value) {
-    return new Intl.NumberFormat('fr-FR', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2
-    }).format(value);
+    return window.formatAmount ? window.formatAmount(value) : String(value);
 }
 
 /** Minimum unit price (buying) when known; legacy carts may omit it (server still validates). */

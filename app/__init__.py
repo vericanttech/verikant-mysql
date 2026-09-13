@@ -1,5 +1,5 @@
 # app/__init__.py
-from flask import Flask, flash, redirect, url_for, request, Response
+from flask import Flask, flash, g, redirect, url_for, request, Response
 from flask_login import logout_user, current_user
 from app.cli import init_cli
 from app.extensions import db, migrate, login_manager
@@ -11,6 +11,15 @@ from flask import current_app, jsonify #import jsonify
 from app.ssh_tunnel_db import maybe_start_ssh_tunnel as _maybe_start_ssh_tunnel
 from app.sw_worker import build_sw_js
 from app.ui_i18n import ENGLISH, current_ui_language, translate_ui
+from app.currencies import (
+    country_options,
+    currency_decimals,
+    currency_label,
+    format_amount,
+    format_money,
+    normalize_currency_code,
+    shop_currency_code,
+)
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -171,14 +180,24 @@ def create_app():
                 shop_profile=current_shop,
                 shop_phones=shop_phones_dicts,
                 user_shop_role=user_shop.role if user_shop else None,
-                available_shops=available_shops
+                available_shops=available_shops,
+                current_currency_code=shop_currency_code(current_shop),
+                current_currency_label=currency_label(shop_currency_code(current_shop)),
+                current_currency_decimals=currency_decimals(shop_currency_code(current_shop)),
+                country_currency_options=country_options(current_ui_language()),
+                money=lambda value: format_money(value, shop_currency_code(current_shop), current_ui_language()),
             )
         return dict(
             current_shop=None,
             shop_profile=None,
             shop_phones=[],
             user_shop_role=None,
-            available_shops=[]
+            available_shops=[],
+            current_currency_code='XOF',
+            current_currency_label='FCFA',
+            current_currency_decimals=0,
+            country_currency_options=country_options(current_ui_language()),
+            money=lambda value: format_money(value, 'XOF', current_ui_language()),
         )
 
     @login_manager.user_loader
@@ -186,13 +205,16 @@ def create_app():
         return User.query.get(int(user_id))
 
     @app.template_filter('fr_thousands')
-    def fr_thousands(value):
-        try:
-            # Convert to int first to drop decimals, then format with space as thousands separator
-            formatted = f"{int(value):,}".replace(",", " ")
-            return formatted
-        except (ValueError, TypeError):
-            return value
+    def fr_thousands(value, currency_code=None):
+        # Kept under its legacy name so existing templates automatically gain
+        # locale- and currency-aware formatting.
+        code = normalize_currency_code(currency_code) if currency_code else 'XOF'
+        if not currency_code and current_user.is_authenticated and current_user.current_shop_id:
+            if not hasattr(g, '_vericant_currency_code'):
+                shop = db.session.get(Shop, current_user.current_shop_id)
+                g._vericant_currency_code = shop_currency_code(shop)
+            code = g._vericant_currency_code
+        return format_amount(value, code, current_ui_language())
 
 
     @app.before_request

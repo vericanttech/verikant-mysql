@@ -320,10 +320,7 @@
 <script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
 <script>
 function formatNumberFR(value) {
-    return new Intl.NumberFormat('fr-FR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-    }).format(value);
+    return window.formatAmount ? window.formatAmount(value) : String(value);
 }
 
 // Modal handling functions

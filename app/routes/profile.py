@@ -4,12 +4,32 @@ from werkzeug.utils import secure_filename
 import os
 from app import db
 from app.auth import admin_required
-from app.models import Shop, ShopPhone, UserShop
+from app.models import (
+    BoutiqueTransaction, Check, EmployeeLoan, EmployeeSalary, Expense, Loan,
+    Product, SalesBill, Shop, ShopPhone, SupplierBill, UserShop,
+)
+from app.currencies import (
+    COUNTRIES, country_options, currency_for_country, currency_label,
+    normalize_country_code, shop_currency_code,
+)
+from app.ui_i18n import current_ui_language
 
 UPLOAD_FOLDER = os.path.join('app', 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 profile = Blueprint('profile', __name__)
+
+
+def shop_currency_is_locked(shop):
+    """Currency becomes immutable once prices or financial history exist."""
+    models = (
+        Product, SalesBill, Expense, SupplierBill, Loan, BoutiqueTransaction,
+        Check, EmployeeSalary, EmployeeLoan,
+    )
+    return any(
+        db.session.query(model.id).filter(model.shop_id == shop.id).first() is not None
+        for model in models
+    )
 
 
 def get_current_shop():
@@ -43,7 +63,19 @@ def view_profile():
     shop = get_current_shop()
     if not shop:
         return jsonify({'error': 'No access to shop profile'}), 403
-    return render_template('profile/shop_profile.html', current_shop=shop)
+    language = current_ui_language()
+    selected_country = normalize_country_code(shop.country_code)
+    selected_currency = shop_currency_code(shop)
+    return render_template(
+        'profile/shop_profile.html',
+        current_shop=shop,
+        currency_locked=shop_currency_is_locked(shop),
+        currency_options=country_options(language),
+        selected_country=selected_country,
+        selected_country_name=COUNTRIES[selected_country]['name_en' if language == 'en' else 'name_fr'],
+        selected_currency=selected_currency,
+        selected_currency_label=currency_label(selected_currency),
+    )
 
 
 @profile.route('/shop-profile/phone', methods=['POST'])
@@ -116,7 +148,7 @@ def update_profile():
         # Check if field exists in model
         valid_fields = [
             'name', 'business_type', 'address', 'email', 'email_password',
-            'tax_id', 'currency', 'show_all_sales',
+            'tax_id', 'country_code', 'show_all_sales',
         ]
         if field not in valid_fields:
             return jsonify({'error': f'Invalid field: {field}'}), 400
@@ -126,11 +158,36 @@ def update_profile():
             coerced = str(value).lower() in ('true', '1', 'on', 'yes')
             setattr(shop, field, coerced)
             value = coerced
+        elif field == 'country_code':
+            requested_country = (value or '').strip().upper()
+            if requested_country not in COUNTRIES:
+                return jsonify({'error': 'Unsupported country or currency'}), 400
+            current_country = normalize_country_code(shop.country_code)
+            if requested_country != current_country and shop_currency_is_locked(shop):
+                return jsonify({
+                    'error': 'Currency cannot be changed after products or financial activity exist.'
+                }), 409
+            code = currency_for_country(requested_country)
+            shop.country_code = requested_country
+            shop.currency_code = code
+            shop.currency = currency_label(code)
+            language = current_ui_language()
+            value = requested_country
+            display_value = (
+                COUNTRIES[requested_country]['name_en' if language == 'en' else 'name_fr']
+                + f" · {code} ({currency_label(code)})"
+            )
         else:
             setattr(shop, field, value)
         db.session.commit()
 
-        return jsonify({'success': True, 'value': value})
+        return jsonify({
+            'success': True,
+            'value': value,
+            'display_value': locals().get('display_value', value),
+            'currency_code': shop.currency_code,
+            'currency_label': shop.currency,
+        })
 
     except Exception as e:
         print(f"Error updating profile: {str(e)}")

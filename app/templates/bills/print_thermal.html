@@ -233,8 +233,8 @@
             <tr>
                 <td>{{ detail.product.name }}</td>
                 <td>{{ detail.quantity }}</td>
-                <td class="number-cell">{{ "{:,.0f}".format(detail.selling_price) }}</td>
-                <td class="number-cell">{{ "{:,.0f}".format(detail.total_amount) }}</td>
+                <td class="number-cell">{{ detail.selling_price|fr_thousands }}</td>
+                <td class="number-cell">{{ detail.total_amount|fr_thousands }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -246,41 +246,41 @@
         {% if show_discount %}
         <div class="total-row">
             <span>{{ tr('Sous-total HT:') }}</span>
-            <span>{{ "{:,.0f}".format(bill.gross_amount_ht) }}</span>
+            <span>{{ bill.gross_amount_ht|fr_thousands }}</span>
         </div>
         <div class="total-row">
             <span>Remise{% if bill.discount_rate %} ({{ (bill.discount_rate * 100)|round(2) }}%){% endif %}:</span>
-            <span>-{{ "{:,.0f}".format(bill.discount_amount) }}</span>
+            <span>-{{ bill.discount_amount|fr_thousands }}</span>
         </div>
         {% endif %}
         {% if show_vat %}
         <div class="total-row">
             <span>{{ tr('Total HT:') }}</span>
-            <span>{{ "{:,.0f}".format(bill.amount_ht) }}</span>
+            <span>{{ bill.amount_ht|fr_thousands }}</span>
         </div>
         <div class="total-row">
             <span>TVA{% if bill.vat_rate %} ({{ (bill.vat_rate * 100)|round(2) }}%){% endif %}:</span>
-            <span>{{ "{:,.0f}".format(bill.vat_amount) }}</span>
+            <span>{{ bill.vat_amount|fr_thousands }}</span>
         </div>
         {% else %}
         <div class="total-row">
             <span>{% if show_discount %}HT après remise{% else %}Sous-total HT{% endif %}:</span>
-            <span>{{ "{:,.0f}".format(bill.amount_ht) }}</span>
+            <span>{{ bill.amount_ht|fr_thousands }}</span>
         </div>
         {% endif %}
         {% if bill.paid_amount < bill.total_amount %}
         <div class="total-row">
             <span>{{ tr('Payé:') }}</span>
-            <span>{{ "{:,.0f}".format(bill.paid_amount) }}</span>
+            <span>{{ bill.paid_amount|fr_thousands }}</span>
         </div>
         <div class="total-row">
             <span>{{ tr('Reste:') }}</span>
-            <span>{{ "{:,.0f}".format(bill.remaining_amount) }}</span>
+            <span>{{ bill.remaining_amount|fr_thousands }}</span>
         </div>
         {% endif %}
         <div class="total-row grand-total">
             <span>{% if show_vat %}Total TTC{% else %}TOTAL{% endif %}:</span>
-            <span>{{ "{:,.0f}".format(bill.total_amount) }}</span>
+            <span>{{ bill.total_amount|fr_thousands }}</span>
         </div>
     </div>
 
@@ -328,7 +328,7 @@
     function shareViaWhatsApp() {
         // Create the message to share
         const message = `Facture #{{ bill.bill_number }} - {{ shop_profile.name }}\n` +
-                       `Total: {{ "{:,.0f}".format(bill.total_amount) }}\n` +
+                       `Total: {{ bill.total_amount|fr_thousands }}\n` +
                        `Date: {{ bill.date|format_datetime }}`;
 
         // Encode the message for URL

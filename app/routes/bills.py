@@ -26,6 +26,7 @@ from app.vitrine_helpers import build_vitrine_shop_url, qr_png_data_url
 from app.invoice_pdf import build_invoice_pdf_buffer
 from app.sales_visibility import sales_bill_vat_only_clause, abort_if_bill_hidden_in_vat_mode
 from app.pricing_validation import validate_unit_selling_not_below_buying
+from app.currencies import currency_label, format_amount, shop_currency_code
 
 
 bills = Blueprint('bills', __name__)
@@ -266,7 +267,8 @@ def api_products():
 
     # Get shop currency from profile
     shop_profile = get_shop_profile()
-    currency = shop_profile.currency if shop_profile else 'FCFA'
+    currency_code = shop_currency_code(shop_profile)
+    currency = currency_label(currency_code)
 
     # Build products JSON response
     products_data = []
@@ -814,7 +816,12 @@ def export_sales_pdf():
 
     # Get currency from shop profile
     shop_profile = get_shop_profile()
-    currency = shop_profile.currency if shop_profile else 'FCFA'
+    currency_code = shop_currency_code(shop_profile)
+    currency = currency_label(currency_code)
+
+    def pdf_money(value):
+        amount = format_amount(value, currency_code, 'fr').replace('\u202f', ' ')
+        return f"{amount} {currency}"
 
     # Create PDF
     buffer = BytesIO()
@@ -888,21 +895,21 @@ def export_sales_pdf():
             str(sale.bill.bill_number),
             sale.product.name,
             str(sale.quantity),
-            f"{sale.selling_price:,.0f} {currency}",
-            f"{sale.total_amount:,.0f} {currency}"
+            pdf_money(sale.selling_price),
+            pdf_money(sale.total_amount)
         ]
 
         if current_user.role == 'admin':
             profit = sale.total_amount - (sale.buying_price * sale.quantity)
-            row.append(f"{profit:,.0f} {currency}")
+            row.append(pdf_money(profit))
 
         data.append(row)
 
     # Add totals row
     if current_user.role == 'admin':
-        totals_row = ['', '', '', '', 'TOTAUX:', f"{total_sales:,.0f} {currency}", f"{total_profit:,.0f} {currency}"]
+        totals_row = ['', '', '', '', 'TOTAUX:', pdf_money(total_sales), pdf_money(total_profit)]
     else:
-        totals_row = ['', '', '', '', 'TOTAUX:', f"{total_sales:,.0f} {currency}"]
+        totals_row = ['', '', '', '', 'TOTAUX:', pdf_money(total_sales)]
 
     data.append(totals_row)
 
@@ -950,10 +957,10 @@ def export_sales_pdf():
 
     summary_text = f"<b>Résumé:</b><br/>"
     summary_text += f"Nombre de ventes: {len(sales)}<br/>"
-    summary_text += f"Total des ventes: {total_sales:,.0f} {currency}<br/>"
+    summary_text += f"Total des ventes: {pdf_money(total_sales)}<br/>"
 
     if current_user.role == 'admin':
-        summary_text += f"Bénéfice total: {total_profit:,.0f} {currency}<br/>"
+        summary_text += f"Bénéfice total: {pdf_money(total_profit)}<br/>"
 
     summary_text += f"Généré le: {datetime.now().strftime('%d/%m/%Y')}"
 

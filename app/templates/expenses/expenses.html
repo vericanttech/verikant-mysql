@@ -324,10 +324,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
 <script>
 function formatNumberFR(value) {
-    return new Intl.NumberFormat('fr-FR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(value);
+    return window.formatAmount ? window.formatAmount(value) : String(value);
 }
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM fully loaded");

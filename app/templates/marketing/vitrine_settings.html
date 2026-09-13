@@ -91,7 +91,7 @@
                             {% set p = row.product %}
                             <tr class="border-t border-gray-100">
                                 <td class="px-3 py-2 font-medium text-gray-900 break-words">{{ p.name if p else '—' }}</td>
-                                <td class="px-3 py-2">{% if p %}{{ p.selling_price|round(0)|int }}{% else %}—{% endif %} {{ shop.currency or 'FCFA' }}</td>
+                                <td class="px-3 py-2">{% if p %}{{ p.selling_price|fr_thousands }}{% else %}—{% endif %} {{ shop.currency or 'FCFA' }}</td>
                                 <td class="px-3 py-2">{{ p.stock if p else '—' }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap">
                                     <form method="post" action="{{ url_for('vitrine.vitrine_move_product', row_id=row.id) }}" class="inline">
@@ -140,7 +140,7 @@
                     <div class="py-3 px-3 text-sm space-y-2 min-w-0">
                         <p class="font-medium text-gray-900 break-words">{{ p.name if p else '—' }}</p>
                         <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 tabular-nums">
-                            <span>{% if p %}{{ p.selling_price|round(0)|int }}{% else %}—{% endif %} {{ shop.currency or 'FCFA' }}</span>
+                            <span>{% if p %}{{ p.selling_price|fr_thousands }}{% else %}—{% endif %} {{ shop.currency or 'FCFA' }}</span>
                             <span>Stock : {{ p.stock if p else '—' }}</span>
                         </div>
                         <div class="flex flex-wrap items-center gap-2 pt-1">
@@ -323,7 +323,7 @@
             return (
                 '<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2 text-sm min-w-0">' +
                 '<div class="min-w-0 flex-1 break-words"><span class="font-medium text-gray-900">' + esc(pr.name) + '</span>' +
-                '<span class="block text-gray-600 tabular-nums">' + esc(String(pr.price)) + ' ' + esc(currency) + ' · stock ' + esc(String(pr.stock)) + '</span></div>' +
+                '<span class="block text-gray-600 tabular-nums">' + esc(window.formatAmount ? window.formatAmount(pr.price) : String(pr.price)) + ' ' + esc(currency) + ' · stock ' + esc(String(pr.stock)) + '</span></div>' +
                 '<form method="post" action="' + esc(addUrl) + '" class="shrink-0">' +
                 '<input type="hidden" name="product_id" value="' + id + '"/>' +
                 '<button type="submit" class="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">Ajouter</button></form></div>'

@@ -283,10 +283,7 @@
 
     // Utility function to format numbers in French format
 function formatNumberFR(value) {
-    return new Intl.NumberFormat('fr-FR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(value);
+    return window.formatAmount ? window.formatAmount(value) : String(value);
 }
 
 // Function to apply Cleave formatting to an input element

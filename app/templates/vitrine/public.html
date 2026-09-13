@@ -838,16 +838,16 @@
                     <div class="price-promo-box" role="group" aria-label="Prix avant et après remise">
                         <div class="price-line">
                             <span class="price-line-label">Avant</span>
-                            <span class="price-old">{{ p.selling_price|round(0)|int }}&nbsp;{{ curr }}</span>
+                            <span class="price-old">{{ p.selling_price|fr_thousands(shop.currency_code) }}&nbsp;{{ curr }}</span>
                         </div>
                         <span class="price-arrow" aria-hidden="true">→</span>
                         <div class="price-line">
                             <span class="price-now-label">Promo</span>
-                            <span class="price-main price-main--promo">{{ after_disc|round(0)|int }}&nbsp;{{ curr }}</span>
+                            <span class="price-main price-main--promo">{{ after_disc|fr_thousands(shop.currency_code) }}&nbsp;{{ curr }}</span>
                         </div>
                     </div>
                 {% else %}
-                    <span class="price-main">{{ p.selling_price|round(0)|int }}&nbsp;{{ curr }}</span>
+                    <span class="price-main">{{ p.selling_price|fr_thousands(shop.currency_code) }}&nbsp;{{ curr }}</span>
                 {% endif %}
             </div>
 

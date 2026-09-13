@@ -21,6 +21,7 @@ from reportlab.platypus.flowables import Flowable
 
 from app.utils import format_datetime, number_to_words
 from app.vitrine_helpers import build_vitrine_shop_url
+from app.currencies import currency_label, format_amount, shop_currency_code
 
 
 # ── Brand palette ─────────────────────────────────────────────────────────────
@@ -67,11 +68,8 @@ def _logo_flowable(logo_fs_path, max_width, max_height):
         return None
 
 
-def _format_fr_num(value):
-    try:
-        return f"{int(round(float(value))):,}".replace(",", "\u202f")  # narrow no-break space
-    except (ValueError, TypeError):
-        return str(value)
+def _format_fr_num(value, currency_code="XOF"):
+    return format_amount(value, currency_code, "fr").replace("\u202f", " ")
 
 
 def _p(text, style):
@@ -127,7 +125,8 @@ def build_invoice_pdf_buffer(bill, shop_profile, vitrine_public_url=None, logo_f
     words_st     = ps("Words",      fontSize=7.5,textColor=MUTED,  fontName="Helvetica-Oblique",leading=9,  alignment=TA_LEFT)
     client_st    = ps("Client",     fontSize=8,  textColor=INK,    fontName="Helvetica",        leading=10, alignment=TA_LEFT)
 
-    currency = (shop_profile.currency if shop_profile else None) or "FCFA"
+    currency_code = shop_currency_code(shop_profile)
+    currency = currency_label(currency_code)
     elements  = []
 
     # ── HEADER ────────────────────────────────────────────────────────────────
@@ -260,8 +259,8 @@ def build_invoice_pdf_buffer(bill, shop_profile, vitrine_public_url=None, logo_f
         data.append([
             _p(str(d.quantity),                                                   cell_c_st),
             _p(pname,                                                              cell_st),
-            _p(escape(_format_fr_num(d.selling_price) + " " + str(currency)),    cell_r_st),
-            _p(escape(_format_fr_num(d.total_amount)  + " " + str(currency)),    cell_r_st),
+            _p(escape(_format_fr_num(d.selling_price, currency_code) + " " + str(currency)),    cell_r_st),
+            _p(escape(_format_fr_num(d.total_amount, currency_code)  + " " + str(currency)),    cell_r_st),
         ])
 
     t = Table(data, colWidths=col_w, repeatRows=1)
@@ -302,15 +301,15 @@ def build_invoice_pdf_buffer(bill, shop_profile, vitrine_public_url=None, logo_f
     if show_discount or show_vat:
         vrows = []
         if show_discount:
-            vrows.append(("Sous-total HT", _format_fr_num(bill.gross_amount_ht) + " " + currency))
+            vrows.append(("Sous-total HT", _format_fr_num(bill.gross_amount_ht, currency_code) + " " + currency))
             dr  = bill.discount_rate
             pct = f" ({round(float(dr)*100,2)}%)" if dr else ""
-            vrows.append(("Remise" + pct, "−" + _format_fr_num(bill.discount_amount) + " " + currency))
+            vrows.append(("Remise" + pct, "−" + _format_fr_num(bill.discount_amount, currency_code) + " " + currency))
         if show_vat:
-            vrows.append(("Total HT",  _format_fr_num(bill.amount_ht)  + " " + currency))
+            vrows.append(("Total HT",  _format_fr_num(bill.amount_ht, currency_code)  + " " + currency))
             vr   = bill.vat_rate
             vpct = f" ({round(float(vr)*100,2)}%)" if vr else ""
-            vrows.append(("TVA" + vpct, _format_fr_num(bill.vat_amount) + " " + currency))
+            vrows.append(("TVA" + vpct, _format_fr_num(bill.vat_amount, currency_code) + " " + currency))
 
         vdata = [[_p(escape(a), subtot_lbl), _p(escape(b), subtot_val)] for a, b in vrows]
         vt = Table(vdata, colWidths=[avail_w * 0.80, avail_w * 0.20])
@@ -326,9 +325,9 @@ def build_invoice_pdf_buffer(bill, shop_profile, vitrine_public_url=None, logo_f
     # ── TOTALS BANNER (3-column) ──────────────────────────────────────────────
     ttc_label = "TOTAL TTC" if show_vat else "TOTAL"
     tot_cells = [
-        (_p(ttc_label, grand_lbl),         _p(escape(_format_fr_num(bill.total_amount)     + " " + str(currency)), grand_val)),
-        (_p("AVANCE",  grand_lbl),         _p(escape(_format_fr_num(bill.paid_amount)       + " " + str(currency)), grand_val)),
-        (_p("NET À PAYER", grand_lbl),     _p(escape(_format_fr_num(bill.remaining_amount)  + " " + str(currency)), grand_val)),
+        (_p(ttc_label, grand_lbl),         _p(escape(_format_fr_num(bill.total_amount, currency_code)     + " " + str(currency)), grand_val)),
+        (_p("AVANCE",  grand_lbl),         _p(escape(_format_fr_num(bill.paid_amount, currency_code)       + " " + str(currency)), grand_val)),
+        (_p("NET À PAYER", grand_lbl),     _p(escape(_format_fr_num(bill.remaining_amount, currency_code)  + " " + str(currency)), grand_val)),
     ]
     col_w3 = avail_w / 3.0
 

@@ -62,7 +62,7 @@
                     <hr class="my-3 sm:my-4 border-gray-200">
                     <div class="flex justify-between items-start gap-3 mb-3 sm:mb-4 text-sm sm:text-base">
                         <h5 class="font-semibold text-gray-800 shrink-0">{{ tr('Total HT') }}</h5>
-                        <h5 class="font-semibold text-gray-800 tabular-nums text-right min-w-0 break-words" id="cart-total">0,00 FCFA </h5>
+                        <h5 class="font-semibold text-gray-800 tabular-nums text-right min-w-0 break-words" id="cart-total">{{ 0|fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</h5>
                     </div>
                     <button id="checkout-btn"
                             type="button"

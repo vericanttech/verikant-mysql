@@ -9,7 +9,8 @@ from werkzeug.utils import secure_filename
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, current_app, make_response, Response
 from flask_login import login_required, current_user
 from app import db
-from app.models import Product, Category, StockMovement, UserShop
+from app.models import Product, Category, StockMovement, UserShop, Shop
+from app.currencies import currency_label, format_amount, shop_currency_code
 from datetime import datetime
 from app.utils import admin_only_action
 from app.rembg_download import download_replicate_image_url
@@ -451,13 +452,17 @@ def export_products_pdf():
     # Create table data
     data = [['Nom du Produit', 'Prix de Vente', 'Prix d\'Achat', 'Stock', 'Stock Min.']]
 
-    # Get currency from shop_profile (you might need to adjust this)
-    currency = "FCFA"  # Default, you can get this from your shop_profile
+    shop = Shop.query.get(shop_id)
+    currency_code = shop_currency_code(shop)
+    currency = currency_label(currency_code)
+
+    def pdf_amount(value):
+        return format_amount(value, currency_code, 'fr').replace('\u202f', ' ')
 
     for product in products:
         # Format prices with thousands separator
-        selling_price = f"{product.selling_price:,.0f}".replace(',', ' ') + f" {currency}"
-        buying_price = f"{product.buying_price:,.0f}".replace(',', ' ') + f" {currency}"
+        selling_price = f"{pdf_amount(product.selling_price)} {currency}"
+        buying_price = f"{pdf_amount(product.buying_price)} {currency}"
 
         data.append([
             product.name,

@@ -51,11 +51,11 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                 <div class="bg-blue-50 p-4 rounded-lg">
                     <p class="text-gray-600">Total des Achats</p>
-                    <p class="text-2xl font-bold text-blue-700">{{ stats.total_purchases|default(0, true)|round(2) }}{{ current_shop.currency|default('FCFA') }}</p>
+                    <p class="text-2xl font-bold text-blue-700">{{ stats.total_purchases|default(0, true)|fr_thousands }} {{ current_shop.currency|default('FCFA') }}</p>
                 </div>
                 <div class="bg-green-50 p-4 rounded-lg">
                     <p class="text-gray-600">Total Payé</p>
-                    <p class="text-2xl font-bold text-green-700">{{ stats.total_paid|default(0, true)|round(2) }} {{ current_shop.currency|default('FCFA') }}</p>
+                    <p class="text-2xl font-bold text-green-700">{{ stats.total_paid|default(0, true)|fr_thousands }} {{ current_shop.currency|default('FCFA') }}</p>
                 </div>
                 <div class="bg-purple-50 p-4 rounded-lg">
                     <p class="text-gray-600">Nombre de Factures</p>
@@ -88,8 +88,8 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 text-sm text-gray-700">{{ bill.bill_number }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-700">{{ bill.date|format_datetime }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-700">{{ bill.total_amount|round(2) }} {{ current_shop.currency|default('FCFA') }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-700">{{ bill.paid_amount|round(2) }} {{ current_shop.currency|default('FCFA') }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ bill.total_amount|fr_thousands }} {{ current_shop.currency|default('FCFA') }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ bill.paid_amount|fr_thousands }} {{ current_shop.currency|default('FCFA') }}</td>
                                 <td class="px-4 py-3 text-sm">
                                     {% if bill.status == 'paid' %}
                                         <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Payée</span>
@@ -112,8 +112,8 @@
                             <p class="text-sm text-gray-600">{{ bill.date|format_datetime }}</p>
                         </div>
                         <div class="grid grid-cols-2 gap-2 mb-3">
-                            <p class="text-sm text-gray-600">Total: <span class="font-medium">{{ bill.total_amount|round(2) }} {{ current_shop.currency|default('FCFA') }} </span></p>
-                            <p class="text-sm text-gray-600">Payé: <span class="font-medium">{{ bill.paid_amount|round(2) }} {{ current_shop.currency|default('FCFA') }} </span></p>
+                            <p class="text-sm text-gray-600">Total: <span class="font-medium">{{ bill.total_amount|fr_thousands }} {{ current_shop.currency|default('FCFA') }} </span></p>
+                            <p class="text-sm text-gray-600">Payé: <span class="font-medium">{{ bill.paid_amount|fr_thousands }} {{ current_shop.currency|default('FCFA') }} </span></p>
                         </div>
                         <div class="flex justify-between items-center">
                             {% if bill.status == 'paid' %}

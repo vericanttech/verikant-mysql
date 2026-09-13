@@ -29,6 +29,7 @@
 
                     <!-- Shop Details -->
                     <div class="space-y-2 text-sm text-gray-600 mb-4">
+                        <p><i data-lucide="landmark" class="w-4 h-4 inline mr-2"></i>{{ shop.country_code }} · {{ shop.currency_code }} ({{ shop.currency }})</p>
                         <p><i data-lucide="map-pin" class="w-4 h-4 inline mr-2"></i>{{ shop.address or 'Adresse non définie' }}</p>
                         <p><i data-lucide="mail" class="w-4 h-4 inline mr-2"></i>{{ shop.email or 'Email non défini' }}</p>
                         {% if shop.phones %}

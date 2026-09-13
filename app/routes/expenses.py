@@ -3,7 +3,8 @@ from flask_login import login_required, current_user
 from sqlalchemy import desc
 from app import db
 from app.utils import admin_only_action
-from app.models import Expense, Category, Check, Supplier, SupplierBill, User
+from app.models import Expense, Category, Check, Supplier, SupplierBill, User, Shop
+from app.currencies import currency_label, format_amount, shop_currency_code
 from datetime import datetime, timedelta
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -260,10 +261,15 @@ def export_expenses_pdf():
     elements.append(Spacer(1, 14))
 
     table_data = [['Date', 'Catégorie', 'Montant', 'Caissier']]
-    currency = "FCFA"
+    shop = Shop.query.get(current_user.current_shop_id)
+    currency_code = shop_currency_code(shop)
+    currency = currency_label(currency_code)
+
+    def pdf_amount(value):
+        return format_amount(value, currency_code, 'fr').replace('\u202f', ' ')
 
     for expense, category_name, user_name in filtered_expenses:
-        amount = f"{expense.amount:,.2f}".replace(',', ' ') + f" {currency}"
+        amount = f"{pdf_amount(expense.amount)} {currency}"
         expense_date = expense.date
         if hasattr(expense_date, 'strftime'):
             formatted_date = expense_date.strftime('%d/%m/%Y')
@@ -286,7 +292,7 @@ def export_expenses_pdf():
         ])
 
     if len(table_data) == 1:
-        table_data.append(['-', '-', '0.00 FCFA', '-'])
+        table_data.append(['-', '-', f'{pdf_amount(0)} {currency}', '-'])
 
     table = Table(table_data, colWidths=[1.2 * inch, 2.2 * inch, 1.5 * inch, 1.8 * inch])
     table.setStyle(TableStyle([

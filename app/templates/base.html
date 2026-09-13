@@ -378,7 +378,17 @@
 <script>
 window.UI_LANG = {{ ui_lang|tojson }};
 window.UI_TRANSLATIONS = {{ ui_translations|tojson }};
+window.CURRENCY_CODE = {{ current_currency_code|default('XOF')|tojson }};
+window.CURRENCY_LABEL = {{ current_currency_label|default('FCFA')|tojson }};
+window.CURRENCY_DECIMALS = {{ current_currency_decimals|default(0)|int }};
 window.tr = function (text) { return window.UI_TRANSLATIONS[text] || text; };
+window.formatAmount = function (value) {
+    const number = Number(value || 0);
+    return new Intl.NumberFormat(window.UI_LANG === 'en' ? 'en' : 'fr', {
+        minimumFractionDigits: window.CURRENCY_DECIMALS,
+        maximumFractionDigits: window.CURRENCY_DECIMALS
+    }).format(number);
+};
 window.translateUI = function (root) {
     if (window.UI_LANG !== 'en' || !root) return;
     const translateTextNode = function (node) {

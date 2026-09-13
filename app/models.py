@@ -5,15 +5,15 @@ from datetime import datetime
 
 
 # Mixins
-class TimestampMixin:
-    @staticmethod
-    def _now_local_str():
-        return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+def _now_local_str():
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
+
+class TimestampMixin:
     created_at = db.Column(
         db.Text,
         nullable=False,
-        default=_now_local_str
+        default=_now_local_str,
     )
 
 
@@ -21,8 +21,8 @@ class TimestampWithUpdateMixin(TimestampMixin):
     updated_at = db.Column(
         db.Text,
         nullable=False,
-        default=TimestampMixin._now_local_str,
-        onupdate=TimestampMixin._now_local_str
+        default=_now_local_str,
+        onupdate=_now_local_str,
     )
 
 
@@ -41,6 +41,8 @@ class Shop(ShopModel, TimestampWithUpdateMixin):
     email_password = db.Column(db.Text)  # New field for email password
     tax_id = db.Column(db.Text)
     currency = db.Column(db.Text, default='FCFA')
+    country_code = db.Column(db.String(2), nullable=False, default='SN', server_default='SN')
+    currency_code = db.Column(db.String(3), nullable=False, default='XOF', server_default='XOF')
     logo_path = db.Column(db.Text)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     # Legacy: anciens liens /v/<slug> uniquement (redirection vers /v/<id>). L’URL publique est /v/<shop_id>.

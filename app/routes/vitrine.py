@@ -264,7 +264,7 @@ def vitrine_products_search():
                 {
                     'id': p.id,
                     'name': p.name,
-                    'price': int(round(p.selling_price or 0)),
+                    'price': float(p.selling_price or 0),
                     'stock': int(p.stock or 0),
                 }
                 for p in products

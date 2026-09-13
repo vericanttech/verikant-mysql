@@ -432,6 +432,14 @@
                             <label for="business_type">Business Type</label>
                             <input type="text" id="business_type" name="business_type" class="form-input" placeholder="Enter business type">
                         </div>
+                        <div class="form-group">
+                            <label for="country_code">Country and Currency</label>
+                            <select id="country_code" name="country_code" class="form-input" required>
+                                {% for option in currency_options %}
+                                <option value="{{ option.country_code }}">{{ option.country_name }} · {{ option.currency_code }} ({{ option.currency_label }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Create Shop
                         </button>
@@ -499,6 +507,8 @@
                             <th>ID</th>
                             <th>Name</th>
                             <th>Business Type</th>
+                            <th>Country</th>
+                            <th>Currency</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -509,6 +519,8 @@
                             <td><strong>#{{ shop.id }}</strong></td>
                             <td>{{ shop.name }}</td>
                             <td>{{ shop.business_type or 'N/A' }}</td>
+                            <td>{{ shop.country_code }}</td>
+                            <td>{{ shop.currency_code }} ({{ shop.currency }})</td>
                             <td>
                                 <span class="status-badge {{ 'status-active' if shop.is_active else 'status-inactive' }}">
                                     {{ 'Active' if shop.is_active else 'Inactive' }}

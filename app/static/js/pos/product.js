@@ -236,7 +236,7 @@ function debounce(func, delay) {
 
 // Format number with French formatting (using spaces as thousands separator and comma for decimal)
 function formatNumberFR(number) {
-    return new Intl.NumberFormat('fr-FR').format(number);
+    return window.formatAmount ? window.formatAmount(number) : String(number);
 }
 
 // Initialize on document ready

@@ -249,6 +249,9 @@ ENGLISH = {
     "Merci de votre confiance!": "Thank you for your business!",
     "Pour toute réclamation, veuillez présenter cette facture": "Please present this invoice for any claim",
     "Promos & vitrine": "Promotions & storefront", "Partager la facture PDF": "Share invoice PDF",
+    "Pays et devise": "Country and Currency",
+    "La devise est verrouillée car ce magasin contient déjà des produits ou des opérations financières.": "The currency is locked because this store already has products or financial activity.",
+    "Échec de la mise à jour": "Update failed", "Erreur": "Error", "Succès": "Success",
     # Inventory
     "Gestion des Stocks": "Inventory Management", "Exporter PDF": "Export PDF",
     "Nouveau produit": "New product", "Rechercher un produit": "Search for a product",
