@@ -41,8 +41,8 @@
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="bg-gradient-to-r from-green-400 via-green-500 to-green-600 text-white rounded-lg p-6 shadow-sm">
-            <h5 class="text-sm font-medium mb-2">{{ tr("Total des Ventes") }}</h5>
-            <h3 class="text-2xl font-bold">{{ total_sales | fr_thousands  }} {{ current_shop.currency|default('FCFA') }}</h3>
+            <h5 class="text-sm font-medium mb-2">{{ tr("Ventes nettes HT") }}</h5>
+            <h3 class="text-2xl font-bold">{{ net_sales | fr_thousands  }} {{ current_shop.currency|default('FCFA') }}</h3>
         </div>
         <div class="bg-gradient-to-r from-red-400 via-red-500 to-red-600 text-white rounded-lg p-6 shadow-sm">
             <h5 class="text-sm font-medium mb-2">{{ tr("Total des Dépenses") }}</h5>
@@ -51,6 +51,29 @@
         <div class="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white rounded-lg p-6 shadow-sm">
             <h5 class="text-sm font-medium mb-2">{{ tr("Bénéfice Net") }}</h5>
             <h3 class="text-2xl font-bold">{{ net_profit | fr_thousands  }} {{ current_shop.currency|default('FCFA') }}</h3>
+        </div>
+    </div>
+
+    <!-- Cash and tax are kept separate from revenue and profit. -->
+    <div class="bg-white rounded-lg shadow-sm p-5">
+        <h4 class="text-sm font-semibold text-gray-700 mb-4">{{ tr("Trésorerie et taxes") }}</h4>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="rounded-lg bg-gray-50 border border-gray-200 p-4">
+                <div class="text-xs font-medium text-gray-500 mb-1">{{ tr("Total facturé TTC") }}</div>
+                <div class="text-lg font-semibold text-gray-900">{{ invoiced_total | fr_thousands }} {{ current_shop.currency|default('FCFA') }}</div>
+            </div>
+            <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-4">
+                <div class="text-xs font-medium text-emerald-700 mb-1">{{ tr("Paiements encaissés") }}</div>
+                <div class="text-lg font-semibold text-emerald-900">{{ payments_collected | fr_thousands }} {{ current_shop.currency|default('FCFA') }}</div>
+            </div>
+            <div class="rounded-lg bg-amber-50 border border-amber-200 p-4">
+                <div class="text-xs font-medium text-amber-700 mb-1">{{ tr("Solde impayé") }}</div>
+                <div class="text-lg font-semibold text-amber-900">{{ outstanding_balance | fr_thousands }} {{ current_shop.currency|default('FCFA') }}</div>
+            </div>
+            <div class="rounded-lg bg-indigo-50 border border-indigo-200 p-4">
+                <div class="text-xs font-medium text-indigo-700 mb-1">{{ tr("TVA à reverser") }}</div>
+                <div class="text-lg font-semibold text-indigo-900">{{ vat_payable | fr_thousands }} {{ current_shop.currency|default('FCFA') }}</div>
+            </div>
         </div>
     </div>
 

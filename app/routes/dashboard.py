@@ -6,7 +6,8 @@ from app import db
 from app.auth import admin_required
 from app.models import (
     SalesBill, Category, Product, Expense,
-    Check, Loan, BoutiqueTransaction, SalesDetail, Client
+    Check, Loan, BoutiqueTransaction, SalesDetail, Client,
+    PaymentTransaction
 )
 from app.sales_visibility import sales_bill_vat_only_clause
 
@@ -53,27 +54,60 @@ def index():
 
     vat_clause = sales_bill_vat_only_clause()
 
-    # Sales Statistics Query with date filter
-    sales_stats_q = (
+    # Invoice-level totals are the accounting source of truth: amount_ht already
+    # includes the invoice discount, while VAT remains separate from revenue.
+    bill_stats_q = (
         db.session.query(
-            func.sum(SalesDetail.total_amount).label('total_sales'),
-            func.sum(
-                SalesDetail.quantity *
-                (SalesDetail.selling_price - SalesDetail.buying_price)
-            ).label('total_profit')
+            func.sum(SalesBill.amount_ht).label('net_sales'),
+            func.sum(SalesBill.vat_amount).label('vat_payable'),
+            func.sum(SalesBill.total_amount).label('invoiced_total'),
+            func.sum(SalesBill.remaining_amount).label('outstanding_balance'),
+        )
+        .filter(
+            SalesBill.date.between(start_datetime, end_datetime),
+            SalesBill.shop_id == shop_id,
+            SalesBill.status != 'cancelled',
+        )
+    )
+    if vat_clause is not None:
+        bill_stats_q = bill_stats_q.filter(vat_clause)
+    bill_stats = bill_stats_q.first()
+
+    net_sales = bill_stats.net_sales or 0
+    vat_payable = bill_stats.vat_payable or 0
+    invoiced_total = bill_stats.invoiced_total or 0
+    outstanding_balance = bill_stats.outstanding_balance or 0
+
+    # Cost of goods sold belongs to the same invoice period as its revenue.
+    cogs_q = (
+        db.session.query(
+            func.sum(SalesDetail.quantity * SalesDetail.buying_price)
         )
         .join(SalesBill, SalesDetail.bill_id == SalesBill.id)
         .filter(
             SalesBill.date.between(start_datetime, end_datetime),
-            SalesBill.shop_id == shop_id
+            SalesBill.shop_id == shop_id,
+            SalesBill.status != 'cancelled',
         )
     )
     if vat_clause is not None:
-        sales_stats_q = sales_stats_q.filter(vat_clause)
-    sales_stats = sales_stats_q.first()
+        cogs_q = cogs_q.filter(vat_clause)
+    cost_of_goods_sold = cogs_q.scalar() or 0
 
-    total_sales = sales_stats.total_sales or 0
-    total_profit = sales_stats.total_profit or 0
+    # Cash is reported by the date it was actually received, independently of
+    # the invoice date. Joining the bill preserves the shop's VAT-only view.
+    payments_q = (
+        db.session.query(func.sum(PaymentTransaction.amount))
+        .join(SalesBill, PaymentTransaction.bill_id == SalesBill.id)
+        .filter(
+            PaymentTransaction.date.between(start_datetime, end_datetime),
+            PaymentTransaction.shop_id == shop_id,
+            SalesBill.status != 'cancelled',
+        )
+    )
+    if vat_clause is not None:
+        payments_q = payments_q.filter(vat_clause)
+    payments_collected = payments_q.scalar() or 0
 
     # Expense Statistics Query with date filter
     total_expenses = (
@@ -139,14 +173,21 @@ def index():
         .all()
     )
 
-    # Calculate net profit
-    net_profit = total_profit - total_expenses
+    # VAT is a liability, not revenue. Discounts are already reflected in
+    # net_sales, so they now correctly reduce both gross and net profit.
+    gross_profit = net_sales - cost_of_goods_sold
+    net_profit = gross_profit - total_expenses
 
     return render_template(
         'dashboard/index.html',
-        total_sales=total_sales,
+        net_sales=net_sales,
         total_expenses=total_expenses,
+        gross_profit=gross_profit,
         net_profit=net_profit,
+        invoiced_total=invoiced_total,
+        payments_collected=payments_collected,
+        outstanding_balance=outstanding_balance,
+        vat_payable=vat_payable,
         recent_sales=recent_sales,
         recent_expenses=recent_expenses,
         low_stock_products=low_stock_products,
