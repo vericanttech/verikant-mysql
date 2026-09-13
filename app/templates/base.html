@@ -397,9 +397,14 @@ window.translateUI = function (root) {
         const value = node.nodeValue;
         const trimmed = value.trim();
         const translated = window.UI_TRANSLATIONS[trimmed];
-        if (translated) node.nodeValue = value.replace(trimmed, translated);
+        if (translated && translated !== trimmed) {
+            node.nodeValue = value.replace(trimmed, translated);
+        }
     };
-    if (root.nodeType === Node.TEXT_NODE) translateTextNode(root);
+    if (root.nodeType === Node.TEXT_NODE) {
+        translateTextNode(root);
+        return;
+    }
     const scope = root.nodeType === Node.ELEMENT_NODE ? root : document;
     const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
     let node;
@@ -410,7 +415,7 @@ window.translateUI = function (root) {
             ['placeholder', 'title', 'aria-label'].forEach(function (attribute) {
                 if (!element.getAttribute) return;
                 const value = element.getAttribute(attribute);
-                if (value && window.UI_TRANSLATIONS[value]) {
+                if (value && window.UI_TRANSLATIONS[value] && window.UI_TRANSLATIONS[value] !== value) {
                     element.setAttribute(attribute, window.UI_TRANSLATIONS[value]);
                 }
             });

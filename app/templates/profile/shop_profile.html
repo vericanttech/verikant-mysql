@@ -8,8 +8,9 @@
             <h2 class="text-xl font-semibold text-gray-900">Profile de l'Entreprise</h2>
             <button id="toggleEdit"
                     class="px-4 py-2 text-sm font-medium rounded-lg transition-colors">
-                <i data-lucide="edit" class="w-5 h-5 inline-block align-text-bottom"></i>
-                <span class="ml-2">Modifier</span>
+                <i data-lucide="edit" class="edit-icon w-5 h-5 inline-block align-text-bottom"></i>
+                <i data-lucide="save" class="save-icon hidden w-5 h-5 inline-block align-text-bottom"></i>
+                <span class="toggle-edit-label ml-2">{{ tr('Modifier') }}</span>
             </button>
         </div>
 
@@ -182,6 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const logoUpload = document.getElementById('logoUpload');
     const addPhoneBtn = document.getElementById('addPhoneBtn');
     const phoneList = document.getElementById('phoneList');
+    const toggleLabel = toggleButton.querySelector('.toggle-edit-label');
     let editMode = false;
 
        // Initialize Lucide icons
@@ -225,22 +227,17 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleButton.className = enabled
             ? 'px-4 py-2 text-sm font-medium rounded-lg bg-blue-50 text-blue-600'
             : 'px-4 py-2 text-sm font-medium rounded-lg transition-colors';
-        toggleButton.innerHTML = enabled
-            ? '<i data-lucide="save" class="w-5 h-5 inline-block align-text-bottom"></i><span class="ml-2">Enregistrer</span>'
-            : '<i data-lucide="edit" class="w-5 h-5 inline-block align-text-bottom"></i><span class="ml-2">Modifier</span>';
-
-        // Refresh icons
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
+        toggleButton.querySelector('.edit-icon').classList.toggle('hidden', enabled);
+        toggleButton.querySelector('.save-icon').classList.toggle('hidden', !enabled);
+        toggleLabel.textContent = enabled ? tr('Enregistrer') : tr('Modifier');
 
         // Toggle logo upload
-        logoUpload.classList.toggle('hidden');
+        logoUpload.classList.toggle('hidden', !enabled);
 
         // Toggle phone controls
-        addPhoneBtn.classList.toggle('hidden');
+        addPhoneBtn.classList.toggle('hidden', !enabled);
         document.querySelectorAll('.delete-phone').forEach(btn => {
-            btn.classList.toggle('hidden');
+            btn.classList.toggle('hidden', !enabled);
         });
 
         // Toggle editable fields
