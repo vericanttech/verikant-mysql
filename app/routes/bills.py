@@ -26,7 +26,7 @@ from app.vitrine_helpers import build_vitrine_shop_url, qr_png_data_url
 from app.invoice_pdf import build_invoice_pdf_buffer
 from app.sales_visibility import sales_bill_vat_only_clause, abort_if_bill_hidden_in_vat_mode
 from app.pricing_validation import validate_unit_selling_not_below_buying
-from app.currencies import currency_label, format_amount, shop_currency_code
+from app.currencies import currency_decimals, currency_label, format_amount, shop_currency_code
 
 
 bills = Blueprint('bills', __name__)
@@ -198,6 +198,9 @@ def print_bill(bill_id, print_format='standard'):
             'bill_data': {
                 'company_name': shop_profile.name if shop_profile else '',
                 'company_tax_id': shop_profile.tax_id if shop_profile else '',
+                'currency_code': shop_currency_code(shop_profile),
+                'currency_label': currency_label(shop_currency_code(shop_profile)),
+                'currency_decimals': currency_decimals(shop_currency_code(shop_profile)),
                 'phone': ', '.join(phone.phone for phone in shop_profile.phones) if shop_profile and shop_profile.phones else '',
                 'bill_number': bill.bill_number,
                 'date': bill.date,

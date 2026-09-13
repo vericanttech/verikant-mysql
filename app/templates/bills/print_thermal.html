@@ -205,6 +205,10 @@
             <span>{{ tr('Date:') }}</span>
             <span>{{ bill.date|format_datetime }}</span>
         </div>
+        <div>
+            <span>{{ tr('Devise') }}:</span>
+            <span>{{ shop_profile.currency|default('FCFA') }}</span>
+        </div>
         {% if bill.client %}
         <div>
             <span>{{ tr('Client:') }}</span>
