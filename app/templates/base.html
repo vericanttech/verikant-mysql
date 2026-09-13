@@ -341,38 +341,6 @@
     <!-- Spacer for mobile bottom nav -->
     <div class="h-24 md:hidden"></div>
 
-    <!-- Mobile Bottom Navigation (Outside main layout) -->
-    {% if current_user.is_authenticated %}
-    <div class="md:hidden mobile-bottom-nav-fix">
-        <a href="{{ url_for('bills.pos') }}" class="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
-            <i data-lucide="shopping-cart" class="w-6 h-6 mb-1"></i>
-            <span class="text-xs font-medium">{{ tr("Vente") }}</span>
-        </a>
-
-        <!-- Stock -->
-        <a href="{{ url_for('inventory.product_list') }}" class="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
-            <i data-lucide="package" class="w-6 h-6 mb-1"></i>
-            <span class="text-xs font-medium">{{ tr("Stock") }}</span>
-        </a>
-
-        <!-- Factures -->
-        <a href="{{ url_for('bills.bill_list') }}" class="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
-            <i data-lucide="receipt" class="w-6 h-6 mb-1"></i>
-            <span class="text-xs font-medium">{{ tr("Factures") }}</span>
-        </a>
-
-        <!-- Plus Button (Floating Action Button) -->
-        <button id="mobile-plus-button" class="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors relative">
-            <div class="w-6 h-6 mb-1 bg-blue-500 rounded-full flex items-center justify-center">
-                <i data-lucide="plus" class="w-4 h-4 text-white"></i>
-            </div>
-            <span class="text-xs font-medium">{{ tr("Plus") }}</span>
-        </button>
-    </div>
-
-
-    </div>
-    {% endif %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
 <script>
