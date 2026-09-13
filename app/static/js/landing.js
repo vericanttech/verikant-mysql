@@ -17,7 +17,8 @@
         revealItems.forEach((item) => revealObserver.observe(item));
     }
 
-    const formatNumber = (value) => new Intl.NumberFormat('fr-FR').format(value);
+    const numberLocale = document.documentElement.lang === 'en' ? 'en-US' : 'fr-FR';
+    const formatNumber = (value) => new Intl.NumberFormat(numberLocale).format(value);
     const counters = document.querySelectorAll('[data-counter]');
     const animateCounter = (element) => {
         if (element.dataset.counted === 'true') return;
@@ -85,19 +86,19 @@
             const spinner = document.getElementById('spinner');
             const status = document.getElementById('formStatus');
             button.disabled = true;
-            label.textContent = 'Envoi en cours…';
+            label.textContent = form.dataset.sending;
             spinner.hidden = false;
             status.textContent = '';
             try {
                 const response = await fetch('/send-email', { method: 'POST', body: new FormData(form) });
                 if (!response.ok) throw new Error('send_failed');
                 form.reset();
-                status.textContent = 'Message envoyé. Nous vous répondrons rapidement.';
+                status.textContent = form.dataset.sent;
             } catch (_error) {
-                status.textContent = "Le message n'a pas pu être envoyé. Écrivez-nous sur WhatsApp ou réessayez plus tard.";
+                status.textContent = form.dataset.error;
             } finally {
                 button.disabled = false;
-                label.textContent = 'Envoyer le message';
+                label.textContent = form.dataset.submit;
                 spinner.hidden = true;
             }
         });

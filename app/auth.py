@@ -10,6 +10,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 from .models import User, UserShop, Shop
+from .landing_copy import get_landing_copy
 from . import db
 from datetime import datetime
 
@@ -248,7 +249,21 @@ def logout():
 
 @auth.route('/')
 def landing_page():
-    return render_template('landing_page.html', year=datetime.now().year)
+    return _render_landing_page('fr')
+
+
+@auth.route('/en/')
+def landing_page_en():
+    return _render_landing_page('en')
+
+
+def _render_landing_page(language):
+    return render_template(
+        'landing_page.html',
+        year=datetime.now().year,
+        landing_lang=language,
+        copy=get_landing_copy(language),
+    )
 
 @auth.route('/reset-password', methods=['POST'])
 @login_required

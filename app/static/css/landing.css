@@ -39,6 +39,9 @@ button { color: inherit; }
 .main-nav > a:not(.nav-login) { transition: color .2s ease; }
 .main-nav > a:not(.nav-login):hover { color: var(--green); }
 .nav-actions { display: flex; align-items: center; gap: 8px; }
+.language-switch { display: inline-flex; padding: 3px; background: #edf3f0; border: 1px solid var(--line); border-radius: 999px; }
+.language-switch a { min-width: 29px; padding: 4px 7px; color: #61716d; border-radius: 999px; font-size: .68rem; font-weight: 850; text-align: center; letter-spacing: .04em; }
+.language-switch a.is-active { color: #fff; background: var(--green-deep); }
 .nav-login { padding: 10px 18px; color: #fff; background: var(--green-deep); border-radius: 999px; }
 .nav-toggle { display: none; width: 44px; height: 44px; border: 0; background: transparent; padding: 11px; }
 .nav-toggle > span:not(.sr-only) { display: block; height: 2px; background: var(--ink); margin: 5px 0; }
@@ -189,6 +192,12 @@ h2 { margin-bottom: 22px; font-family: Georgia, "Times New Roman", serif; font-s
     .multi-shop { padding-bottom: 85px; }.multi-card { padding: 38px 22px; border-radius: 24px; }.multi-card h2 { font-size: 2.45rem; }.network-node { min-width: 125px; }.n1 { left: 0; }.n2 { right: -5px; }.n3 { left: 4%; }
     .final-cta { padding-block: 80px; }.contact { padding-block: 80px; }.contact-copy h2 { font-size: 2.6rem; }.contact-form { grid-template-columns: 1fr; padding: 22px 17px; }.contact-form label,.contact-form label:nth-child(3),.contact-form .button,.form-status { grid-column: 1; }
     .footer-grid { grid-template-columns: 1fr; gap: 32px; }.footer-bottom { flex-direction: column; gap: 5px; }
+}
+@media (max-width: 410px) {
+    .nav-shell { gap: 7px; }
+    .brand span { display: none; }
+    .nav-actions { gap: 5px; }
+    .nav-login { padding-inline: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; } *,*::before,*::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } [data-reveal] { opacity: 1; transform: none; }
