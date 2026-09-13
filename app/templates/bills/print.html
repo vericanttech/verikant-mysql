@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facture #{{ bill.bill_number }}</title>
+    <title>{{ tr('Facture') }} #{{ bill.bill_number }}</title>
     <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
     <style>
         /* Reset and base styles */
@@ -648,7 +648,7 @@
             <!-- Mobile Header -->
             <div class="mobile-header mobile-only">
                 <div class="mobile-company-name">{{ shop_profile.name }}</div>
-                <div class="mobile-company-tagline">Facture Professionnelle</div>
+                <div class="mobile-company-tagline">{{ tr('Facture Professionnelle') }}</div>
                 <div class="mobile-contact-info">
                     {% if shop_profile.phones %}
                         {% for phone in shop_profile.phones %}
@@ -676,16 +676,16 @@
             <!-- Desktop Bill Information -->
             <div class="bill-info desktop-only">
                 <div class="info-grid">
-                    <span>La Caissière:</span>
+                    <span>{{ tr('La Caissière:') }}</span>
                     <span>{{ bill.user.name }}</span>
-                    <span>No Facture:</span>
+                    <span>{{ tr('No Facture:') }}</span>
                     <span>{{ bill.bill_number }}</span>
-                    <span>Date:</span>
+                    <span>{{ tr('Date:') }}</span>
                     <span>{{ bill.date|format_datetime }}</span>
                     {% if bill.client %}
-                    <span>Client:</span>
+                    <span>{{ tr('Client:') }}</span>
                     <span>{{ bill.client.name }}</span>
-                    <span>Téléphone:</span>
+                    <span>{{ tr('Téléphone:') }}</span>
                     <span>{{ bill.client.phone }}</span>
                     {% endif %}
                 </div>
@@ -694,14 +694,14 @@
             <!-- Mobile Bill Information -->
             <div class="mobile-bill-info mobile-only">
                 <div class="mobile-info-grid">
-                    <span class="mobile-info-label">👤 Caissière:</span>
+                    <span class="mobile-info-label">👤 {{ tr('Caissier:') }}</span>
                     <span class="mobile-info-value">{{ bill.user.name }}</span>
-                    <span class="mobile-info-label">📅 Date:</span>
+                    <span class="mobile-info-label">📅 {{ tr('Date:') }}</span>
                     <span class="mobile-info-value">{{ bill.date|format_datetime }}</span>
                     {% if bill.client %}
-                    <span class="mobile-info-label">🏢 Client:</span>
+                    <span class="mobile-info-label">🏢 {{ tr('Client:') }}</span>
                     <span class="mobile-info-value">{{ bill.client.name }}</span>
-                    <span class="mobile-info-label">📞 Téléphone:</span>
+                    <span class="mobile-info-label">📞 {{ tr('Téléphone:') }}</span>
                     <span class="mobile-info-value">{{ bill.client.phone }}</span>
                     {% endif %}
                 </div>
@@ -711,10 +711,10 @@
             <table class="items-table desktop-only">
                 <thead>
                     <tr>
-                        <th>Qté</th>
+                        <th>{{ tr('Qté') }}</th>
                         <th>Designation</th>
-                        <th>Prix unitaire</th>
-                        <th>Prix total</th>
+                        <th>{{ tr('Prix unitaire') }}</th>
+                        <th>{{ tr('Prix total') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -733,10 +733,10 @@
             <table class="mobile-items-table mobile-only">
                 <thead>
                     <tr>
-                        <th>Qté</th>
+                        <th>{{ tr('Qté') }}</th>
                         <th>Designation</th>
-                        <th>Prix unitaire</th>
-                        <th>Prix total</th>
+                        <th>{{ tr('Prix unitaire') }}</th>
+                        <th>{{ tr('Prix total') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -756,15 +756,15 @@
             {% if show_discount or show_vat %}
             <div class="vat-summary">
                 {% if show_discount %}
-                <div class="vat-summary-line"><span>Sous-total HT</span><span>{{ bill.gross_amount_ht | fr_thousands }}</span></div>
+                <div class="vat-summary-line"><span>{{ tr('Sous-total HT') }}</span><span>{{ bill.gross_amount_ht | fr_thousands }}</span></div>
                 <div class="vat-summary-line"><span>Remise{% if bill.discount_rate %} ({{ (bill.discount_rate * 100)|round(2) }}%){% endif %}</span><span>-{{ bill.discount_amount | fr_thousands }}</span></div>
                 {% endif %}
                 {% if show_vat %}
-                <div class="vat-summary-line"><span>Total HT</span><span>{{ bill.amount_ht | fr_thousands }}</span></div>
+                <div class="vat-summary-line"><span>{{ tr('Total HT') }}</span><span>{{ bill.amount_ht | fr_thousands }}</span></div>
                 <div class="vat-summary-line"><span>TVA{% if bill.vat_rate %} ({{ (bill.vat_rate * 100)|round(2) }}%){% endif %}</span><span>{{ bill.vat_amount | fr_thousands }}</span></div>
-                <div class="vat-summary-line vat-summary-total"><span>Total TTC</span><span>{{ bill.total_amount | fr_thousands }}</span></div>
+                <div class="vat-summary-line vat-summary-total"><span>{{ tr('Total TTC') }}</span><span>{{ bill.total_amount | fr_thousands }}</span></div>
                 {% elif show_discount %}
-                <div class="vat-summary-line vat-summary-total"><span>Total</span><span>{{ bill.total_amount | fr_thousands }}</span></div>
+                <div class="vat-summary-line vat-summary-total"><span>{{ tr('Total') }}</span><span>{{ bill.total_amount | fr_thousands }}</span></div>
                 {% endif %}
             </div>
             {% endif %}
@@ -773,8 +773,8 @@
             <table class="total-section desktop-only">
                 <tr>
                     <td><strong>{% if show_vat %}TOTAL TTC{% else %}TOTAL{% endif %}</strong></td>
-                    <td><strong>AVANCE</strong></td>
-                    <td><strong>NET A PAYER</strong></td>
+                    <td><strong>{{ tr('AVANCE') }}</strong></td>
+                    <td><strong>{{ tr('NET A PAYER') }}</strong></td>
                 </tr>
                 <tr>
                     <td>{{ bill.total_amount | fr_thousands  }}</td>
@@ -801,32 +801,32 @@
             <div class="signature-section desktop-only">
                 <div class="signature-box">
                     <div class="signature-line"></div>
-                    <div>VISA RESPONSABLE DEPOT</div>
+                    <div>{{ tr('VISA RESPONSABLE DEPOT') }}</div>
                 </div>
                 <div class="signature-box">
                     <div class="signature-line"></div>
-                    <div>VISA LIVREUR</div>
+                    <div>{{ tr('VISA LIVREUR') }}</div>
                 </div>
                 <div class="signature-box">
                     <div class="signature-line"></div>
-                    <div>VISA CAISSIER</div>
+                    <div>{{ tr('VISA CAISSIER') }}</div>
                 </div>
             </div>
 
             <!-- Desktop Total in Letters -->
             <div class="total-letters desktop-only">
-                <strong>**Total en lettres :**</strong> {{ bill.total_amount|number_to_words(shop_profile.currency|default('FCFA'))|upper }}
+                <strong>{{ tr('**Total en lettres :**') }}</strong> {{ bill.total_amount|number_to_words(shop_profile.currency|default('FCFA'), ui_lang)|upper }}
             </div>
 
             <!-- Mobile Total in Letters -->
             <div class="mobile-total-letters mobile-only">
-                <strong>Total en lettres :</strong><br>
-                {{ bill.total_amount|number_to_words(shop_profile.currency|default('FCFA'))|upper }}
+                <strong>{{ tr('Total en lettres :') }}</strong><br>
+                {{ bill.total_amount|number_to_words(shop_profile.currency|default('FCFA'), ui_lang)|upper }}
             </div>
 
             {% if vitrine_public_url and vitrine_qr_data_url %}
             <div class="vitrine-qr-print" style="text-align:center;margin-top:14px;padding-top:14px;border-top:1px dashed #ccc;">
-                <p style="font-size:13px;font-weight:600;margin-bottom:6px;">Promos &amp; vitrine</p>
+                <p style="font-size:13px;font-weight:600;margin-bottom:6px;">{{ tr('Promos & vitrine') }}</p>
                 <img src="{{ vitrine_qr_data_url }}" alt="QR vitrine" class="vitrine-qr-img" style="margin:0 auto;display:block;" />
             </div>
             {% endif %}
@@ -853,7 +853,7 @@
         -->
         <button type="button" id="mobile-invoice-action" onclick="generateAndShare()"
             class="mobile-action-button mobile-whatsapp-button"
-            aria-label="Partager la facture PDF">
+            aria-label="{{ tr('Partager la facture PDF') }}">
             <i class="fab fa-whatsapp" aria-hidden="true"></i> Partager
         </button>
     </div>

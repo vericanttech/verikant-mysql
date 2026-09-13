@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ ui_lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% include '_partials/pwa_head.html' %}
-    <title>Système de Gestion d'Entreprise</title>
+    <title>{% block title %}{{ tr("Système de Gestion d'Entreprise") }}{% endblock %}</title>
     <script src="{{ url_for('static', filename='js/lib/lucide.min.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="icon" type="image/x-icon" href="/static/images/vericant-icon.svg">
@@ -14,7 +14,7 @@
     <div id="offlineAlert" class="hidden fixed top-0 left-0 right-0 bg-red-500 text-white p-4 text-center z-50">
         <p class="flex items-center justify-center">
             <i data-lucide="wifi-off" class="w-5 h-5 mr-2"></i>
-            Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées.
+            {{ tr("Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées.") }}
         </p>
     </div>
     {% include '_partials/rollout_banner.html' %}
@@ -40,7 +40,7 @@
                         {% if current_shop %}
                             {{ current_shop.name }}
                         {% else %}
-                            Management System
+                            {{ tr("Management System") }}
                         {% endif %}
                     </span>
                 </a>
@@ -59,7 +59,7 @@
                     <div>
                         <a href="{{ url_for('dashboard.index') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all group">
                             <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
-                            <span class="font-medium">Tableau de Bord</span>
+                            <span class="font-medium">{{ tr("Tableau de Bord") }}</span>
                         </a>
                     </div>
                     {% endif %}
@@ -69,22 +69,22 @@
                         <button class="collapsible-header w-full flex items-center justify-between p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all group">
                             <div class="flex items-center">
                                 <i data-lucide="trending-up" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium text-sm uppercase tracking-wider">Gestion des Ventes</span>
+                                <span class="font-medium text-sm uppercase tracking-wider">{{ tr("Gestion des Ventes") }}</span>
                             </div>
                             <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200"></i>
                         </button>
                         <div class="collapsible-content hidden space-y-1 pl-4">
                             <a href="{{ url_for('bills.pos') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group {% if request.endpoint == 'bills.pos' %}bg-green-50 text-green-700 border-l-4 border-green-500{% endif %}">
                                 <i data-lucide="shopping-cart" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Point de Vente</span>
+                                <span class="font-medium">{{ tr("Point de Vente") }}</span>
                             </a>
                             <a href="{{ url_for('bills.sale_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="trending-up" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Historique des Ventes</span>
+                                <span class="font-medium">{{ tr("Historique des Ventes") }}</span>
                             </a>
                             <a href="{{ url_for('bills.bill_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="receipt" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Factures</span>
+                                <span class="font-medium">{{ tr("Factures") }}</span>
                             </a>
                         </div>
                     </div>
@@ -97,22 +97,22 @@
                         <button class="collapsible-header w-full flex items-center justify-between p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all group">
                             <div class="flex items-center">
                                 <i data-lucide="package" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium text-sm uppercase tracking-wider">Stock & Fournisseurs</span>
+                                <span class="font-medium text-sm uppercase tracking-wider">{{ tr("Stock & Fournisseurs") }}</span>
                             </div>
                             <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200"></i>
                         </button>
                         <div class="collapsible-content hidden space-y-1 pl-4">
                             <a href="{{ url_for('inventory.product_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="package" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Inventaire</span>
+                                <span class="font-medium">{{ tr("Inventaire") }}</span>
                             </a>
                             <a href="{{ url_for('expenses.supplier_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="truck" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Fournisseurs</span>
+                                <span class="font-medium">{{ tr("Fournisseurs") }}</span>
                             </a>
                             <a href="{{ url_for('boutique.transaction_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="shopping-bag" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Versement</span>
+                                <span class="font-medium">{{ tr("Versement") }}</span>
                             </a>
                         </div>
                     </div>
@@ -125,7 +125,7 @@
                         <button class="collapsible-header w-full flex items-center justify-between p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all group">
                             <div class="flex items-center">
                                 <i data-lucide="wallet" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium text-sm uppercase tracking-wider">Gestion Financière</span>
+                                <span class="font-medium text-sm uppercase tracking-wider">{{ tr("Gestion Financière") }}</span>
                             </div>
                             <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200"></i>
                         </button>
@@ -133,16 +133,16 @@
                             {% if current_user.role == 'admin' %}
                                 <a href="{{ url_for('expenses.expense_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                     <i data-lucide="wallet" class="w-5 h-5 mr-3"></i>
-                                    <span class="font-medium">Dépenses</span>
+                                    <span class="font-medium">{{ tr("Dépenses") }}</span>
                                 </a>
                             {% endif %}
                             <a href="{{ url_for('loans.loan_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="piggy-bank" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Prêts</span>
+                                <span class="font-medium">{{ tr("Prêts") }}</span>
                             </a>
                             <a href="{{ url_for('expenses.check_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="file-check" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Chèques</span>
+                                <span class="font-medium">{{ tr("Chèques") }}</span>
                             </a>
                         </div>
                     </div>
@@ -155,18 +155,18 @@
                         <button class="collapsible-header w-full flex items-center justify-between p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all group">
                             <div class="flex items-center">
                                 <i data-lucide="users" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium text-sm uppercase tracking-wider">Relations Clients</span>
+                                <span class="font-medium text-sm uppercase tracking-wider">{{ tr("Relations Clients") }}</span>
                             </div>
                             <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200"></i>
                         </button>
                         <div class="collapsible-content hidden space-y-1 pl-4">
                             <a href="{{ url_for('clients.client_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="users" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Clients</span>
+                                <span class="font-medium">{{ tr("Clients") }}</span>
                             </a>
                             <a href="{{ url_for('notes.note_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="clipboard" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Notes</span>
+                                <span class="font-medium">{{ tr("Notes") }}</span>
                             </a>
                         </div>
                     </div>
@@ -180,18 +180,18 @@
                         <button class="collapsible-header w-full flex items-center justify-between p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all group">
                             <div class="flex items-center">
                                 <i data-lucide="users" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium text-sm uppercase tracking-wider">Gestion Employés</span>
+                                <span class="font-medium text-sm uppercase tracking-wider">{{ tr("Gestion Employés") }}</span>
                             </div>
                             <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200"></i>
                         </button>
                         <div class="collapsible-content hidden space-y-1 pl-4">
                             <a href="{{ url_for('employee_salaries.salary_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="credit-card" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Salaires</span>
+                                <span class="font-medium">{{ tr("Salaires") }}</span>
                             </a>
                             <a href="{{ url_for('employee_loans.loan_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="handshake" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Prêts</span>
+                                <span class="font-medium">{{ tr("Prêts") }}</span>
                             </a>
                         </div>
                     </div>
@@ -204,26 +204,26 @@
                         <button class="collapsible-header w-full flex items-center justify-between p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all group">
                             <div class="flex items-center">
                                 <i data-lucide="settings" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium text-sm uppercase tracking-wider">Administration</span>
+                                <span class="font-medium text-sm uppercase tracking-wider">{{ tr("Administration") }}</span>
                             </div>
                             <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200"></i>
                         </button>
                         <div class="collapsible-content hidden space-y-1 pl-4">
                             <a href="{{ url_for('vitrine.marketing_vitrine') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="megaphone" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Vitrine &amp; promos</span>
+                                <span class="font-medium">{{ tr("Vitrine & promos") }}</span>
                             </a>
                             <a href="{{ url_for('auth.create_user') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="user-plus" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Créer Utilisateur</span>
+                                <span class="font-medium">{{ tr("Créer Utilisateur") }}</span>
                             </a>
                             <a href="{{ url_for('auth.manage_shops') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="store" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Gérer les Magasins</span>
+                                <span class="font-medium">{{ tr("Gérer les Magasins") }}</span>
                             </a>
                             <a href="{{ url_for('bills.stock_movements') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all group">
                                 <i data-lucide="trending-up" class="w-5 h-5 mr-3"></i>
-                                <span class="font-medium">Mouvements de Stock</span>
+                                <span class="font-medium">{{ tr("Mouvements de Stock") }}</span>
                             </a>
                         </div>
                     </div>
@@ -252,16 +252,16 @@
                                 </span>
                             {% else %}
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    Personnel
+                                    {{ tr("Personnel") }}
                                 </span>
                             {% endif %}
                         </div>
                     </div>
 
-                    <a href="{{ url_for('auth.logout') }}" class="flex items-center px-3 py-1.5 text-sm text-gray-600 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-200">
-                        <i data-lucide="log-out" class="w-4 h-4 mr-1.5"></i>
-                        Déconnexion
-                    </a>
+                    <div class="flex items-center gap-2">
+                        <div class="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5 text-xs font-semibold"><a href="{{ url_for('auth.set_language', language='fr', next=request.full_path) }}" class="px-2 py-1 rounded-md {% if ui_lang == 'fr' %}bg-blue-600 text-white{% else %}text-gray-500{% endif %}">FR</a><a href="{{ url_for('auth.set_language', language='en', next=request.full_path) }}" class="px-2 py-1 rounded-md {% if ui_lang == 'en' %}bg-blue-600 text-white{% else %}text-gray-500{% endif %}">EN</a></div>
+                        <a href="{{ url_for('auth.logout') }}" class="flex items-center px-3 py-1.5 text-sm text-gray-600 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-200"><i data-lucide="log-out" class="w-4 h-4 mr-1.5"></i>{{ tr("Déconnexion") }}</a>
+                    </div>
                 </div>
             </div>
 
@@ -311,15 +311,13 @@
                                     </span>
                                 {% else %}
                                     <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        Personnel
+                                    {{ tr("Personnel") }}
                                     </span>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
-                    <a href="{{ url_for('auth.logout') }}" class="flex items-center p-2 text-gray-600 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors">
-                        <i data-lucide="log-out" class="w-5 h-5"></i>
-                    </a>
+                    <div class="flex items-center gap-1"><div class="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5 text-[10px] font-semibold"><a href="{{ url_for('auth.set_language', language='fr', next=request.full_path) }}" class="px-1.5 py-1 rounded-md {% if ui_lang == 'fr' %}bg-blue-600 text-white{% else %}text-gray-500{% endif %}">FR</a><a href="{{ url_for('auth.set_language', language='en', next=request.full_path) }}" class="px-1.5 py-1 rounded-md {% if ui_lang == 'en' %}bg-blue-600 text-white{% else %}text-gray-500{% endif %}">EN</a></div><a href="{{ url_for('auth.logout') }}" aria-label="{{ tr('Déconnexion') }}" class="flex items-center p-2 text-gray-600 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors"><i data-lucide="log-out" class="w-5 h-5"></i></a></div>
                 </div>
             </div>
 
@@ -348,19 +346,19 @@
     <div class="md:hidden mobile-bottom-nav-fix">
         <a href="{{ url_for('bills.pos') }}" class="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
             <i data-lucide="shopping-cart" class="w-6 h-6 mb-1"></i>
-            <span class="text-xs font-medium">Vente</span>
+            <span class="text-xs font-medium">{{ tr("Vente") }}</span>
         </a>
 
         <!-- Stock -->
         <a href="{{ url_for('inventory.product_list') }}" class="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
             <i data-lucide="package" class="w-6 h-6 mb-1"></i>
-            <span class="text-xs font-medium">Stock</span>
+            <span class="text-xs font-medium">{{ tr("Stock") }}</span>
         </a>
 
         <!-- Factures -->
         <a href="{{ url_for('bills.bill_list') }}" class="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
             <i data-lucide="receipt" class="w-6 h-6 mb-1"></i>
-            <span class="text-xs font-medium">Factures</span>
+            <span class="text-xs font-medium">{{ tr("Factures") }}</span>
         </a>
 
         <!-- Plus Button (Floating Action Button) -->
@@ -368,7 +366,7 @@
             <div class="w-6 h-6 mb-1 bg-blue-500 rounded-full flex items-center justify-center">
                 <i data-lucide="plus" class="w-4 h-4 text-white"></i>
             </div>
-            <span class="text-xs font-medium">Plus</span>
+            <span class="text-xs font-medium">{{ tr("Plus") }}</span>
         </button>
     </div>
 
@@ -377,6 +375,50 @@
     {% endif %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
+<script>
+window.UI_LANG = {{ ui_lang|tojson }};
+window.UI_TRANSLATIONS = {{ ui_translations|tojson }};
+window.tr = function (text) { return window.UI_TRANSLATIONS[text] || text; };
+window.translateUI = function (root) {
+    if (window.UI_LANG !== 'en' || !root) return;
+    const translateTextNode = function (node) {
+        if (!node || !node.nodeValue || !node.parentElement) return;
+        if (/^(SCRIPT|STYLE|TEXTAREA)$/.test(node.parentElement.tagName)) return;
+        const value = node.nodeValue;
+        const trimmed = value.trim();
+        const translated = window.UI_TRANSLATIONS[trimmed];
+        if (translated) node.nodeValue = value.replace(trimmed, translated);
+    };
+    if (root.nodeType === Node.TEXT_NODE) translateTextNode(root);
+    const scope = root.nodeType === Node.ELEMENT_NODE ? root : document;
+    const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) translateTextNode(node);
+    if (scope.querySelectorAll) {
+        const elements = [scope, ...scope.querySelectorAll('[placeholder], [title], [aria-label]')];
+        elements.forEach(function (element) {
+            ['placeholder', 'title', 'aria-label'].forEach(function (attribute) {
+                if (!element.getAttribute) return;
+                const value = element.getAttribute(attribute);
+                if (value && window.UI_TRANSLATIONS[value]) {
+                    element.setAttribute(attribute, window.UI_TRANSLATIONS[value]);
+                }
+            });
+        });
+    }
+};
+document.addEventListener('DOMContentLoaded', function () {
+    window.translateUI(document.body);
+    if (window.UI_LANG === 'en') {
+        new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                if (mutation.type === 'characterData') window.translateUI(mutation.target);
+                mutation.addedNodes.forEach(window.translateUI);
+            });
+        }).observe(document.body, { childList: true, subtree: true, characterData: true });
+    }
+});
+</script>
 {% block scripts %}{% endblock %}
 
 <script>
@@ -602,19 +644,19 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="md:hidden mobile-bottom-nav-fix">
     <a href="{{ url_for('bills.pos') }}" class="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
         <i data-lucide="shopping-cart" class="w-5 h-5 mb-1"></i>
-        <span class="text-xs">Vente</span>
+        <span class="text-xs">{{ tr("Vente") }}</span>
     </a>
     <a href="{{ url_for('inventory.product_list') }}" class="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
         <i data-lucide="package" class="w-5 h-5 mb-1"></i>
-        <span class="text-xs">Stock</span>
+        <span class="text-xs">{{ tr("Stock") }}</span>
     </a>
     <a href="{{ url_for('bills.bill_list') }}" class="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
         <i data-lucide="receipt" class="w-5 h-5 mb-1"></i>
-        <span class="text-xs">Factures</span>
+        <span class="text-xs">{{ tr("Factures") }}</span>
     </a>
     <button id="mobile-more-btn" class="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
         <i data-lucide="more-horizontal" class="w-5 h-5 mb-1"></i>
-        <span class="text-xs">Plus</span>
+        <span class="text-xs">{{ tr("Plus") }}</span>
     </button>
 </div>
 
@@ -622,7 +664,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div id="mobile-more-modal" class="md:hidden fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
     <div class="modal-content absolute bottom-0 left-0 right-0 bg-white rounded-t-xl p-4 max-h-[70vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-800">Menu</h3>
+            <h3 class="text-lg font-semibold text-gray-800">{{ tr("Menu") }}</h3>
             <button id="close-more-modal" class="p-2 text-gray-600 hover:text-gray-800">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
@@ -633,23 +675,23 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="mb-4">
             <a href="{{ url_for('dashboard.index') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                 <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
-                <span>Tableau de Bord</span>
+                <span>{{ tr("Tableau de Bord") }}</span>
             </a>
         </div>
         {% endif %}
 
         <!-- Ventes & Historique -->
         <div class="mb-4">
-            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">Ventes & Historique</h4>
+            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">{{ tr("Ventes & Historique") }}</h4>
             <div class="space-y-1">
                 <a href="{{ url_for('bills.sale_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="bar-chart" class="w-5 h-5 mr-3"></i>
-                    <span>Historique des Ventes</span>
+                    <span>{{ tr("Historique des Ventes") }}</span>
                 </a>
                 {% if current_user.role == 'admin' %}
                 <a href="{{ url_for('bills.stock_movements') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="activity" class="w-5 h-5 mr-3"></i>
-                    <span>Mouvements de Stock</span>
+                    <span>{{ tr("Mouvements de Stock") }}</span>
                 </a>
                 {% endif %}
             </div>
@@ -657,36 +699,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
         <!-- Fournisseurs & Versements -->
         <div class="mb-4">
-            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">Fournisseurs & Versements</h4>
+            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">{{ tr("Fournisseurs & Versements") }}</h4>
             <div class="space-y-1">
                 <a href="{{ url_for('expenses.supplier_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="users" class="w-5 h-5 mr-3"></i>
-                    <span>Fournisseurs</span>
+                    <span>{{ tr("Fournisseurs") }}</span>
                 </a>
                 <a href="{{ url_for('boutique.transaction_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="credit-card" class="w-5 h-5 mr-3"></i>
-                    <span>Versement</span>
+                    <span>{{ tr("Versement") }}</span>
                 </a>
             </div>
         </div>
 
         <!-- Gestion Financière -->
         <div class="mb-4">
-            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">Gestion Financière</h4>
+            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">{{ tr("Gestion Financière") }}</h4>
             <div class="space-y-1">
                 {% if current_user.role == 'admin' %}
                 <a href="{{ url_for('expenses.expense_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="dollar-sign" class="w-5 h-5 mr-3"></i>
-                    <span>Dépenses</span>
+                    <span>{{ tr("Dépenses") }}</span>
                 </a>
                 {% endif %}
                 <a href="{{ url_for('loans.loan_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="piggy-bank" class="w-5 h-5 mr-3"></i>
-                    <span>Prêts</span>
+                    <span>{{ tr("Prêts") }}</span>
                 </a>
                 <a href="{{ url_for('expenses.check_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="file-check" class="w-5 h-5 mr-3"></i>
-                    <span>Chèques</span>
+                    <span>{{ tr("Chèques") }}</span>
                 </a>
             </div>
         </div>
@@ -694,15 +736,15 @@ document.addEventListener('DOMContentLoaded', function() {
         <!-- Gestion des Employés (Admin Only) -->
         {% if current_user.role == 'admin' %}
         <div class="mb-4">
-            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">Gestion des Employés</h4>
+            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">{{ tr("Gestion des Employés") }}</h4>
             <div class="space-y-1">
                 <a href="{{ url_for('employee_salaries.salary_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="credit-card" class="w-5 h-5 mr-3"></i>
-                    <span>Salaires</span>
+                    <span>{{ tr("Salaires") }}</span>
                 </a>
                 <a href="{{ url_for('employee_loans.loan_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="handshake" class="w-5 h-5 mr-3"></i>
-                    <span>Prêts Employés</span>
+                    <span>{{ tr("Prêts Employés") }}</span>
                 </a>
             </div>
         </div>
@@ -710,15 +752,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         <!-- Relations Clients -->
         <div class="mb-4">
-            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">Relations Clients</h4>
+            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">{{ tr("Relations Clients") }}</h4>
             <div class="space-y-1">
                 <a href="{{ url_for('clients.client_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="user" class="w-5 h-5 mr-3"></i>
-                    <span>Clients</span>
+                    <span>{{ tr("Clients") }}</span>
                 </a>
                 <a href="{{ url_for('notes.note_list') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="clipboard" class="w-5 h-5 mr-3"></i>
-                    <span>Notes</span>
+                    <span>{{ tr("Notes") }}</span>
                 </a>
             </div>
         </div>
@@ -726,19 +768,19 @@ document.addEventListener('DOMContentLoaded', function() {
         <!-- Administration (Admin Only) -->
         {% if current_user.role == 'admin' %}
         <div class="mb-4">
-            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">Administration</h4>
+            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">{{ tr("Administration") }}</h4>
             <div class="space-y-1">
                 <a href="{{ url_for('vitrine.marketing_vitrine') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="megaphone" class="w-5 h-5 mr-3"></i>
-                    <span>Vitrine &amp; promos</span>
+                    <span>{{ tr("Vitrine & promos") }}</span>
                 </a>
                 <a href="{{ url_for('auth.create_user') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="user-plus" class="w-5 h-5 mr-3"></i>
-                    <span>Créer Utilisateur</span>
+                    <span>{{ tr("Créer Utilisateur") }}</span>
                 </a>
                 <a href="{{ url_for('auth.manage_shops') }}" class="flex items-center p-3 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all">
                     <i data-lucide="store" class="w-5 h-5 mr-3"></i>
-                    <span>Gérer les Magasins</span>
+                    <span>{{ tr("Gérer les Magasins") }}</span>
                 </a>
             </div>
         </div>

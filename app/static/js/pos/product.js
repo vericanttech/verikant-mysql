@@ -65,7 +65,7 @@ function loadProducts() {
         })
         .catch(error => {
             console.error('Error loading products:', error);
-            showNotification('Erreur lors du chargement des produits', 'error');
+            showNotification(tr('Erreur lors du chargement des produits'), 'error');
             hideLoading();
         });
 }
@@ -82,7 +82,7 @@ function renderProducts(data) {
     if (products.length === 0) {
         productsGrid.innerHTML = `
             <div class="col-span-full text-center py-8">
-                <p class="text-gray-500">Aucun produit trouvé</p>
+                <p class="text-gray-500">${tr('Aucun produit trouvé')}</p>
             </div>
         `;
         renderPagination({current_page: 1, total_pages: 1});
@@ -108,10 +108,10 @@ function renderProducts(data) {
                     ${imgHtml}
                     <h5 class="text-xs sm:text-lg font-medium text-gray-900 mb-1 sm:mb-2 line-clamp-2 break-words w-full">${product.name}</h5>
                     <p class="text-gray-600 mb-1 sm:mb-2 text-[11px] sm:text-base tabular-nums">${product.currency || 'FCFA'} ${formatNumberFR(product.selling_price)}</p>
-                    <p class="text-gray-500 mb-2 sm:mb-3 text-[11px] sm:text-sm">Stock : ${product.stock}</p>
+                    <p class="text-gray-500 mb-2 sm:mb-3 text-[11px] sm:text-sm">${tr('Stock')} : ${product.stock}</p>
                     <button type="button" class="add-to-cart w-full px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors ${product.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}"
                             ${product.stock <= 0 ? 'disabled' : ''}>
-                        Ajouter
+                        ${tr('Ajouter')}
                     </button>
                 </div>
             </div>

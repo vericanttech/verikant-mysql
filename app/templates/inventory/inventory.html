@@ -3,17 +3,17 @@
 <div class="container mx-auto max-w-full px-0 sm:px-4 md:px-8">
     <!-- Header -->
     <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 mb-4 md:mb-6 px-3 sm:px-0">
-        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Gestion des Stocks</h2>
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">{{ tr('Gestion des Stocks') }}</h2>
         <div class="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full md:w-auto">
             <a href="#" onclick="exportAndSharePDF(event)"
                class="col-span-2 sm:col-span-1 justify-center bg-green-500 hover:bg-green-600 text-white px-3 sm:px-4 py-2 rounded text-sm sm:text-base flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span class="truncate">Exporter PDF</span>
+                <span class="truncate">{{ tr('Exporter PDF') }}</span>
             </a>
             <button type="button" class="col-span-2 sm:col-span-1 bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded text-sm sm:text-base" onclick="openModal('addProductModal')">
-                Nouveau produit
+                {{ tr('Nouveau produit') }}
             </button>
         </div>
     </div>
@@ -22,23 +22,23 @@
     <div class="mb-4 md:mb-6 pb-4 md:pb-0 border-b border-gray-200 md:border-0 bg-gray-50 md:bg-transparent -mx-0 px-3 sm:px-0 sm:mx-0 md:shadow md:rounded-lg md:bg-white md:p-4">
         <form method="GET" class="grid gap-3 sm:gap-4 sm:flex sm:flex-wrap sm:items-end">
             <div class="w-full sm:w-2/3 min-w-0">
-                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Rechercher un produit</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">{{ tr('Rechercher un produit') }}</label>
                 <input type="text" name="search" value="{{ request.args.get('search', '') }}"
                        class="w-full px-3 sm:px-4 py-2 text-sm sm:text-base text-gray-700 bg-white border border-gray-300 rounded-lg focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"
-                       placeholder="Nom du produit...">
+                       placeholder="{{ tr('Nom du produit...') }}">
             </div>
             <div class="w-full sm:w-auto min-w-0">
-                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Stock bas</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">{{ tr('Stock bas') }}</label>
                 <select name="stock_filter" class="w-full sm:w-auto min-w-[10rem] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
-                    <option value="">Tous les produits</option>
-                    <option value="low" {% if request.args.get('stock_filter') == 'low' %}selected{% endif %}>Stock bas (&lt;10)</option>
+                    <option value="">{{ tr('Tous les produits') }}</option>
+                    <option value="low" {% if request.args.get('stock_filter') == 'low' %}selected{% endif %}>{{ tr('Stock bas (<10)') }}</option>
                 </select>
             </div>
             <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
-                <button type="submit" class="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm">Filtrer</button>
+                <button type="submit" class="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm">{{ tr('Filtrer') }}</button>
                 {% if request.args.get('search') or request.args.get('stock_filter') %}
                 <a href="{{ url_for('inventory.product_list') }}" class="w-full sm:w-auto text-center text-blue-600 hover:text-blue-800 text-sm py-2 sm:py-0 sm:inline-flex sm:items-center">
-                    Réinitialiser
+                    {{ tr('Réinitialiser') }}
                 </a>
                 {% endif %}
             </div>
@@ -49,7 +49,7 @@
         {% if messages %}
             {% for category, message in messages %}
                 <div class="mb-4 mx-3 sm:mx-0 p-3 sm:p-4 rounded {% if category == 'success' %}bg-green-100 text-green-700{% elif category == 'error' %}bg-red-100 text-red-700{% elif category == 'warning' %}bg-amber-50 text-amber-900{% else %}bg-blue-100 text-blue-700{% endif %}">
-                    {{ message }}
+                    {{ tr(message) }}
                 </div>
             {% endfor %}
         {% endif %}
@@ -63,12 +63,12 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-20">Photo</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom du Produit</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prix de Vente</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prix d'Achat</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-20">{{ tr('Photo') }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ tr('Nom du Produit') }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ tr('Prix de Vente') }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ tr("Prix d'Achat") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ tr('Stock') }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ tr('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -86,9 +86,9 @@
                         <td class="px-6 py-4 whitespace-nowrap">{{ product.buying_price | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap {% if product.stock < 10 %}text-red-600 font-medium{% endif %}">{{ product.stock }}</td>
                         <td class="px-6 py-4 whitespace-nowrap space-x-2">
-                            <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }}, {{ (url_for("static", filename=product.image_path) if product.image_path else "")|tojson }})'>Modifier</button>
+                            <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }}, {{ (url_for("static", filename=product.image_path) if product.image_path else "")|tojson }})'>{{ tr('Modifier') }}</button>
 
-                            <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm" onclick='deleteProduct({{ product.id }}, {{ product.name|tojson }})'>Supprimer</button>
+                            <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm" onclick='deleteProduct({{ product.id }}, {{ product.name|tojson }})'>{{ tr('Supprimer') }}</button>
 
 
                         </td>
@@ -112,20 +112,20 @@
                     <div class="min-w-0 flex-1 space-y-1.5 text-sm">
                         <p class="font-semibold text-gray-900 break-words">{{ product.name }}</p>
                         <div class="flex gap-2 justify-between">
-                            <span class="text-gray-600 shrink-0">Prix vente</span>
+                            <span class="text-gray-600 shrink-0">{{ tr('Prix vente') }}</span>
                             <span class="tabular-nums text-right min-w-0">{{ product.selling_price | fr_thousands   }} {{ shop_profile.currency|default('FCFA') }}</span>
                         </div>
                         <div class="flex gap-2 justify-between">
-                            <span class="text-gray-600 shrink-0">Prix achat</span>
+                            <span class="text-gray-600 shrink-0">{{ tr('Prix achat') }}</span>
                             <span class="tabular-nums text-right min-w-0">{{ product.buying_price | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</span>
                         </div>
                         <div class="flex gap-2 justify-between">
-                            <span class="text-gray-600 shrink-0">Stock</span>
+                            <span class="text-gray-600 shrink-0">{{ tr('Stock') }}</span>
                             <span class="tabular-nums text-right font-medium {% if product.stock < 10 %}text-red-600{% endif %}">{{ product.stock }}</span>
                         </div>
                         <div class="flex flex-wrap gap-2 justify-end pt-2">
-                            <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }}, {{ (url_for("static", filename=product.image_path) if product.image_path else "")|tojson }})'>Modifier</button>
-                            <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-sm" onclick='deleteProduct({{ product.id }}, {{ product.name|tojson }})'>Supprimer</button>
+                            <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-sm" onclick='editProduct({{ product.id }}, {{ product.name|tojson }}, {{ product.selling_price }}, {{ product.buying_price }}, {{ product.stock }}, {{ product.min_stock | default(0) }}, {{ (url_for("static", filename=product.image_path) if product.image_path else "")|tojson }})'>{{ tr('Modifier') }}</button>
+                            <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-sm" onclick='deleteProduct({{ product.id }}, {{ product.name|tojson }})'>{{ tr('Supprimer') }}</button>
                         </div>
                     </div>
                 </div>
@@ -168,28 +168,28 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10" />
         </svg>
-        Résumé de la Boutique
+        {{ tr('Résumé de la Boutique') }}
     </h3>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <div class="bg-white md:rounded-lg p-3 sm:p-4 md:shadow-sm border border-gray-100 md:border-0">
-            <div class="text-xs sm:text-sm text-gray-600">Total produits</div>
+            <div class="text-xs sm:text-sm text-gray-600">{{ tr('Total produits') }}</div>
             <div class="text-xl sm:text-2xl font-bold text-gray-800 tabular-nums">{{ shop_totals.total_products_count }}</div>
         </div>
         <div class="bg-white md:rounded-lg p-3 sm:p-4 md:shadow-sm border border-gray-100 md:border-0">
-            <div class="text-xs sm:text-sm text-gray-600">Stock bas</div>
+            <div class="text-xs sm:text-sm text-gray-600">{{ tr('Stock bas') }}</div>
             <div class="text-xl sm:text-2xl font-bold tabular-nums {% if shop_totals.low_stock_count > 0 %}text-red-600{% else %}text-green-600{% endif %}">
                 {{ shop_totals.low_stock_count }}
             </div>
         </div>
         <div class="bg-white md:rounded-lg p-3 sm:p-4 md:shadow-sm border border-gray-100 md:border-0 col-span-2 md:col-span-1">
-            <div class="text-xs sm:text-sm text-gray-600">Valeur d'achat</div>
+            <div class="text-xs sm:text-sm text-gray-600">{{ tr("Valeur d'achat") }}</div>
             <div class="text-base sm:text-lg font-bold text-blue-600 tabular-nums break-words">
                 {{ shop_totals.total_buying_value | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}
             </div>
         </div>
         <div class="bg-white md:rounded-lg p-3 sm:p-4 md:shadow-sm border border-gray-100 md:border-0 col-span-2 md:col-span-1">
-            <div class="text-xs sm:text-sm text-gray-600">Valeur de vente</div>
+            <div class="text-xs sm:text-sm text-gray-600">{{ tr('Valeur de vente') }}</div>
             <div class="text-base sm:text-lg font-bold text-green-600 tabular-nums break-words">
                 {{ shop_totals.total_selling_value | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}
             </div>
@@ -198,7 +198,7 @@
 
     <div class="mt-3 sm:mt-4 bg-white md:rounded-lg p-3 sm:p-4 md:shadow-sm border border-gray-100 md:border-0">
         <div class="flex gap-2 justify-between items-start text-sm sm:text-base">
-            <span class="text-gray-600 shrink-0 min-w-0">Marge potentielle</span>
+            <span class="text-gray-600 shrink-0 min-w-0">{{ tr('Marge potentielle') }}</span>
             <span class="font-bold tabular-nums text-right min-w-0 break-words {% if shop_totals.total_profit >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
                 {{ shop_totals.total_profit | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}
             </span>
@@ -215,9 +215,9 @@
     <div class="w-full max-w-md mx-auto flex flex-col" style="max-height: calc(100dvh - 4rem - env(safe-area-inset-bottom, 56px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
         <div class="bg-white rounded-t-2xl sm:rounded-lg shadow-xl flex flex-col overflow-hidden">
             <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
-                <h5 class="text-lg font-semibold">Ajouter un Nouveau Produit</h5>
+                <h5 class="text-lg font-semibold">{{ tr('Ajouter un Nouveau Produit') }}</h5>
                 <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
-                    <span class="sr-only">Fermer</span>
+                    <span class="sr-only">{{ tr('Fermer') }}</span>
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -227,30 +227,30 @@
                 <div class="p-4 overflow-y-auto flex-1">
                     <input type="hidden" name="add_product" value="1">
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Photo (optionnel)</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">{{ tr('Photo (optionnel)') }}</label>
                         <input type="file" name="product_image" id="add_product_image" accept="image/*"
                                class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
-                        <p class="text-xs text-gray-500 mt-1 mb-2">Redimensionnée dans le navigateur avant envoi.</p>
+                        <p class="text-xs text-gray-500 mt-1 mb-2">{{ tr('Redimensionnée dans le navigateur avant envoi.') }}</p>
                         <div class="flex items-start gap-3">
                             <div class="flex-shrink-0 w-24 h-24 rounded-lg border-2 border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center">
-                                <img id="add_product_image_preview" src="" alt="Aperçu" class="max-w-full max-h-full object-cover hidden" width="96" height="96">
-                                <span id="add_product_image_placeholder" class="text-xs text-gray-400 text-center px-2">Aperçu</span>
+                                <img id="add_product_image_preview" src="" alt="{{ tr('Aperçu') }}" class="max-w-full max-h-full object-cover hidden" width="96" height="96">
+                                <span id="add_product_image_placeholder" class="text-xs text-gray-400 text-center px-2">{{ tr('Aperçu') }}</span>
                             </div>
                             <div class="min-w-0 flex-1 pt-1">
-                                <p class="text-xs font-medium text-gray-600">Fichier sélectionné</p>
+                                <p class="text-xs font-medium text-gray-600">{{ tr('Fichier sélectionné') }}</p>
                                 <p id="add_product_image_filename" class="text-xs text-gray-500 truncate" title=""></p>
                             </div>
                         </div>
                         {% if rembg_available %}
                         <button type="button" id="add_remove_bg_btn"
                                 class="mt-2 text-sm px-3 py-1.5 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Retirer le fond (IA)
+                            {{ tr('Retirer le fond (IA)') }}
                         </button>
-                        <p class="text-xs text-gray-500 mt-1">Replicate rembg — le résultat est un PNG transparent.</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ tr('Replicate rembg — le résultat est un PNG transparent.') }}</p>
                         {% endif %}
                     </div>
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Produit</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">{{ tr('Nom du Produit') }}</label>
                         <input type="text" 
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
                                name="name" 
@@ -258,7 +258,7 @@
                                required>
                     </div>
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Prix de Vente</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">{{ tr('Prix de Vente') }}</label>
                         <input type="text" 
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
                                name="selling_price" 
@@ -267,7 +267,7 @@
                                required>
                     </div>
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Prix d'Achat</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">{{ tr("Prix d'Achat") }}</label>
                         <input type="text" 
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
                                name="buying_price" 
@@ -277,7 +277,7 @@
                         <p id="add_product_price_warning" class="hidden mt-2 text-sm text-red-600" role="alert"></p>
                     </div>
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Stock Initial</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">{{ tr('Stock Initial') }}</label>
                         <input type="number" 
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
                                name="stock" 
@@ -285,7 +285,7 @@
                                required>
                     </div>
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Stock Minimum</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">{{ tr('Stock Minimum') }}</label>
                         <input type="number" 
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
                                name="min_stock" 
@@ -294,8 +294,8 @@
                     </div>
                 </div>
                 <div class="flex items-center justify-end p-4 border-t gap-2 flex-shrink-0 bg-white">
-                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">Ajouter</button>
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">{{ tr('Annuler') }}</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">{{ tr('Ajouter') }}</button>
                 </div>
             </form>
         </div>
@@ -307,9 +307,9 @@
     <div class="w-full max-w-md mx-auto flex flex-col" style="max-height: calc(100dvh - 4rem - env(safe-area-inset-bottom, 56px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
         <div class="bg-white rounded-t-2xl sm:rounded-lg shadow-xl flex flex-col overflow-hidden">
             <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
-                <h5 class="text-lg font-semibold">Modifier le Produit</h5>
+                <h5 class="text-lg font-semibold">{{ tr('Modifier le Produit') }}</h5>
                 <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
-                    <span class="sr-only">Fermer</span>
+                    <span class="sr-only">{{ tr('Fermer') }}</span>
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -320,34 +320,34 @@
                     <input type="hidden" name="edit_product" value="1">
                     <input type="hidden" name="product_id" id="edit_product_id">
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Photo</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">{{ tr('Photo') }}</label>
                         <input type="file" name="product_image" id="edit_product_image" accept="image/*"
                                class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
-                        <p class="text-xs text-gray-500 mt-1 mb-2">Nouvelle image redimensionnée dans le navigateur. Aperçu ci-dessous après choix du fichier.</p>
+                        <p class="text-xs text-gray-500 mt-1 mb-2">{{ tr('Nouvelle image redimensionnée dans le navigateur. Aperçu ci-dessous après choix du fichier.') }}</p>
                         <div class="flex items-start gap-3 mt-2">
                             <div class="flex-shrink-0 w-24 h-24 rounded-lg border-2 border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center">
-                                <img id="edit_product_image_preview" src="" alt="Aperçu" class="max-w-full max-h-full object-cover hidden" width="96" height="96">
-                                <span id="edit_product_image_placeholder" class="text-xs text-gray-400 text-center px-2">Aperçu</span>
+                                <img id="edit_product_image_preview" src="" alt="{{ tr('Aperçu') }}" class="max-w-full max-h-full object-cover hidden" width="96" height="96">
+                                <span id="edit_product_image_placeholder" class="text-xs text-gray-400 text-center px-2">{{ tr('Aperçu') }}</span>
                             </div>
                             <div class="min-w-0 flex-1 pt-1">
-                                <p class="text-xs font-medium text-gray-600">Fichier sélectionné</p>
+                                <p class="text-xs font-medium text-gray-600">{{ tr('Fichier sélectionné') }}</p>
                                 <p id="edit_product_image_filename" class="text-xs text-gray-500 truncate" title=""></p>
                             </div>
                         </div>
                         {% if rembg_available %}
                         <button type="button" id="edit_remove_bg_btn"
                                 class="mt-2 text-sm px-3 py-1.5 rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Retirer le fond (IA)
+                            {{ tr('Retirer le fond (IA)') }}
                         </button>
-                        <p class="text-xs text-gray-500 mt-1">Replicate rembg — le résultat est un PNG transparent.</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ tr('Replicate rembg — le résultat est un PNG transparent.') }}</p>
                         {% endif %}
                         <label class="mt-3 flex items-center gap-2 text-sm text-gray-700">
                             <input type="checkbox" name="remove_product_image" id="remove_product_image" value="1" class="rounded border-gray-300">
-                            Supprimer la photo actuelle
+                            {{ tr('Supprimer la photo actuelle') }}
                         </label>
                     </div>
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du Produit</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">{{ tr('Nom du Produit') }}</label>
                         <input type="text" 
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
                                name="name" 
@@ -356,7 +356,7 @@
                                required>
                     </div>
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Prix de Vente</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">{{ tr('Prix de Vente') }}</label>
                         <input type="text" 
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
                                name="selling_price" 
@@ -365,7 +365,7 @@
                                required>
                     </div>
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Prix d'Achat</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">{{ tr("Prix d'Achat") }}</label>
                         <input type="text" 
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
                                name="buying_price" 
@@ -375,7 +375,7 @@
                         <p id="edit_product_price_warning" class="hidden mt-2 text-sm text-red-600" role="alert"></p>
                     </div>
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Stock</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">{{ tr('Stock') }}</label>
                         <input type="number" 
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
                                name="stock" 
@@ -384,7 +384,7 @@
                                required>
                     </div>
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Stock Minimum</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">{{ tr('Stock Minimum') }}</label>
                         <input type="number" 
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200" 
                                name="min_stock" 
@@ -393,8 +393,8 @@
                     </div>
                 </div>
                 <div class="flex items-center justify-end p-4 border-t gap-2 flex-shrink-0 bg-white">
-                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">Enregistrer</button>
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">{{ tr('Annuler') }}</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">{{ tr('Enregistrer') }}</button>
                 </div>
             </form>
         </div>
@@ -406,9 +406,9 @@
     <div class="w-full max-w-md mx-auto flex flex-col" style="max-height: calc(100dvh - 4rem - env(safe-area-inset-bottom, 56px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
         <div class="bg-white rounded-t-2xl sm:rounded-lg shadow-xl flex flex-col overflow-hidden">
             <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
-                <h5 class="text-lg font-semibold">Supprimer le Produit</h5>
+                <h5 class="text-lg font-semibold">{{ tr('Supprimer le Produit') }}</h5>
                 <button type="button" class="text-gray-400 hover:text-gray-500" data-bs-dismiss="modal">
-                    <span class="sr-only">Fermer</span>
+                    <span class="sr-only">{{ tr('Fermer') }}</span>
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -418,11 +418,11 @@
                 <div class="p-4 overflow-y-auto flex-1">
                     <input type="hidden" name="delete_product" value="1">
                     <input type="hidden" name="product_id" id="delete_product_id">
-                    <p class="text-gray-700">Êtes-vous sûr de vouloir supprimer <span id="delete_product_name" class="font-medium"></span> ?</p>
+                    <p class="text-gray-700">{{ tr('Êtes-vous sûr de vouloir supprimer') }} <span id="delete_product_name" class="font-medium"></span> ?</p>
                 </div>
                 <div class="flex items-center justify-end p-4 border-t gap-2 flex-shrink-0 bg-white">
-                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md">Supprimer</button>
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md" data-bs-dismiss="modal">{{ tr('Annuler') }}</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md">{{ tr('Supprimer') }}</button>
                 </div>
             </form>
         </div>

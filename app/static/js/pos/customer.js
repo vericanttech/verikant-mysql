@@ -42,7 +42,7 @@ function selectCustomer(customer) {
     document.getElementById('selected-customer-id').value = customer.id;
     document.getElementById('selected-customer-name').textContent = customer.name;
     document.getElementById('selected-customer-contact').textContent =
-        `${customer.phone ? 'Tél: ' + customer.phone : ''} ${customer.email ? ' | Email: ' + customer.email : ''}`;
+        `${customer.phone ? (window.UI_LANG === 'en' ? 'Phone: ' : 'Tél: ') + customer.phone : ''} ${customer.email ? ' | Email: ' + customer.email : ''}`;
     customerDetails.classList.remove('hidden');
 }
 
@@ -89,7 +89,7 @@ async function searchCustomers(searchTerm) {
         }
     } catch (error) {
         console.error('Error searching customers:', error);
-        showNotification('Erreur lors de la recherche des clients', 'error');
+        showNotification(tr('Erreur lors de la recherche des clients'), 'error');
     }
 }
 
@@ -114,14 +114,14 @@ async function createCustomer(customerData) {
             if (typeof window.updateCheckoutTotals === 'function') {
                 window.updateCheckoutTotals();
             }
-            showNotification('Client créé avec succès', 'success');
+            showNotification(tr('Client créé avec succès'), 'success');
             return newCustomer;
         } else {
             throw new Error('Failed to create customer');
         }
     } catch (error) {
         console.error('Error creating customer:', error);
-        showNotification('Erreur lors de la création du client', 'error');
+        showNotification(tr('Erreur lors de la création du client'), 'error');
         return null;
     }
 }

@@ -154,7 +154,7 @@ function initCheckoutEventListeners() {
             const customerId = document.getElementById('selected-customer-id').value;
 
             if (isNaN(cashReceivedAmount) || cashReceivedAmount < 0) {
-                showNotification('Veuillez entrer un montant valide', 'error');
+                showNotification(tr('Veuillez entrer un montant valide'), 'error');
                 return;
             }
 
@@ -203,22 +203,22 @@ function initCheckoutEventListeners() {
                     window.lastBillId = result.bill_id;
                     document.getElementById('print-bill-btn').disabled = false;
                 }
-                showNotification('Vente terminée avec succès !', 'success');
+                showNotification(tr('Vente terminée avec succès !'), 'success');
                 window.cart = [];
                 localStorage.removeItem('pos_cart');
                 updateCartDisplay();
             } else {
-                throw new Error(result.error || 'Erreur lors du traitement de la vente');
+                throw new Error(result.error || tr('Erreur lors du traitement de la vente'));
             }
         } catch (error) {
-            showNotification(`Erreur lors du traitement de la vente : ${error.message}`, 'error');
+            showNotification(window.UI_LANG === 'en' ? `Could not process the sale: ${error.message}` : `Erreur lors du traitement de la vente : ${error.message}`, 'error');
         }
     });
 
     // Print bill functionality
     document.getElementById('print-bill-btn').addEventListener('click', async function () {
         if (!window.lastBillId) {
-            showNotification('Aucune facture à imprimer', 'error');
+            showNotification(tr('Aucune facture à imprimer'), 'error');
             return;
         }
 
@@ -258,10 +258,10 @@ function initCheckoutEventListeners() {
                     await new Promise(resolve => setTimeout(resolve, 50));
                 }
 
-                showNotification('Impression terminée', 'success');
+                showNotification(tr('Impression terminée'), 'success');
             } catch (error) {
                 console.error('Bluetooth printing error:', error);
-                showNotification('Erreur d\'impression Bluetooth: ' + error.message, 'error');
+                showNotification((window.UI_LANG === 'en' ? 'Bluetooth printing error: ' : 'Erreur d\'impression Bluetooth: ') + error.message, 'error');
             }
         } else {
             // Non-Bluetooth printing (web-based)
@@ -270,11 +270,11 @@ function initCheckoutEventListeners() {
                 if (printWindow) {
                     printWindow.focus();
                 } else {
-                    showNotification('Veuillez autoriser les popups pour imprimer la facture', 'error');
+                    showNotification(tr('Veuillez autoriser les popups pour imprimer la facture'), 'error');
                 }
             } catch (error) {
                 console.error('Error printing bill:', error);
-                showNotification('Erreur lors de l\'impression de la facture', 'error');
+                showNotification(tr("Erreur lors de l'impression de la facture"), 'error');
             }
         }
     });

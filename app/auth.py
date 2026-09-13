@@ -5,7 +5,7 @@ import hashlib
 import hmac
 import os
 import secrets
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, send_from_directory
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, send_from_directory, make_response
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
@@ -258,12 +258,26 @@ def landing_page_en():
 
 
 def _render_landing_page(language):
-    return render_template(
+    response = make_response(render_template(
         'landing_page.html',
         year=datetime.now().year,
         landing_lang=language,
         copy=get_landing_copy(language),
-    )
+    ))
+    response.set_cookie('vericant_language', language, max_age=31536000, samesite='Lax', secure=request.is_secure)
+    return response
+
+
+@auth.route('/language/<language>')
+def set_language(language):
+    if language not in ('fr', 'en'):
+        language = 'fr'
+    target = request.args.get('next') or url_for('dashboard.index')
+    if not target.startswith('/') or target.startswith('//'):
+        target = url_for('dashboard.index')
+    response = make_response(redirect(target))
+    response.set_cookie('vericant_language', language, max_age=31536000, samesite='Lax', secure=request.is_secure)
+    return response
 
 @auth.route('/reset-password', methods=['POST'])
 @login_required

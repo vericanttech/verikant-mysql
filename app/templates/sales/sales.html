@@ -4,7 +4,7 @@
 <div class="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
     <!-- Header and Controls Section -->
     <div class="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:justify-between sm:items-center mb-6">
-        <h2 class="text-2xl font-semibold text-gray-800">Historique des Ventes</h2>
+        <h2 class="text-2xl font-semibold text-gray-800">{{ tr('Historique des Ventes') }}</h2>
         <div class="flex flex-col sm:flex-row gap-3">
             <div class="grid grid-cols-2 sm:flex gap-3">
                 <input type="date" id="start_date"
@@ -15,11 +15,11 @@
             <div class="grid grid-cols-2 sm:flex gap-3">
                 <button onclick="filterSales()"
                         class="w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                    Filtrer
+                    {{ tr('Filtrer') }}
                 </button>
                 <button onclick="exportToPDF()"
                         class="w-full sm:w-auto px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-                    Exporter PDF
+                    {{ tr('Exporter PDF') }}
                 </button>
                 <button onclick="generateAndShareSalesPDF()"
                         class="w-full sm:w-auto px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
@@ -35,21 +35,21 @@
         {% for sale in sales %}
         <div class="bg-white border-b border-gray-200 p-4">
             <div class="grid grid-cols-2 gap-2">
-                <div class="text-sm text-gray-500">Date</div>
+                <div class="text-sm text-gray-500">{{ tr('Date') }}</div>
                 <div class="text-sm">{{ sale.bill.date|format_datetime}}</div>
-                <div class="text-sm text-gray-500">Facture</div>
+                <div class="text-sm text-gray-500">{{ tr('Facture') }}</div>
                 <div class="text-sm">{{ sale.bill.bill_number }}</div>
-                <div class="text-sm text-gray-500">Produit</div>
+                <div class="text-sm text-gray-500">{{ tr('Produit') }}</div>
                 <div class="text-sm">{{ sale.product.name }}</div>
-                <div class="text-sm text-gray-500">Quantité</div>
+                <div class="text-sm text-gray-500">{{ tr('Quantité') }}</div>
                 <div class="text-sm">{{ sale.quantity }}</div>
-                <div class="text-sm text-gray-500">Prix/Unité</div>
+                <div class="text-sm text-gray-500">{{ tr('Prix/Unité') }}</div>
                 <div class="text-sm">{{ sale.selling_price| fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</div>
-                <div class="text-sm text-gray-500">Total</div>
+                <div class="text-sm text-gray-500">{{ tr('Total') }}</div>
                 <div class="text-sm font-medium">{{ sale.total_amount | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</div>
 
                 {% if current_user.role == 'admin' %}
-                <div class="text-sm text-gray-500">Bénéfice</div>
+                <div class="text-sm text-gray-500">{{ tr('Bénéfice') }}</div>
                 <div class="text-sm text-green-600">{{ (sale.total_amount - (sale.buying_price * sale.quantity))| fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</div>
                 {% endif %}
             </div>
@@ -59,10 +59,10 @@
             <!-- Mobile totals -->
             <div class="bg-blue-50 p-4">
                 <div class="grid grid-cols-2 gap-2">
-                    <div class="text-sm font-medium text-gray-500">Total des Ventes</div>
+                    <div class="text-sm font-medium text-gray-500">{{ tr('Total des Ventes') }}</div>
                     <div class="text-sm font-medium">{{ total_sales | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</div>
                     {% if current_user.role == 'admin' %}
-                    <div class="text-sm font-medium text-gray-500">Bénéfice Total</div>
+                    <div class="text-sm font-medium text-gray-500">{{ tr('Bénéfice Total') }}</div>
                     <div class="text-sm font-medium text-green-600">{{ total_profit | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</div>
                     {% endif %}
                 </div>
@@ -75,14 +75,14 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Numéro de Facture</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix/Unité</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ tr('Date') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ tr('Numéro de Facture') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ tr('Produit') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ tr('Quantité') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ tr('Prix/Unité') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ tr('Total') }}</th>
                             {% if current_user.role == 'admin' %}
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bénéfice</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ tr('Bénéfice') }}</th>
                             {% endif %}
                         </tr>
                     </thead>
@@ -103,7 +103,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="bg-blue-50">
-                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">Totaux</td>
+                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{{ tr('Totaux') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{{ total_sales | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</td>
                             {% if current_user.role == 'admin' %}
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{{ total_profit | fr_thousands  }} {{ shop_profile.currency|default('FCFA') }}</td>

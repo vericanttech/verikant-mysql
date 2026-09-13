@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from flask import current_app, jsonify #import jsonify
 from app.ssh_tunnel_db import maybe_start_ssh_tunnel as _maybe_start_ssh_tunnel
 from app.sw_worker import build_sw_js
+from app.ui_i18n import ENGLISH, current_ui_language, translate_ui
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -123,10 +124,14 @@ def create_app():
 
     @app.context_processor
     def inject_ui_config():
+        ui_language = current_ui_language()
         return dict(
             show_rollout_banner=app.config.get('SHOW_ROLLOUT_BANNER', False),
             rollout_banner_text=app.config.get('ROLLOUT_BANNER_TEXT', ''),
             app_sw_version=app.config.get('APP_SW_VERSION', '1'),
+            ui_lang=ui_language,
+            tr=lambda text: translate_ui(text, ui_language),
+            ui_translations=ENGLISH if ui_language == "en" else {},
         )
 
     @app.before_request

@@ -71,7 +71,7 @@
             {% endfor %}
         </div>
         <div class="mt-4 pt-4 border-t">
-            <p class="text-lg font-bold text-gray-900">Total général: {{ total_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</p>
+            <p class="text-lg font-bold text-gray-900">{{ tr('Total général:') }} {{ total_amount | fr_thousands }} {{ shop_profile.currency|default('FCFA') }}</p>
         </div>
     </div>
     {% endif %}
@@ -141,7 +141,7 @@
             {% if boutique_items.pages > 1 %}
             <div class="flex items-center justify-between border-t border-gray-200 bg-white px-6 py-3 mt-4">
                 <p class="text-sm text-blue-600">
-                    Page {{ boutique_items.page }} sur {{ boutique_items.pages }}
+                    {{ tr('Page') }} {{ boutique_items.page }} {{ tr('sur') }} {{ boutique_items.pages }}
                 </p>
                 <div class="space-x-2">
                     {% if boutique_items.has_prev %}

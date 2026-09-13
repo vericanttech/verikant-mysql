@@ -110,10 +110,11 @@ def admin_required(f):
     return decorated_function
 
 
-def number_to_words(number, currency='FCFA'):
+def number_to_words(number, currency='FCFA', language='fr'):
     try:
         amount = float(str(number).rstrip('0').rstrip('.') if '.' in str(number) else number)
-        words = num2words(amount, lang='fr')
+        lang = 'en' if language == 'en' else 'fr'
+        words = num2words(amount, lang=lang)
         return f"{words.upper()} {currency}"
     except Exception as e:
         print(f"Error converting number to words: {e}")

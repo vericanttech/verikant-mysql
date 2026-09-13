@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
-    <title>Facture #{{ bill.bill_number }}</title>
+    <title>{{ tr('Facture') }} #{{ bill.bill_number }}</title>
     <style>
         * {
             margin: 0;
@@ -200,19 +200,19 @@
     </div>
 
     <div class="bill-details">
-        <div class="bill-title">Facture #{{ bill.bill_number }}</div>
+        <div class="bill-title">{{ tr('Facture') }} #{{ bill.bill_number }}</div>
         <div>
-            <span>Date:</span>
+            <span>{{ tr('Date:') }}</span>
             <span>{{ bill.date|format_datetime }}</span>
         </div>
         {% if bill.client %}
         <div>
-            <span>Client:</span>
+            <span>{{ tr('Client:') }}</span>
             <span>{{ bill.client.name }}</span>
         </div>
         {% if bill.client.phone %}
         <div>
-            <span>Tel:</span>
+            <span>{{ tr('Téléphone:') }}</span>
             <span>{{ bill.client.phone }}</span>
         </div>
         {% endif %}
@@ -222,10 +222,10 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 40%">Article</th>
-                <th style="width: 15%">Qté</th>
-                <th style="width: 20%" class="number-cell">Prix</th>
-                <th style="width: 25%" class="number-cell">Total</th>
+                <th style="width: 40%">{{ tr('Article') }}</th>
+                <th style="width: 15%">{{ tr('Qté') }}</th>
+                <th style="width: 20%" class="number-cell">{{ tr('Prix') }}</th>
+                <th style="width: 25%" class="number-cell">{{ tr('Total') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -245,7 +245,7 @@
         {% set show_vat = (bill.vat_amount is not none and bill.vat_amount > 0) or (bill.vat_rate is not none and bill.vat_rate > 0) %}
         {% if show_discount %}
         <div class="total-row">
-            <span>Sous-total HT:</span>
+            <span>{{ tr('Sous-total HT:') }}</span>
             <span>{{ "{:,.0f}".format(bill.gross_amount_ht) }}</span>
         </div>
         <div class="total-row">
@@ -255,7 +255,7 @@
         {% endif %}
         {% if show_vat %}
         <div class="total-row">
-            <span>Total HT:</span>
+            <span>{{ tr('Total HT:') }}</span>
             <span>{{ "{:,.0f}".format(bill.amount_ht) }}</span>
         </div>
         <div class="total-row">
@@ -270,11 +270,11 @@
         {% endif %}
         {% if bill.paid_amount < bill.total_amount %}
         <div class="total-row">
-            <span>Payé:</span>
+            <span>{{ tr('Payé:') }}</span>
             <span>{{ "{:,.0f}".format(bill.paid_amount) }}</span>
         </div>
         <div class="total-row">
-            <span>Reste:</span>
+            <span>{{ tr('Reste:') }}</span>
             <span>{{ "{:,.0f}".format(bill.remaining_amount) }}</span>
         </div>
         {% endif %}
@@ -290,15 +290,15 @@
 
     {% if vitrine_public_url and vitrine_qr_data_url %}
     <div style="text-align:center;margin-top:12px;padding-top:8px;border-top:1px dashed #ccc;">
-        <p style="font-size:11px;margin-bottom:4px;">Promos &amp; vitrine</p>
+        <p style="font-size:11px;margin-bottom:4px;">{{ tr('Promos & vitrine') }}</p>
         <img src="{{ vitrine_qr_data_url }}" alt="QR vitrine" style="max-width:120px;height:auto;" />
         <p style="font-size:9px;word-break:break-all;margin-top:4px;">{{ vitrine_public_url }}</p>
     </div>
     {% endif %}
 
     <div class="footer">
-        <p>Merci de votre confiance!</p>
-        <p>Pour toute réclamation, veuillez présenter cette facture</p>
+        <p>{{ tr('Merci de votre confiance!') }}</p>
+        <p>{{ tr('Pour toute réclamation, veuillez présenter cette facture') }}</p>
     </div>
 
     <div class="action-buttons no-print">

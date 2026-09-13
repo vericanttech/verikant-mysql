@@ -33,7 +33,9 @@ function validateCartUnitPrice(item, unitPrice) {
         return {
             ok: false,
             message:
-                `Le prix unitaire doit être supérieur ou égal au prix d'achat (minimum ${formatNumberFR(minP)}).`,
+                window.UI_LANG === 'en'
+                    ? `The unit price must be at least the purchase price (minimum ${formatNumberFR(minP)}).`
+                    : `Le prix unitaire doit être supérieur ou égal au prix d'achat (minimum ${formatNumberFR(minP)}).`,
         };
     }
     return { ok: true };
@@ -71,7 +73,7 @@ function updateCartDisplay() {
             <div class="px-2 sm:px-4 py-2 sm:py-3 bg-gray-50 md:bg-gray-50">
                 <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                     <div class="flex-grow min-w-0 w-full sm:w-auto">
-                        <label class="block text-xs text-gray-600 mb-1">Prix</label>
+                        <label class="block text-xs text-gray-600 mb-1">${tr('Prix')}</label>
                         <div class="relative">
                             <input type="text"
                                    class="price-input w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-200 transition-all"
@@ -83,7 +85,7 @@ function updateCartDisplay() {
                     </div>
 
                     <div class="flex-grow min-w-0 w-full sm:w-auto">
-                        <label class="block text-xs text-gray-600 mb-1">Quantité</label>
+                        <label class="block text-xs text-gray-600 mb-1">${tr('Quantité')}</label>
                         <div class="relative">
                             <textarea
                                 class="quantity-input w-full px-2 sm:px-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-200 resize-none transition-all"
@@ -96,7 +98,7 @@ function updateCartDisplay() {
 
                 <div class="mt-2 sm:mt-3 text-right">
                     <span class="text-xs sm:text-sm font-medium text-gray-700">
-                        Sous-total :
+                        ${tr('Sous-total')} :
                         <span class="text-blue-600 font-bold tabular-nums">${formatNumberFR(itemTotal.toFixed(2))} ${currency}</span>
                     </span>
                 </div>
@@ -141,7 +143,7 @@ function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
             if (existingItem.quantity < stock) {
                 existingItem.quantity++;
             } else {
-                showNotification('Stock insuffisant !', 'error');
+                showNotification(tr('Stock insuffisant !'), 'error');
                 return;
             }
         } else {
@@ -156,7 +158,7 @@ function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
             });
         }
         updateCartDisplay();
-        showNotification('Article ajouté au panier', 'success');
+        showNotification(tr('Article ajouté au panier'), 'success');
     });
 
     // Cart item controls using event delegation
@@ -177,10 +179,10 @@ function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
         if (button.classList.contains('remove-item')) {
             window.cart.splice(index, 1);
             updateCartDisplay();
-            showNotification('Article retiré du panier', 'success');
+            showNotification(tr('Article retiré du panier'), 'success');
         } else if (button.classList.contains('edit-price')) {
             const currentPrice = item.price;
-            const newPrice = prompt('Nouveau prix:', currentPrice);
+            const newPrice = prompt(tr('Nouveau prix:'), currentPrice);
             const parsedPrice = parseFloat(newPrice);
 
             if (!isNaN(parsedPrice) && parsedPrice >= 0) {
@@ -191,9 +193,9 @@ function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
                 }
                 item.price = parsedPrice;
                 updateCartDisplay();
-                showNotification('Prix modifié avec succès', 'success');
+                showNotification(tr('Prix modifié avec succès'), 'success');
             } else if (newPrice !== null) { // if not cancelled
-                showNotification('Prix invalide', 'error');
+                showNotification(tr('Prix invalide'), 'error');
             }
         }
     });
@@ -218,10 +220,10 @@ function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
                 }
                 item.price = newPrice;
                 updateCartDisplay();
-                showNotification('Prix modifié avec succès', 'success');
+                showNotification(tr('Prix modifié avec succès'), 'success');
             } else {
                 e.target.value = item.price.toFixed(2);
-                showNotification('Prix invalide', 'error');
+                showNotification(tr('Prix invalide'), 'error');
             }
         } else if (e.target.classList.contains('quantity-input')) {
             const index = parseInt(e.target.dataset.index);
@@ -237,13 +239,13 @@ function initCartEventListeners(cartItems, cartTotal, checkoutBtn) {
             if (!isNaN(newValue) && newValue > 0 && newValue <= stock) {
                 item.quantity = newValue;
                 updateCartDisplay();
-                showNotification('Quantité modifiée avec succès', 'success');
+                showNotification(tr('Quantité modifiée avec succès'), 'success');
             } else {
                 e.target.value = item.quantity;
                 if (isNaN(newValue) || newValue < 1) {
-                    showNotification('Quantité invalide', 'error');
+                    showNotification(tr('Quantité invalide'), 'error');
                 } else {
-                    showNotification('Stock insuffisant', 'error');
+                    showNotification(tr('Stock insuffisant'), 'error');
                 }
             }
         }
