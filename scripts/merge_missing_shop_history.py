@@ -84,17 +84,9 @@ def merge(source_schema, shop_id, apply):
 
             # Every previously shared foreign-key row must still be the same
             # historical entity. Values may legitimately have changed in live.
-            for name in ("categories", "clients", "products", "sales_bills",
-                         "payment_transactions", "stock_movements"):
+            for name in ("categories", "clients", "products"):
                 for row_id in source[name].keys() & target[name].keys():
-                    fields = ("created_at",)
-                    if name == "sales_bills":
-                        fields = ("created_at", "bill_number")
-                    elif name == "payment_transactions":
-                        fields = ("created_at", "bill_id")
-                    elif name == "stock_movements":
-                        fields = ("created_at", "product_id")
-                    same_identity(source[name][row_id], target[name][row_id], name, fields)
+                    same_identity(source[name][row_id], target[name][row_id], name)
 
             # Existing parent rows must cover all source dependencies. This
             # utility does not silently restore deleted categories or clients.
@@ -111,7 +103,12 @@ def merge(source_schema, shop_id, apply):
                         f"Product {row['id']} has missing category")
 
             target_bill_numbers = {int(row["bill_number"]) for row in target["sales_bills"].values()}
-            new_bills = [source["sales_bills"][i] for i in sorted(source["sales_bills"].keys() - target["sales_bills"].keys())]
+            shared_bill_ids = {
+                i for i in source["sales_bills"].keys() & target["sales_bills"].keys()
+                if source["sales_bills"][i]["created_at"] == target["sales_bills"][i]["created_at"]
+                and source["sales_bills"][i]["bill_number"] == target["sales_bills"][i]["bill_number"]
+            }
+            new_bills = [source["sales_bills"][i] for i in sorted(source["sales_bills"].keys() - shared_bill_ids)]
             for row in new_bills:
                 require(int(row["bill_number"]) not in target_bill_numbers,
                         f"Bill number {row['bill_number']} already exists under another ID")
@@ -139,11 +136,28 @@ def merge(source_schema, shop_id, apply):
                 require(int(row["product_id"]) in source["products"],
                         f"Detail {row['id']} references unknown product")
 
+            shared_payment_ids = {
+                i for i in source["payment_transactions"].keys() & target["payment_transactions"].keys()
+                if source["payment_transactions"][i]["created_at"] == target["payment_transactions"][i]["created_at"]
+                and source["payment_transactions"][i]["bill_id"] == target["payment_transactions"][i]["bill_id"]
+                and source["payment_transactions"][i]["bill_id"] in shared_bill_ids
+            }
             new_payments = [source["payment_transactions"][i] for i in sorted(
-                source["payment_transactions"].keys() - target["payment_transactions"].keys()
+                source["payment_transactions"].keys() - shared_payment_ids
             )]
+            shared_movement_ids = {
+                i for i in source["stock_movements"].keys() & target["stock_movements"].keys()
+                if source["stock_movements"][i]["created_at"] == target["stock_movements"][i]["created_at"]
+                and source["stock_movements"][i]["product_id"] == target["stock_movements"][i]["product_id"]
+                and source["stock_movements"][i]["reference_type"] == target["stock_movements"][i]["reference_type"]
+                and source["stock_movements"][i]["reference_id"] == target["stock_movements"][i]["reference_id"]
+                and (
+                    (source["stock_movements"][i].get("reference_type") or "").lower() not in {"sale", "bill"}
+                    or source["stock_movements"][i]["reference_id"] in shared_bill_ids
+                )
+            }
             new_movements = [source["stock_movements"][i] for i in sorted(
-                source["stock_movements"].keys() - target["stock_movements"].keys()
+                source["stock_movements"].keys() - shared_movement_ids
             )]
             for row in new_payments:
                 require(int(row["bill_id"]) in source["sales_bills"],
@@ -159,6 +173,9 @@ def merge(source_schema, shop_id, apply):
             print("Missing:", {"products": len(new_products), "sales_bills": len(new_bills),
                                "sales_details": len(new_details), "payments": len(new_payments),
                                "stock_movements": len(new_movements)})
+            print("Same-ID invoice collisions remapped:", len(
+                (source["sales_bills"].keys() & target["sales_bills"].keys()) - shared_bill_ids
+            ))
             print("Movement reference types:", dict(Counter(row.get("reference_type") for row in new_movements)))
             print("Existing product stock balances and other shared rows will not be changed.")
             if not apply:
@@ -173,7 +190,7 @@ def merge(source_schema, shop_id, apply):
                     result = conn.execute(insert(live["products"]).values(**_prepare_values(live["products"], row)))
                     product_map[int(row["id"])] = int(result.inserted_primary_key[0])
 
-                bill_map = {i: i for i in source["sales_bills"].keys() & target["sales_bills"].keys()}
+                bill_map = {i: i for i in shared_bill_ids}
                 for row in new_bills:
                     values = _prepare_values(live["sales_bills"], row)
                     _accounting_defaults(values)
