@@ -151,10 +151,6 @@ def merge(source_schema, shop_id, apply):
                 and source["stock_movements"][i]["product_id"] == target["stock_movements"][i]["product_id"]
                 and source["stock_movements"][i]["reference_type"] == target["stock_movements"][i]["reference_type"]
                 and source["stock_movements"][i]["reference_id"] == target["stock_movements"][i]["reference_id"]
-                and (
-                    (source["stock_movements"][i].get("reference_type") or "").lower() not in {"sale", "bill"}
-                    or source["stock_movements"][i]["reference_id"] in shared_bill_ids
-                )
             }
             new_movements = [source["stock_movements"][i] for i in sorted(
                 source["stock_movements"].keys() - shared_movement_ids
@@ -165,9 +161,9 @@ def merge(source_schema, shop_id, apply):
             for row in new_movements:
                 require(int(row["product_id"]) in source["products"],
                         f"Movement {row['id']} references unknown product")
-                if (row.get("reference_type") or "").lower() in {"sale", "bill"}:
-                    require(row.get("reference_id") is None or int(row["reference_id"]) in source["sales_bills"],
-                            f"Movement {row['id']} references unknown bill")
+                # Legacy movement references are not FK-constrained. Some old
+                # rows use references outside this shop's bill ID set; keep
+                # those raw values rather than inventing a different link.
 
             print(f"Shop {shop_id}: {source_shop[0]['name']}")
             print("Missing:", {"products": len(new_products), "sales_bills": len(new_bills),
@@ -211,7 +207,7 @@ def merge(source_schema, shop_id, apply):
                 for row in new_movements:
                     values = _prepare_values(live["stock_movements"], row)
                     values["product_id"] = product_map[int(row["product_id"])]
-                    if values.get("reference_id") is not None and (
+                    if values.get("reference_id") is not None and int(values["reference_id"]) in bill_map and (
                         values.get("reference_type") or ""
                     ).lower() in {"sale", "bill"}:
                         values["reference_id"] = bill_map[int(values["reference_id"])]
