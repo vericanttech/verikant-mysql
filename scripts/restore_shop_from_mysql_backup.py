@@ -247,9 +247,10 @@ def restore(source_schema: str, source_shop_id: int, apply: bool) -> None:
                     ).first()
                     old_user_id = int(source_user["id"])
                     if existing:
-                        if old_user_id in linked_user_ids:
+                        if old_user_id in linked_user_ids and int(existing.id) != old_user_id:
                             raise RuntimeError(
-                                f"Linked username already exists in target: {source_user['name']!r}"
+                                "Linked username belongs to a different target user: "
+                                f"{source_user['name']!r} ({old_user_id} -> {existing.id})"
                             )
                         user_map[old_user_id] = int(existing.id)
                         continue
