@@ -36,6 +36,7 @@ def row_dicts(conn, table, where=None):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-schema", default="vericant$shop_backup_20260912")
+    parser.add_argument("--shop-id", type=int)
     args = parser.parse_args()
 
     app = create_app()
@@ -60,6 +61,8 @@ def main():
             live_by_name = {shop["name"].casefold().strip(): shop for shop in live_shops}
             for source_shop in sorted(source_shops, key=lambda row: row["id"]):
                 source_id = source_shop["id"]
+                if args.shop_id is not None and source_id != args.shop_id:
+                    continue
                 live_shop = live_by_name.get(source_shop["name"].casefold().strip())
                 live_id = live_shop["id"] if live_shop else None
                 print(f"\nSHOP {source_id} {source_shop['name']!r} -> {live_id}")
@@ -95,6 +98,17 @@ def main():
                         f"source_only_ids={len(source_keys-live_keys)} "
                         f"same_ids={overlap} different_same_ids={changed}"
                     )
+                    if source_keys - live_keys:
+                        print(f"    source_only_id_sample={sorted(source_keys-live_keys)[:12]}")
+                    if name == "products" and changed:
+                        for row_id in sorted(source_keys & live_keys):
+                            src_row, live_row = source_by_id[row_id], live_by_id[row_id]
+                            if src_row["name"] != live_row["name"]:
+                                print(
+                                    f"    product_id={row_id} backup_name={src_row['name']!r} "
+                                    f"live_name={live_row['name']!r}"
+                                )
+                                break
                 source_bill_ids = {
                     row["id"] for row in row_dicts(
                         conn, src["sales_bills"], src["sales_bills"].c.shop_id == source_id
