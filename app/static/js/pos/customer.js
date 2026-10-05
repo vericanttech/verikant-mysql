@@ -52,6 +52,7 @@ function selectCustomer(customer) {
 async function searchCustomers(searchTerm) {
     if (searchTerm.length < 2) {
         customerDetails.classList.add('hidden');
+        document.getElementById('customer-dropdown')?.remove();
         return;
     }
 
@@ -62,7 +63,7 @@ async function searchCustomers(searchTerm) {
         if (customers.length > 0) {
             // Create dropdown for results
             const dropdown = document.createElement('div');
-            dropdown.className = 'absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1';
+            dropdown.className = 'absolute left-0 right-0 z-20 max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1';
             dropdown.id = 'customer-dropdown';
 
             customers.forEach(customer => {
@@ -85,7 +86,10 @@ async function searchCustomers(searchTerm) {
             const existingDropdown = document.getElementById('customer-dropdown');
             if (existingDropdown) existingDropdown.remove();
 
+            customerSearch.parentNode.classList.add('relative');
             customerSearch.parentNode.appendChild(dropdown);
+        } else {
+            document.getElementById('customer-dropdown')?.remove();
         }
     } catch (error) {
         console.error('Error searching customers:', error);
