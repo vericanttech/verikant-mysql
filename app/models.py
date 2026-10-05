@@ -284,6 +284,26 @@ class MobileSaleSubmission(ShopModel, TimestampMixin):
     )
 
 
+class MobileCashierOperation(ShopModel, TimestampMixin):
+    __tablename__ = 'mobile_cashier_operations'
+    id = db.Column(db.Integer, primary_key=True)
+    shop_id = db.Column(db.Integer, db.ForeignKey('shops.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    client_operation_id = db.Column(db.String(64), nullable=False)
+    operation_type = db.Column(db.String(32), nullable=False)
+    response_payload = db.Column(db.JSON, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            'shop_id',
+            'client_operation_id',
+            name='uq_mobile_cashier_shop_client_operation',
+        ),
+        db.Index('idx_mobile_cashier_operation_user', 'user_id'),
+        db.Index('idx_mobile_cashier_operation_type', 'operation_type'),
+    )
+
+
 class EnterpriseInvoiceDetails(ShopModel, TimestampWithUpdateMixin):
     """Presentation details only; financial amounts remain on the original sale."""
     __tablename__ = 'enterprise_invoice_details'
