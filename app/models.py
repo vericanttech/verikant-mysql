@@ -82,6 +82,9 @@ class User(ShopModel, UserMixin, TimestampMixin):
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     current_shop_id = db.Column(db.Integer, db.ForeignKey('shops.id'))
     superadmin = db.Column(db.Boolean, nullable=False, default=False)
+    preferred_language = db.Column(
+        db.String(2), nullable=False, default='fr', server_default='fr'
+    )
 
     # Relationships
     shops = db.relationship('Shop', secondary='user_shops', backref='users')
@@ -102,6 +105,50 @@ class UserShop(ShopModel, TimestampMixin):
 
     __table_args__ = (
         db.Index('idx_user_shop_active', 'is_active'),
+    )
+
+
+class MobileRefreshToken(ShopModel, TimestampMixin):
+    __tablename__ = 'mobile_refresh_tokens'
+    id = db.Column(db.Integer, primary_key=True)
+    token_hash = db.Column(db.String(64), nullable=False, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    shop_id = db.Column(db.Integer, db.ForeignKey('shops.id'), nullable=False)
+    expires_at = db.Column(db.String(64), nullable=False)
+    last_used_at = db.Column(db.String(64))
+    revoked_at = db.Column(db.String(64))
+
+    __table_args__ = (
+        db.Index('idx_mobile_refresh_user', 'user_id'),
+        db.Index('idx_mobile_refresh_shop', 'shop_id'),
+        db.Index('idx_mobile_refresh_expires', 'expires_at'),
+    )
+
+
+class AccountDeletionRequest(ShopModel, TimestampMixin):
+    __tablename__ = 'account_deletion_requests'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True
+    )
+    shop_id = db.Column(
+        db.Integer, db.ForeignKey('shops.id', ondelete='SET NULL'), nullable=True
+    )
+    username = db.Column(db.String(255), nullable=False)
+    contact = db.Column(db.String(255), nullable=False)
+    reason = db.Column(db.Text)
+    language_code = db.Column(
+        db.String(2), nullable=False, default='fr', server_default='fr'
+    )
+    status = db.Column(
+        db.String(24), nullable=False, default='pending', server_default='pending'
+    )
+    processed_at = db.Column(db.Text)
+
+    __table_args__ = (
+        db.Index('idx_deletion_request_status', 'status'),
+        db.Index('idx_deletion_request_user', 'user_id'),
+        db.Index('idx_deletion_request_shop', 'shop_id'),
     )
 
 
@@ -142,6 +189,28 @@ class Product(ShopModel, TimestampWithUpdateMixin):
         db.Index('idx_product_shop_name', 'shop_id', 'name'),
         db.Index('idx_product_category', 'category_id'),
         db.Index('idx_product_stock', 'stock'),
+    )
+
+
+class ProductBarcode(ShopModel, TimestampWithUpdateMixin):
+    __tablename__ = 'product_barcodes'
+    id = db.Column(db.Integer, primary_key=True)
+    shop_id = db.Column(db.Integer, db.ForeignKey('shops.id'), nullable=False)
+    product_id = db.Column(
+        db.Integer,
+        db.ForeignKey('products.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+    # Barcodes are identifiers, not numbers: leading zeroes must be preserved.
+    code = db.Column(db.String(128), nullable=False)
+    quantity_multiplier = db.Column(db.Integer, nullable=False, server_default='1')
+    is_primary = db.Column(db.Boolean, nullable=False, server_default='0')
+
+    __table_args__ = (
+        db.UniqueConstraint('shop_id', 'code', name='uq_product_barcode_shop_code'),
+        db.Index('idx_product_barcode_product', 'product_id'),
+        db.Index('idx_product_barcode_shop', 'shop_id'),
+        CheckConstraint('quantity_multiplier > 0'),
     )
 
 
@@ -196,6 +265,40 @@ class SalesBill(ShopModel, TimestampMixin):
     def gross_amount_ht(self):
         """Total HT des lignes avant remise globale."""
         return sum(float(d.total_amount) for d in self.sales_details)
+
+
+class MobileSaleSubmission(ShopModel, TimestampMixin):
+    __tablename__ = 'mobile_sale_submissions'
+    id = db.Column(db.Integer, primary_key=True)
+    shop_id = db.Column(db.Integer, db.ForeignKey('shops.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    client_sale_id = db.Column(db.String(64), nullable=False)
+    bill_id = db.Column(db.Integer, db.ForeignKey('sales_bills.id'), nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            'shop_id', 'client_sale_id', name='uq_mobile_sale_shop_client_id'
+        ),
+        db.Index('idx_mobile_sale_bill', 'bill_id'),
+        db.Index('idx_mobile_sale_user', 'user_id'),
+    )
+
+
+class EnterpriseInvoiceDetails(ShopModel, TimestampWithUpdateMixin):
+    """Presentation details only; financial amounts remain on the original sale."""
+    __tablename__ = 'enterprise_invoice_details'
+    bill_id = db.Column(db.Integer, db.ForeignKey('sales_bills.id', ondelete='CASCADE'), primary_key=True)
+    data = db.Column(db.JSON, nullable=False)
+    bill = db.relationship('SalesBill', backref=db.backref(
+        'enterprise_details', uselist=False, cascade='all, delete-orphan'))
+
+
+class EnterpriseInvoiceDefaults(ShopModel, TimestampWithUpdateMixin):
+    __tablename__ = 'enterprise_invoice_defaults'
+    shop_id = db.Column(db.Integer, db.ForeignKey('shops.id', ondelete='CASCADE'), primary_key=True)
+    data = db.Column(db.JSON, nullable=False)
+    shop = db.relationship('Shop', backref=db.backref(
+        'enterprise_defaults', uselist=False, cascade='all, delete-orphan'))
 
 
 class VitrineVisit(ShopModel, TimestampMixin):
@@ -408,6 +511,7 @@ class Check(ShopModel, TimestampMixin):
 # Add relationships to Shop model
 Shop.categories = db.relationship('Category', backref='shop', lazy=True)
 Shop.products = db.relationship('Product', backref='shop', lazy=True)
+Shop.product_barcodes = db.relationship('ProductBarcode', backref='shop', lazy=True)
 Shop.clients = db.relationship('Client', backref='shop', lazy=True)
 Shop.sales_bills = db.relationship('SalesBill', backref='shop', lazy=True)
 Shop.stock_movements = db.relationship('StockMovement', backref='shop', lazy=True)
@@ -436,6 +540,13 @@ Client.sales_bills = db.relationship('SalesBill', backref='client', lazy=True)
 
 Product.sales_details = db.relationship('SalesDetail', backref='product', lazy=True)
 Product.stock_movements = db.relationship('StockMovement', backref='product', lazy=True)
+Product.barcodes = db.relationship(
+    'ProductBarcode',
+    backref='product',
+    lazy='selectin',
+    cascade='all, delete-orphan',
+    passive_deletes=True,
+)
 Product.vitrine_selections = db.relationship('VitrineProductSelection', backref='product', lazy=True)
 
 SalesBill.sales_details = db.relationship('SalesDetail', backref='bill', lazy=True)

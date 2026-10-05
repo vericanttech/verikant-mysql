@@ -1,0 +1,37 @@
+{% extends "public_legal_base.html" %}
+{% block title %}{{ copy.delete_title }} · Verikant{% endblock %}
+{% block content %}
+<section class="legal-hero compact">
+    <span class="eyebrow">VERIKANT</span>
+    <h1>{{ copy.delete_title }}</h1>
+    <p>{{ copy.delete_intro }}</p>
+</section>
+
+{% if deletion_request %}
+<section class="confirmation-card" role="status">
+    <div class="confirmation-icon">✓</div>
+    <h2>{{ copy.confirmation_title }}</h2>
+    <p>{{ copy.confirmation_body }}</p>
+    <strong>{{ copy.reference }}: {{ reference }}</strong>
+    <a class="primary-button" href="{{ url_for('auth.landing_page_en' if language == 'en' else 'auth.landing_page') }}">{{ copy.home }}</a>
+</section>
+{% else %}
+<div class="delete-layout">
+    <section class="scope-card">
+        <span class="step">01</span>
+        <h2>{{ copy.delete_scope_title }}</h2>
+        <p>{{ copy.delete_scope_body }}</p>
+        <a href="{{ url_for('auth.privacy', lang=language) }}">{{ copy.privacy_title }} →</a>
+    </section>
+    <form class="deletion-form" method="post" action="{{ url_for('auth.request_account_deletion') }}" novalidate>
+        <input type="hidden" name="lang" value="{{ language }}">
+        <div class="honeypot" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+        {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+        <label>{{ copy.username }}<input name="username" value="{{ username }}" maxlength="255" autocomplete="username" required></label>
+        <label>{{ copy.contact }}<input name="contact" value="{{ contact }}" maxlength="255" autocomplete="email" required></label>
+        <label>{{ copy.reason }}<textarea name="reason" maxlength="2000" rows="4">{{ reason }}</textarea></label>
+        <button class="primary-button danger-button" type="submit">{{ copy.submit }}</button>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

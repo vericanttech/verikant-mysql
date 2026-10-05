@@ -1,0 +1,22 @@
+{% extends "public_legal_base.html" %}
+{% block title %}{{ copy.privacy_title }} · Verikant{% endblock %}
+{% block content %}
+<section class="legal-hero">
+    <span class="eyebrow">VERIKANT</span>
+    <h1>{{ copy.privacy_title }}</h1>
+    <p>{{ copy.privacy_intro }}</p>
+    <small>{{ copy.updated }}</small>
+</section>
+
+<section class="legal-grid" aria-label="{{ copy.privacy_title }}">
+    <article><span class="step">01</span><h2>{{ copy.collected_title }}</h2><p>{{ copy.collected_body }}</p></article>
+    <article><span class="step">02</span><h2>{{ copy.use_title }}</h2><p>{{ copy.use_body }}</p></article>
+    <article><span class="step">03</span><h2>{{ copy.sharing_title }}</h2><p>{{ copy.sharing_body }}</p></article>
+    <article><span class="step">04</span><h2>{{ copy.rights_title }}</h2><p>{{ copy.rights_body }}</p></article>
+</section>
+
+<section class="legal-callout">
+    <div><h2>{{ copy.contact_title }}</h2><p>{{ copy.contact_body }}</p></div>
+    <a class="primary-button" href="{{ url_for('auth.request_account_deletion', lang=language) }}">{{ copy.delete_link }}</a>
+</section>
+{% endblock %}

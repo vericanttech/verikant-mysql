@@ -9,12 +9,87 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
-from .models import User, UserShop, Shop
+from .models import AccountDeletionRequest, User, UserShop, Shop
 from .landing_copy import get_landing_copy
 from . import db
 from datetime import datetime
 
 auth = Blueprint('auth', __name__)
+
+
+def _public_language():
+    requested = (request.values.get('lang') or '').strip().lower()
+    if requested in ('fr', 'en'):
+        return requested
+    saved = getattr(current_user, 'preferred_language', None)
+    if current_user.is_authenticated and saved in ('fr', 'en'):
+        return saved
+    cookie = (request.cookies.get('vericant_language') or '').strip().lower()
+    return cookie if cookie in ('fr', 'en') else 'fr'
+
+
+PUBLIC_LEGAL_COPY = {
+    'fr': {
+        'privacy_title': 'Politique de confidentialité',
+        'privacy_intro': 'Verikant aide les commerces à gérer leurs ventes, leur stock, leurs dépenses et leurs crédits clients. Cette page explique quelles informations sont utilisées et comment vous pouvez exercer vos droits.',
+        'collected_title': 'Informations que nous traitons',
+        'collected_body': 'Nous traitons les informations de compte et de boutique que vous fournissez, ainsi que les données opérationnelles saisies dans le service, comme les produits, ventes, clients, dépenses et crédits. Des données techniques limitées peuvent être utilisées pour sécuriser le service et diagnostiquer les erreurs.',
+        'use_title': 'Pourquoi nous les utilisons',
+        'use_body': 'Ces informations servent à fournir les fonctions de Verikant, synchroniser vos appareils, protéger les comptes, résoudre les incidents et améliorer la fiabilité du service. Nous ne vendons pas vos données personnelles.',
+        'sharing_title': 'Partage et conservation',
+        'sharing_body': 'Les données ne sont communiquées qu’aux prestataires nécessaires au fonctionnement du service ou lorsque la loi l’exige. Elles sont conservées pendant la durée nécessaire au service, à la sécurité et aux obligations légales applicables.',
+        'rights_title': 'Vos choix et vos droits',
+        'rights_body': 'Vous pouvez demander l’accès, la correction ou la suppression de vos informations. Une vérification d’identité peut être nécessaire afin de protéger votre compte.',
+        'delete_link': 'Demander la suppression de mon compte',
+        'contact_title': 'Nous contacter',
+        'contact_body': 'Pour toute question relative à la confidentialité, écrivez à vericant2023@gmail.com.',
+        'updated': 'Dernière mise à jour : 4 octobre 2026',
+        'delete_title': 'Supprimer mon compte Verikant',
+        'delete_intro': 'Envoyez cette demande pour supprimer votre compte et les données de boutique qui lui sont associées. Nous vous contacterons afin de vérifier votre identité avant toute suppression définitive.',
+        'delete_scope_title': 'Ce que la suppression comprend',
+        'delete_scope_body': 'Après vérification, nous supprimerons ou anonymiserons le compte et les données associées qui ne doivent pas être conservées pour des raisons légales, de sécurité ou de prévention de la fraude. Les copies de sauvegarde expirent selon leur cycle normal.',
+        'username': 'Nom d’utilisateur Verikant',
+        'contact': 'Téléphone ou adresse e-mail',
+        'reason': 'Informations complémentaires (facultatif)',
+        'submit': 'Envoyer la demande',
+        'required': 'Veuillez renseigner votre nom d’utilisateur et un moyen de vous contacter.',
+        'confirmation_title': 'Demande enregistrée',
+        'confirmation_body': 'Votre demande a bien été enregistrée. Nous vous contacterons pour vérifier votre identité avant de procéder à la suppression.',
+        'reference': 'Référence',
+        'home': 'Retour à l’accueil',
+        'privacy': 'Confidentialité',
+    },
+    'en': {
+        'privacy_title': 'Privacy Policy',
+        'privacy_intro': 'Verikant helps businesses manage sales, inventory, expenses, and customer credit. This page explains what information is used and how you can exercise your rights.',
+        'collected_title': 'Information we process',
+        'collected_body': 'We process the account and shop information you provide, together with operational data entered into the service, such as products, sales, customers, expenses, and credit. Limited technical data may be used to secure the service and diagnose errors.',
+        'use_title': 'Why we use it',
+        'use_body': 'We use this information to provide Verikant features, synchronize your devices, protect accounts, resolve incidents, and improve service reliability. We do not sell your personal data.',
+        'sharing_title': 'Sharing and retention',
+        'sharing_body': 'Data is shared only with providers needed to operate the service or when required by law. It is retained only as long as needed for the service, security, and applicable legal obligations.',
+        'rights_title': 'Your choices and rights',
+        'rights_body': 'You can request access to, correction of, or deletion of your information. We may need to verify your identity to protect your account.',
+        'delete_link': 'Request account deletion',
+        'contact_title': 'Contact us',
+        'contact_body': 'For privacy questions, email vericant2023@gmail.com.',
+        'updated': 'Last updated: October 4, 2026',
+        'delete_title': 'Delete my Verikant account',
+        'delete_intro': 'Submit this request to delete your account and its associated shop data. We will contact you to verify your identity before permanently deleting anything.',
+        'delete_scope_title': 'What deletion includes',
+        'delete_scope_body': 'After verification, we will delete or anonymize the account and associated data that we are not required to retain for legal, security, or fraud-prevention reasons. Backup copies expire through their normal lifecycle.',
+        'username': 'Verikant username',
+        'contact': 'Phone number or email address',
+        'reason': 'Additional information (optional)',
+        'submit': 'Submit request',
+        'required': 'Enter your username and a way for us to contact you.',
+        'confirmation_title': 'Request received',
+        'confirmation_body': 'Your request has been recorded. We will contact you to verify your identity before proceeding with deletion.',
+        'reference': 'Reference',
+        'home': 'Back to home',
+        'privacy': 'Privacy',
+    },
+}
 
 
 def _username_fingerprint(username):
@@ -257,6 +332,90 @@ def landing_page_en():
     return _render_landing_page('en')
 
 
+@auth.route('/privacy')
+def privacy():
+    language = _public_language()
+    return render_template(
+        'privacy.html',
+        language=language,
+        copy=PUBLIC_LEGAL_COPY[language],
+    )
+
+
+@auth.route('/account/delete', methods=['GET', 'POST'])
+def request_account_deletion():
+    language = _public_language()
+    copy = PUBLIC_LEGAL_COPY[language]
+    username = ''
+    contact = ''
+    reason = ''
+    error = None
+    deletion_request = None
+
+    if request.method == 'POST':
+        # A filled website field is a bot signal; render the same confirmation
+        # without adding junk to the deletion queue.
+        if (request.form.get('website') or '').strip():
+            return render_template(
+                'account_delete.html',
+                language=language,
+                copy=copy,
+                deletion_request=True,
+                reference='DEL-RECEIVED',
+                username='',
+                contact='',
+                reason='',
+                error=None,
+            )
+
+        username = (request.form.get('username') or '').strip()[:255]
+        contact = (request.form.get('contact') or '').strip()[:255]
+        reason = (request.form.get('reason') or '').strip()[:2000]
+        if not username or not contact:
+            error = copy['required']
+        else:
+            deletion_request = AccountDeletionRequest.query.filter(
+                db.func.lower(AccountDeletionRequest.username) == username.casefold(),
+                AccountDeletionRequest.contact == contact,
+                AccountDeletionRequest.status == 'pending',
+            ).first()
+            if deletion_request is None:
+                deletion_request = AccountDeletionRequest(
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    shop_id=(
+                        current_user.current_shop_id
+                        if current_user.is_authenticated
+                        else None
+                    ),
+                    username=username,
+                    contact=contact,
+                    reason=reason or None,
+                    language_code=language,
+                    status='pending',
+                )
+                db.session.add(deletion_request)
+                db.session.commit()
+                current_app.logger.warning(
+                    'account_deletion_request_created id=%s authenticated=%s',
+                    deletion_request.id,
+                    current_user.is_authenticated,
+                )
+
+    return render_template(
+        'account_delete.html',
+        language=language,
+        copy=copy,
+        deletion_request=deletion_request,
+        reference=(
+            f'DEL-{deletion_request.id:06d}' if deletion_request else None
+        ),
+        username=username,
+        contact=contact,
+        reason=reason,
+        error=error,
+    ), (400 if error else 200)
+
+
 def _render_landing_page(language):
     response = make_response(render_template(
         'landing_page.html',
@@ -272,6 +431,9 @@ def _render_landing_page(language):
 def set_language(language):
     if language not in ('fr', 'en'):
         language = 'fr'
+    if current_user.is_authenticated:
+        current_user.preferred_language = language
+        db.session.commit()
     target = request.args.get('next') or url_for('dashboard.index')
     if not target.startswith('/') or target.startswith('//'):
         target = url_for('dashboard.index')

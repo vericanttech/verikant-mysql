@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="{{ language }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#073b36">
+    <link rel="icon" href="{{ url_for('static', filename='images/vericant-icon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+    <title>{% block title %}Verikant{% endblock %}</title>
+</head>
+<body>
+    <header class="legal-header">
+        <a class="legal-brand" href="{{ url_for('auth.landing_page_en' if language == 'en' else 'auth.landing_page') }}">
+            <img src="{{ url_for('static', filename='images/vericant-icon.svg') }}" alt="" width="38" height="38">
+            <span>Veri<strong>kant</strong></span>
+        </a>
+        <nav aria-label="Language">
+            <a href="{{ request.path }}?lang=fr" lang="fr"{% if language == 'fr' %} class="active" aria-current="page"{% endif %}>FR</a>
+            <a href="{{ request.path }}?lang=en" lang="en"{% if language == 'en' %} class="active" aria-current="page"{% endif %}>EN</a>
+        </nav>
+    </header>
+    <main class="legal-shell">
+        {% block content %}{% endblock %}
+    </main>
+    <footer>
+        <span>© 2026 Verikant</span>
+        <a href="{{ url_for('auth.privacy', lang=language) }}">{{ copy.privacy }}</a>
+        <a href="mailto:vericant2023@gmail.com">vericant2023@gmail.com</a>
+    </footer>
+</body>
+</html>
